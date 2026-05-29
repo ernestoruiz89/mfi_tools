@@ -419,10 +419,9 @@ def _reset_package_targets(package_name):
     for name in frappe.get_all("Factsheet", filters={"paquete_eeff": package_name}, pluck="name", limit_page_length=200):
         doc = frappe.get_doc("Factsheet", name)
         for row in doc.lineas or []:
-            if not cint(getattr(row, "es_manual", 0)):
+            if cstr(getattr(row, "origen_dato", "")) != "Manual":
                 row.monto_actual = 0
                 row.monto_comparativo = 0
-                row.origen_dato = "Manual"
         doc.save(ignore_permissions=True)
 
 
@@ -691,11 +690,10 @@ def aplicar_mapeo_paquete(paquete_name):
                     "descripcion": rule.destino_codigo_linea,
                 })
                 line = fact_doc.lineas[-1]
-            if cint(getattr(line, "es_manual", 0)):
+            if cstr(getattr(line, "origen_dato", "")) != "Mapeo":
                 continue
             line.monto_actual = flt(line.monto_actual or 0) + amount
             line.monto_comparativo = flt(line.monto_comparativo or 0) + comparative_amount
-            line.origen_dato = source_type
             touched_factsheets.add(fact_doc.name)
 
     for name in touched_states:
