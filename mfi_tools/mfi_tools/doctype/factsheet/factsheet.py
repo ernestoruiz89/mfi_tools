@@ -19,8 +19,8 @@ class Factsheet(Document):
     def validate(self):
         self.codigo_factsheet = cstr(self.codigo_factsheet or "").strip().upper()
         
-        if "." in self.codigo_factsheet:
-            frappe.throw(_("El codigo de factsheet {0} no puede contener puntos (.)").format(self.codigo_factsheet))
+        if "." in self.codigo_factsheet or " " in self.codigo_factsheet:
+            frappe.throw(_("El codigo de factsheet {0} no puede contener puntos ni espacios").format(self.codigo_factsheet))
             
         if not self.company and self.paquete_eeff:
             self.company = frappe.db.get_value("Paquete EEFF", self.paquete_eeff, "company")
@@ -32,8 +32,8 @@ class Factsheet(Document):
         for idx, row in enumerate(self.lineas or [], start=1):
             row.codigo_linea = cstr(row.codigo_linea or f"LINEA_{idx}").strip().upper()
             
-            if "." in row.codigo_linea:
-                frappe.throw(_("El codigo de linea {0} no puede contener puntos (.)").format(row.codigo_linea))
+            if "." in row.codigo_linea or " " in row.codigo_linea:
+                frappe.throw(_("El codigo de linea {0} no puede contener puntos ni espacios").format(row.codigo_linea))
                 
             row.origen_dato = cstr(row.origen_dato or "Manual").strip() or "Manual"
             if row.origen_dato == "Manual":
