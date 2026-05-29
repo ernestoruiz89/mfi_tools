@@ -28,6 +28,9 @@ SECTION_CELL_PERIODS = (
 
 class ReglaMapeoContableEEFF(Document):
     def autoname(self):
+        if not self.is_new():
+            return
+            
         explicit_name = cstr(self.nombre_regla or "").strip()
         if explicit_name:
             self.nombre_regla = _build_unique_rule_name(explicit_name, current_name=self.name if not self.is_new() else None)
