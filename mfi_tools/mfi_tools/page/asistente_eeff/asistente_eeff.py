@@ -190,23 +190,10 @@ def _build_status(package_name=None, balanza_name=None):
         status["total_debe"] = balanza.total_debe or 0
         status["total_haber"] = balanza.total_haber or 0
         status["cuadra"] = cint(balanza.cuadra or 0)
-        tasas = []
-        for row in balanza.get("tasas_cambio") or []:
-            moneda = cstr(getattr(row, "moneda", "") or "").strip().upper()
-            if not moneda:
-                continue
-            tasas.append(
-                {
-                    "moneda": moneda,
-                    "tasa_cambio": flt(getattr(row, "tasa_cambio", 0) or 0) or 1,
-                }
-            )
-
-        status["tasas_cambio"] = tasas
-        status["total_tasas_cambio"] = len(tasas)
-        first_moneda = tasas[0]["moneda"] if tasas else "USD"
-        status["moneda_tasa_cambio"] = first_moneda
-        status["tasa_cambio"] = balanza.get_tasa_cambio(moneda=first_moneda, fallback=1)
+        status["tasas_cambio"] = []
+        status["total_tasas_cambio"] = 0
+        status["moneda_tasa_cambio"] = cstr(balanza.moneda or "").strip().upper() or "USD"
+        status["tasa_cambio"] = 1.0
 
     return status
 
