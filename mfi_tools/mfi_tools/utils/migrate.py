@@ -15,10 +15,10 @@ def before_install():
         
         # 2. Update Module Def
         if frappe.db.exists("Module Def", "Contafacil"):
-            frappe.db.sql("UPDATE `tabModule Def` SET name = 'MFI Tools', app_name = 'mfi_tools' WHERE name = 'Contafacil'")
-        else:
-            # Just in case the module was already renamed, make sure app_name is updated
-            frappe.db.sql("UPDATE `tabModule Def` SET app_name = 'mfi_tools' WHERE name = 'MFI Tools'")
+            frappe.delete_doc("Module Def", "Contafacil", force=True, ignore_missing=True)
+            
+        if frappe.db.exists("Module Def", "MFI Tools"):
+            frappe.delete_doc("Module Def", "MFI Tools", force=True, ignore_missing=True)
 
         # 3. Update Patch Log
         frappe.db.sql("UPDATE `tabPatch Log` SET patch = REPLACE(patch, 'contafacil.contafacil', 'mfi_tools.mfi_tools') WHERE patch LIKE 'contafacil.contafacil%'")
