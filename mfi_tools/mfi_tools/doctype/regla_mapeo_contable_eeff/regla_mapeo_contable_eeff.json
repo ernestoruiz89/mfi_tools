@@ -64,7 +64,7 @@
             "fieldtype": "Check",
             "label": "Usar Periodos Especiales Cifra",
             "default": 0,
-            "depends_on": "eval:doc.destino_tipo==='Cifra Nota'",
+            "depends_on": "eval:in_list(['Cifra Nota', 'Linea Factsheet', 'Linea Estado'], doc.destino_tipo)",
             "description": "Habilita seleccionar valores especiales para las columnas actual y comparativo de la cifra."
         },
         {
@@ -73,7 +73,7 @@
             "label": "Periodo Valor Cifra Actual",
             "options": "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo",
             "default": "Actual",
-            "depends_on": "eval:doc.destino_tipo==='Cifra Nota' && doc.usar_periodos_especiales_cifra==1"
+            "depends_on": "eval:in_list(['Cifra Nota', 'Linea Factsheet', 'Linea Estado'], doc.destino_tipo) && doc.usar_periodos_especiales_cifra==1"
         },
         {
             "fieldname": "destino_periodo_cifra_comparativo",
@@ -81,7 +81,7 @@
             "label": "Periodo Valor Cifra Comparativo",
             "options": "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo",
             "default": "Comparativo",
-            "depends_on": "eval:doc.destino_tipo==='Cifra Nota' && doc.usar_periodos_especiales_cifra==1"
+            "depends_on": "eval:in_list(['Cifra Nota', 'Linea Factsheet', 'Linea Estado'], doc.destino_tipo) && doc.usar_periodos_especiales_cifra==1"
         },
         {"fieldname": "destino_seccion_id", "fieldtype": "Data", "label": "Destino Seccion ID", "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"},
         {"fieldname": "destino_codigo_fila", "fieldtype": "Data", "label": "Destino Codigo Fila", "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"},

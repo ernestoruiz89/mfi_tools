@@ -558,8 +558,19 @@ def aplicar_mapeo_paquete(paquete_name):
                 continue
             if cint(getattr(line, "es_manual", 0)):
                 continue
-            line.monto_actual = flt(line.monto_actual or 0) + amount
-            line.monto_comparativo = flt(line.monto_comparativo or 0) + comparative_amount
+
+            selected_actual_amount, selected_comparative_amount = _select_figure_amounts(
+                rule,
+                amount,
+                comparative_amount,
+                balances,
+                comparative_balances,
+                actual_stats,
+                comparative_stats,
+            )
+
+            line.monto_actual = flt(line.monto_actual or 0) + selected_actual_amount
+            line.monto_comparativo = flt(line.monto_comparativo or 0) + selected_comparative_amount
             line.monto_base_actual = flt(line.monto_base_actual or 0) + base_actual_amount
             line.monto_base_comparativo = flt(line.monto_base_comparativo or 0) + base_comparative_amount
             line.origen_dato = source_type
@@ -692,8 +703,19 @@ def aplicar_mapeo_paquete(paquete_name):
                 line = fact_doc.lineas[-1]
             if cstr(getattr(line, "origen_dato", "")) != "Mapeo":
                 continue
-            line.monto_actual = flt(line.monto_actual or 0) + amount
-            line.monto_comparativo = flt(line.monto_comparativo or 0) + comparative_amount
+
+            selected_actual_amount, selected_comparative_amount = _select_figure_amounts(
+                rule,
+                amount,
+                comparative_amount,
+                balances,
+                comparative_balances,
+                actual_stats,
+                comparative_stats,
+            )
+
+            line.monto_actual = flt(line.monto_actual or 0) + selected_actual_amount
+            line.monto_comparativo = flt(line.monto_comparativo or 0) + selected_comparative_amount
             touched_factsheets.add(fact_doc.name)
 
     for name in touched_states:
