@@ -249,7 +249,7 @@ def get_autocomplete_options(company):
     for nota in notas:
         options["notas"].append({"code": nota.numero_nota, "label": nota.titulo})
         doc = frappe.get_doc("Nota EEFF", nota.name)
-        for cifra in doc.get("cifras", []):
+        for cifra in doc.get("cifras_nota", []):
             options["cifras_nota"].append({"code": cifra.codigo_cifra, "label": cifra.descripcion, "nota": nota.numero_nota})
             
         secciones = frappe.get_all("Seccion Nota EEFF", filters={"nota_eeff": nota.name}, fields=["name", "codigo_seccion", "titulo_seccion"])
