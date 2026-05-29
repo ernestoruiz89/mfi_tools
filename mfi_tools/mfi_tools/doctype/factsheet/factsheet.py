@@ -7,7 +7,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, cstr, flt
 
-VAR_REGEX = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*|[A-Za-z0-9_]+\.[A-Za-z_][A-Za-z0-9_]*)\b")
+VAR_REGEX = re.compile(r"\b([A-Za-z0-9_]+\.[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*)\b")
 
 class Factsheet(Document):
     def autoname(self):
