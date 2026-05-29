@@ -49,6 +49,30 @@ class Factsheet(Document):
         cache_act = {}
         cache_comp = {}
 
+        MONTH_NUMBER = {
+            "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4,
+            "Mayo": 5, "Junio": 6, "Julio": 7, "Agosto": 8,
+            "Septiembre": 9, "Octubre": 10, "Noviembre": 11, "Diciembre": 12
+        }
+        mes_act = 1
+        mes_comp = 1
+        anio_act = 2026
+        anio_comp = 2025
+        
+        if self.paquete_eeff:
+            paquete = frappe.db.get_value("Paquete EEFF", self.paquete_eeff, ["mes", "anio", "balanza_comparativa_eeff"], as_dict=True)
+            if paquete:
+                mes_act = MONTH_NUMBER.get(paquete.get("mes"), 1)
+                anio_act = paquete.get("anio") or 2026
+                if paquete.get("balanza_comparativa_eeff"):
+                    comp = frappe.db.get_value("Balanza Comprobacion EEFF", paquete.get("balanza_comparativa_eeff"), ["mes", "anio"], as_dict=True)
+                    if comp:
+                        mes_comp = MONTH_NUMBER.get(comp.get("mes"), mes_act)
+                        anio_comp = comp.get("anio") or anio_act
+                else:
+                    mes_comp = mes_act
+                    anio_comp = anio_act
+
         def get_value(code, fieldname, stack):
             is_comp = (fieldname == "monto_comparativo")
             cache = cache_comp if is_comp else cache_act
@@ -80,7 +104,13 @@ class Factsheet(Document):
             # Reemplazar variables en la formula
             def replacer(match):
                 var_name = match.group(1)
-                # Soportar prefijos ej: COMP.EMPLEADOS
+                
+                if var_name == "MES_ACTUAL": return str(mes_act)
+                if var_name == "MES_COMPARATIVO": return str(mes_comp)
+                if var_name == "ANIO_ACTUAL": return str(anio_act)
+                if var_name == "ANIO_COMPARATIVO": return str(anio_comp)
+
+                # Soportar prefijos ej: COMP_EMPLEADOS
                 target_field = fieldname
                 target_var = var_name
                 
