@@ -1,0 +1,39 @@
+{
+    "actions": [],
+    "creation": "2026-03-12 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "codigo_tabla",
+        "codigo_fila",
+        "codigo_columna",
+        "valor_numero",
+        "valor_texto",
+        "formato_numero",
+        "redondear_entero",
+        "es_manual",
+        "origen_dato",
+        "ultima_regla_mapeo",
+        "comentario"
+    ],
+    "fields": [
+        {"fieldname": "codigo_tabla", "fieldtype": "Data", "label": "Codigo Tabla", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "codigo_fila", "fieldtype": "Data", "label": "Codigo Fila", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "codigo_columna", "fieldtype": "Data", "label": "Codigo Columna", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "valor_numero", "fieldtype": "Currency", "label": "Valor Numero", "in_list_view": 1},
+        {"fieldname": "valor_texto", "fieldtype": "Data", "label": "Valor Texto"},
+        {"fieldname": "formato_numero", "fieldtype": "Select", "label": "Formato Numero", "options": "Numero\nMoneda\nPorcentaje\nTexto"},
+        {"fieldname": "redondear_entero", "fieldtype": "Check", "label": "Redondear Entero", "default": 0},
+        {"fieldname": "es_manual", "fieldtype": "Check", "label": "Es Manual", "default": 0},
+        {"fieldname": "origen_dato", "fieldtype": "Select", "label": "Origen Dato", "options": "Manual\nBalanza\nFormula", "default": "Manual"},
+        {"fieldname": "ultima_regla_mapeo", "fieldtype": "Data", "label": "Ultima Regla Mapeo"},
+        {"fieldname": "comentario", "fieldtype": "Small Text", "label": "Comentario"}
+    ],
+    "istable": 1,
+    "module": "MFI Tools",
+    "name": "Celda Seccion Nota EEFF",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC"
+}

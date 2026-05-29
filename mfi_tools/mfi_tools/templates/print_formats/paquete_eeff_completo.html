@@ -1,0 +1,710 @@
+<style>
+  .cpc-wrap,
+  .cpc-wrap * {
+    font-family: "Arial Narrow", Arial, "Helvetica Neue", sans-serif !important;
+    color: #000000 !important;
+    font-size: 12pt;
+    line-height: 1.25;
+  }
+
+  .cpc-wrap {
+    padding: 0 24px;
+    box-sizing: border-box;
+  }
+
+  .cpc-head {
+    position: relative;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+    line-height: 1;
+  }
+
+  .cpc-head::after {
+    content: "";
+    display: block;
+    width: calc(100% + 48px);
+    margin-left: -24px;
+    margin-top: 10px;
+    border-bottom: 2px solid #000000;
+  }
+
+  .cpc-head h1 {
+    margin: 0;
+    font-size: 12pt;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .cpc-head p {
+    margin: 4px 0 0;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cpc-meta {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 18px;
+  }
+
+  .cpc-meta td {
+    border: 1px solid #dbe3ef;
+    padding: 6px 8px;
+    vertical-align: top;
+    font-size: 12pt;
+  }
+
+  .cpc-section {
+    margin: 0 0 10px;
+    page-break-inside: avoid;
+  }
+
+  .cpc-section,
+  .cpc-section *,
+  .cpc-table,
+  .cpc-table * {
+    line-height: 1.25 !important;
+  }
+
+  .cpc-section h2 {
+    margin: 0 0 4px;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cpc-section h3 {
+    margin: 0 0 4px;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cpc-note-narrative {
+    margin-top: 8px;
+    margin-bottom: 1em;
+  }
+
+  .cpc-note-block + .cpc-note-block {
+    margin-top: 12pt;
+  }
+
+  .cpc-subtitle {
+    margin: 2px 0 4px;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cpc-section p,
+  .cpc-section ul,
+  .cpc-section ol,
+  .cpc-section div.ql-editor p {
+    margin-top: 0;
+    margin-bottom: 2px;
+  }
+
+  .cpc-table {
+    width: var(--cpc-table-width, 100%);
+    border-collapse: collapse;
+    margin-top: 4px;
+    table-layout: fixed;
+  }
+
+  .cpc-table.cpc-align-left {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  .cpc-table.cpc-align-center {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cpc-table.cpc-align-right {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .cpc-table,
+  .cpc-table * {
+    font-size: var(--cpc-table-font-size, 12pt) !important;
+    line-height: 1.1 !important;
+  }
+
+  .cpc-table th,
+  .cpc-table td {
+    border: none;
+    padding: 1px 0 !important;
+    vertical-align: middle;
+  }
+
+  .cpc-table th {
+    background: transparent;
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .cpc-col-desc {
+    width: 46%;
+  }
+
+  .cpc-col-nota {
+    width: 8%;
+    text-align: center;
+  }
+
+  .cpc-col-monto {
+    width: 21%;
+    text-align: right;
+  }
+
+  .cpc-col-gap {
+    width: 2px;
+  }
+
+  .cpc-table th.num,
+  .cpc-table td.num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .cpc-table th.cpc-note,
+  .cpc-table td.cpc-note {
+    text-align: center;
+    white-space: nowrap;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .cpc-table th.cpc-val-actual,
+  .cpc-table td.cpc-val-actual {
+    padding-left: 18px !important;
+    padding-right: 12px !important;
+  }
+
+  .cpc-table th.cpc-val-comparativo,
+  .cpc-table td.cpc-val-comparativo {
+    padding-left: 22px !important;
+  }
+
+  .cpc-table th.cpc-gap,
+  .cpc-table td.cpc-gap {
+    padding: 0 !important;
+    width: 2px;
+  }
+
+  .cpc-money {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .cpc-money-symbol {
+    text-align: left;
+    padding-right: 6px;
+    white-space: nowrap;
+  }
+
+  .cpc-money-value {
+    text-align: right;
+    white-space: nowrap;
+    flex: 1 1 auto;
+  }
+
+  .cpc-table th.cpc-gap,
+  .cpc-table td.cpc-gap {
+    padding: 0 !important;
+    width: 2px;
+  }
+
+  .cpc-line-total td,
+  .cpc-line-subtotal td,
+  .cpc-row-total td,
+  .cpc-row-subtotal td {
+    font-weight: 700;
+  }
+
+  .cpc-line-subtotal td.num,
+  .cpc-row-subtotal td.num {
+    border-top: 1px solid #000000;
+    border-bottom: 1px solid #000000;
+  }
+
+  .cpc-line-total td.num,
+  .cpc-row-total td.num {
+    border-top: 1px solid #000000;
+    border-bottom: 3px double #000000;
+  }
+
+  .cpc-desc {
+    display: block;
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  .cpc-note-desc,
+  .cpc-complex-desc {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  .cpc-line-blank td {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .cpc-line-blank .cpc-desc {
+    min-height: 1.25em;
+  }
+
+  .cpc-note-comment {
+    margin-top: 1px;
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  .cpc-note-observaciones {
+    margin-top: 12pt;
+  }
+
+  .cpc-row-blank td {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+
+  .cpc-signatures-wrapper {
+    margin-top: 30px;
+    text-align: center;
+    width: 100%;
+    page-break-inside: avoid;
+  }
+
+  .cpc-sig-box {
+    display: inline-block;
+    vertical-align: top;
+    width: 30%;
+    min-width: 180px;
+    margin: 0 10px;
+    text-align: center;
+  }
+
+  .cpc-sig-gap {
+    height: 60px;
+  }
+
+  .cpc-sig-line {
+    border-top: 1px solid #000000;
+    padding-top: 4px;
+    font-weight: 700;
+    font-size: 10pt;
+  }
+
+  .cpc-sig-name {
+    font-size: 11pt;
+    font-weight: 400;
+    margin-top: 4px;
+  }
+
+  .cpc-sig-title {
+    font-size: 11pt;
+    margin-top: 2px;
+  }
+</style>
+{% set estados = frappe.get_all(
+"Estado Financiero EEFF",
+filters={"paquete_eeff": doc.name},
+fields=["name", "tipo_estado", "titulo", "orden_presentacion"],
+order_by="orden_presentacion asc, creation asc",
+limit_page_length=100
+) %}
+{% set notas = frappe.get_all(
+"Nota EEFF",
+filters={"paquete_eeff": doc.name},
+fields=["name", "numero_nota", "sub_nota", "estado_aprobacion", "creation"],
+order_by="numero_nota asc, sub_nota asc, creation asc",
+limit_page_length=300
+) %}
+{% set labels = doc.get_column_labels() %}
+{% set currency_ctx = doc.get_currency_context() %}
+{% set currency_symbol = currency_ctx.symbol or "$" %}
+
+<div class="cpc-wrap">
+  <div class="cpc-head">
+    <h1>{{ doc.cliente or "-" }}</h1>
+    <p>Estado Financiero Completo</p>
+    <p>Periodo: {{ doc.periodo_nombre or "-" }}</p>
+  </div>
+
+  <table class="cpc-meta">
+    <tr>
+      <td><strong>Paquete</strong><br>{{ doc.name or "-" }}</td>
+      <td><strong>Cliente</strong><br>{{ doc.cliente or "-" }}</td>
+      <td><strong>Mes</strong><br>{{ doc.mes or "-" }}</td>
+      <td><strong>Anio</strong><br>{{ doc.anio or "-" }}</td>
+    </tr>
+    <tr>
+      <td><strong>Estado Preparacion</strong><br>{{ doc.estado_preparacion or "-" }}</td>
+      <td><strong>Total Estados</strong><br>{{ doc.total_estados or 0 }}</td>
+      <td><strong>Total Notas</strong><br>{{ doc.total_notas or 0 }}</td>
+      <td>
+        <strong>Fecha Emision</strong><br>{{ doc.fecha_emision or "-" }}<br>
+        <strong>Moneda</strong><br>{{ (currency_ctx.currency or "-") ~ " (" ~ currency_symbol ~ ")" }}
+      </td>
+    </tr>
+  </table>
+
+  <div class="cpc-section">
+    <h2>Estados Financieros</h2>
+    {% if estados %}
+    {% for estado in estados %}
+    {% set estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name) %}
+    {% set lineas = (estado_doc.lineas or []) %}
+    {% set estado_header = estado_doc.get_print_header() %}
+    <div class="cpc-section">
+      <h3>{{ estado_header.cliente or "-" }}</h3>
+      <p class="cpc-subtitle">{{ estado_header.titulo or "-" }}</p>
+      {% if estado_header.periodo %}<p class="cpc-subtitle">{{ estado_header.periodo }}</p>{% endif %}
+      {% if estado_header.subtitulo %}<p class="cpc-subtitle">{{ estado_header.subtitulo }}</p>{% endif %}
+
+      <table class="cpc-table cpc-align-{{ estado_doc.get_print_table_alignment_css() }}" style="--cpc-table-font-size: {{ estado_doc.get_print_font_size() }}pt; --cpc-table-width: {{ estado_doc.get_print_table_width() }};">
+        <colgroup>
+          <col class="cpc-col-desc">
+          <col class="cpc-col-nota">
+          <col class="cpc-col-monto">
+          <col class="cpc-col-gap">
+          <col class="cpc-col-monto">
+        </colgroup>
+        <thead>
+          <tr>
+            <th></th>
+            <th class="cpc-note">Nota</th>
+            <th class="num cpc-val-actual">{{ labels.actual }}</th>
+            <th class="cpc-gap"></th>
+            <th class="num cpc-val-comparativo">{{ labels.comparativo }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for linea in lineas %}
+          {% if not linea.no_imprimir %}
+          {% set row_class = "" %}
+          {% if linea.es_linea_blanco %}
+          {% set row_class = "cpc-line-blank" %}
+          {% endif %}
+          {% if linea.es_total %}
+          {% set row_class = "cpc-line-total" %}
+          {% elif linea.es_subtotal %}
+          {% set row_class = "cpc-line-subtotal" %}
+          {% endif %}
+          <tr class="{{ row_class }}">
+            <td>
+              <span class="cpc-desc" style="margin-left: {{ ((linea.nivel or 1) - 1) * 16 }}px;{% if linea.negrita %}font-weight: 700;{% endif %}{% if linea.subrayado %}text-decoration: underline;{% endif %}">
+                {% if not linea.es_linea_blanco %}{{ linea.descripcion or "-" }}{% endif %}
+              </span>
+            </td>
+            {% if linea.es_linea_blanco %}
+            <td class="cpc-note"></td>
+            <td class="cpc-val-actual"></td>
+            <td class="cpc-gap"></td>
+            <td class="cpc-val-comparativo"></td>
+            {% elif linea.es_titulo %}
+            <td class="cpc-note">{{ linea.nota or "" }}</td>
+            <td class="num cpc-val-actual"></td>
+            <td class="cpc-gap"></td>
+            <td class="num cpc-val-comparativo"></td>
+            {% elif estado_doc.is_text_line(linea) %}
+            <td class="cpc-note">{{ linea.nota or "" }}</td>
+            <td class="cpc-val-actual">
+              {% if linea.formato_presentacion == "Moneda" and estado_doc.format_line_value(linea, "monto_actual") %}
+              <span class="cpc-money">
+                <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                <span class="cpc-money-value">{{ estado_doc.format_line_value(linea, "monto_actual") }}</span>
+              </span>
+              {% else %}
+              {{ estado_doc.format_line_value(linea, "monto_actual") }}
+              {% endif %}
+            </td>
+            <td class="cpc-gap"></td>
+            <td class="num cpc-val-comparativo"></td>
+            {% else %}
+            <td class="cpc-note">{{ linea.nota or "" }}</td>
+            <td class="num cpc-val-actual">
+              {% if linea.formato_presentacion == "Moneda" and estado_doc.format_line_value(linea, "monto_actual") %}
+              <span class="cpc-money">
+                <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                <span class="cpc-money-value">{{ estado_doc.format_line_value(linea, "monto_actual") }}</span>
+              </span>
+              {% else %}
+              {{ estado_doc.format_line_value(linea, "monto_actual") }}
+              {% endif %}
+            </td>
+            <td class="cpc-gap"></td>
+            <td class="num cpc-val-comparativo">
+              {% if linea.formato_presentacion == "Moneda" and estado_doc.format_line_value(linea, "monto_comparativo") %}
+              <span class="cpc-money">
+                <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                <span class="cpc-money-value">{{ estado_doc.format_line_value(linea, "monto_comparativo") }}</span>
+              </span>
+              {% else %}
+              {{ estado_doc.format_line_value(linea, "monto_comparativo") }}
+              {% endif %}
+            </td>
+            {% endif %}
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if doc.elaborado_por or doc.revisado_por or doc.autorizado_por %}
+      <div class="cpc-signatures-wrapper">
+        {% if doc.elaborado_por %}
+        <div class="cpc-sig-box">
+          <div class="cpc-sig-gap"></div>
+          <div class="cpc-sig-line"></div>
+          <div class="cpc-sig-name">{{ doc.elaborado_por }}</div>
+          {% if doc.cargo_elaborado_por %}<div class="cpc-sig-title">{{ doc.cargo_elaborado_por }}</div>{% endif %}
+        </div>
+        {% endif %}
+        {% if doc.revisado_por %}
+        <div class="cpc-sig-box">
+          <div class="cpc-sig-gap"></div>
+          <div class="cpc-sig-line"></div>
+          <div class="cpc-sig-name">{{ doc.revisado_por }}</div>
+          {% if doc.cargo_revisado_por %}<div class="cpc-sig-title">{{ doc.cargo_revisado_por }}</div>{% endif %}
+        </div>
+        {% endif %}
+        {% if doc.autorizado_por %}
+        <div class="cpc-sig-box">
+          <div class="cpc-sig-gap"></div>
+          <div class="cpc-sig-line"></div>
+          <div class="cpc-sig-name">{{ doc.autorizado_por }}</div>
+          {% if doc.cargo_autorizado_por %}<div class="cpc-sig-title">{{ doc.cargo_autorizado_por }}</div>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No hay estados financieros registrados para este paquete.</p>
+    {% endif %}
+  </div>
+
+  <div class="cpc-section">
+    <h2>Notas a los Estados Financieros</h2>
+    {% if notas %}
+    {% for nota in notas %}
+    {% set nota_doc = frappe.get_doc("Nota EEFF", nota.name) %}
+    {% set cifras = nota_doc.cifras_nota or [] %}
+      {% set nota_font_size = nota_doc.get_print_font_size() %}
+      {% set nota_table_width = nota_doc.get_print_table_width() %}
+      {% set nota_table_align = nota_doc.get_print_table_alignment_css() %}
+    <div class="cpc-section cpc-note-block">
+      <h3{% if nota_doc.sub_nota %} style="font-weight: 400;"{% endif %}>{{ nota_doc.get_print_heading() }}</h3>
+
+      {% set secciones_complejas = frappe.get_all("Seccion Nota EEFF", filters={"nota_eeff": nota_doc.name}, fields=["name", "orden"], order_by="orden asc, creation asc") %}
+      {% if nota_doc.contenido_narrativo %}
+      <div class="cpc-note-narrative">{{ nota_doc.render_contenido_narrativo() | safe }}</div>
+      {% endif %}
+
+      {% set ns_fig = namespace(tiene=0) %}
+      {% for cifra in cifras %}
+      {% if not cifra.no_imprimir %}{% set ns_fig.tiene = 1 %}{% endif %}
+      {% endfor %}
+      {% if ns_fig.tiene %}
+      <table class="cpc-table cpc-align-{{ nota_table_align }}" style="margin-top: {{ '0' if nota_doc.contenido_narrativo else '8px' }}; --cpc-table-width: {{ nota_table_width }}; --cpc-table-font-size: {{ nota_font_size }}pt;">
+        <colgroup>
+          <col style="width:60%;">
+          <col style="width:19.5%;">
+          <col class="cpc-gap">
+          <col style="width:19.5%;">
+        </colgroup>
+        <thead>
+          <tr>
+            <th></th>
+            <th class="num cpc-val-actual">{{ labels.actual }}</th>
+            <th class="cpc-gap"></th>
+            <th class="num cpc-val-comparativo">{{ labels.comparativo }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set ns = namespace(total_actual=0, total_comparativo=0, tiene_total=0) %}
+          {% set total_format = nota_doc.get_figures_total_format(cifras) %}
+          {% for cifra in cifras %}
+          {% if not cifra.no_imprimir %}
+          {% set cifra_es_texto = nota_doc.is_text_figure(cifra) %}
+          {% set row_class = "" %}
+          {% if cifra.es_linea_blanco %}
+          {% set row_class = "cpc-row-blank" %}
+          {% elif cifra.es_total %}
+          {% set row_class = "cpc-row-total" %}
+          {% set ns.tiene_total = 1 %}
+          {% elif cifra.es_subtotal %}
+          {% set row_class = "cpc-row-subtotal" %}
+          {% elif not cifra_es_texto and not cifra.es_titulo %}
+          {% set ns.total_actual = ns.total_actual + (cifra.monto_actual or 0) %}
+          {% set ns.total_comparativo = ns.total_comparativo + (cifra.monto_comparativo or 0) %}
+          {% endif %}
+          <tr class="{{ row_class }}">
+            <td style="padding-left: {{ ((cifra.nivel or 1) - 1) * 18 }}px !important;{% if cifra.negrita or cifra.es_titulo %}font-weight: 700;{% endif %}{% if cifra.subrayado %}text-decoration: underline;{% endif %}">
+              <div class="cpc-note-desc">{% if not cifra.es_linea_blanco %}{{ cifra.concepto or "-" }}{% endif %}</div>
+              {% if cifra.comentario %}<div class="cpc-note-comment">{{ cifra.comentario }}</div>{% endif %}
+            </td>
+            <td class="num cpc-val-actual">
+              {% if not cifra.es_linea_blanco and not cifra.es_titulo %}
+                {% if nota_doc.get_figure_number_format(cifra) == "Moneda" and nota_doc.format_figure_value(cifra, "monto_actual") %}
+                <span class="cpc-money">
+                  <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                  <span class="cpc-money-value">{{ nota_doc.format_figure_value(cifra, "monto_actual") }}</span>
+                </span>
+                {% else %}
+                {{ nota_doc.format_figure_value(cifra, "monto_actual") }}
+                {% endif %}
+              {% endif %}
+            </td>
+            <td class="cpc-gap"></td>
+            <td class="num cpc-val-comparativo">
+              {% if not cifra.es_linea_blanco and not cifra.es_titulo %}
+                {% if nota_doc.get_figure_number_format(cifra) == "Moneda" and nota_doc.format_figure_value(cifra, "monto_comparativo") %}
+                <span class="cpc-money">
+                  <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                  <span class="cpc-money-value">{{ nota_doc.format_figure_value(cifra, "monto_comparativo") }}</span>
+                </span>
+                {% else %}
+                {{ nota_doc.format_figure_value(cifra, "monto_comparativo") }}
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+          {% if not ns.tiene_total %}
+          <tr class="cpc-row-total">
+            <td>Total</td>
+            <td class="num cpc-val-actual">
+              {% if total_format == "Moneda" %}
+              <span class="cpc-money">
+                <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                <span class="cpc-money-value">{{ nota_doc.format_figure_amount(ns.total_actual, total_format) }}</span>
+              </span>
+              {% else %}
+              {{ nota_doc.format_figure_amount(ns.total_actual, total_format) }}
+              {% endif %}
+            </td>
+            <td class="cpc-gap"></td>
+            <td class="num cpc-val-comparativo">
+              {% if total_format == "Moneda" %}
+              <span class="cpc-money">
+                <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                <span class="cpc-money-value">{{ nota_doc.format_figure_amount(ns.total_comparativo, total_format) }}</span>
+              </span>
+              {% else %}
+              {{ nota_doc.format_figure_amount(ns.total_comparativo, total_format) }}
+              {% endif %}
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% if nota_doc.estructura_nota == "Compleja" and secciones_complejas %}
+      <div style="height: 1em;"></div>
+
+        {% for sec_meta in secciones_complejas %}
+        {% set sec = frappe.get_doc("Seccion Nota EEFF", sec_meta.name) %}
+        <div style="margin-top: 10px;">
+          {% if sec.mostrar_titulo %}
+          <div style="font-weight: 700; font-style: italic; text-decoration: underline; margin-bottom: 6px;">{{ sec.titulo_seccion or sec.codigo_seccion or "Seccion" }}</div>
+          {% endif %}
+
+          {% if sec.contenido_narrativo %}
+          <div>{{ sec.render_contenido_narrativo() | safe }}</div>
+          {% endif %}
+
+          {% set tablas = sec.get_render_tables() %}
+          {% for tabla in tablas %}
+          {% if tabla.columnas and tabla.filas %}
+          {% set compact_table = (tabla.columnas | length) > 5 %}
+          <div style="margin-top: 10px;">
+            <table class="cpc-table cpc-align-{{ nota_table_align }}" style="--cpc-table-width: {{ nota_table_width }}; --cpc-table-font-size: {{ 10 if compact_table else nota_font_size }}pt;">
+              <thead>
+                {% if tabla.tiene_grupos %}
+                <tr>
+                  <th rowspan="2">Concepto</th>
+                  {% for grupo in tabla.grupos_columnas %}
+                  <th colspan="{{ (grupo.span * 2) - 1 }}">{{ grupo.label or "" }}</th>
+                  {% if not loop.last %}
+                  <th class="cpc-gap" rowspan="2"></th>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                <tr>
+                  {% for col in tabla.columnas %}
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  {% if not loop.last %}
+                  <th class="cpc-gap"></th>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                {% else %}
+                <tr>
+                  <th>Concepto</th>
+                  {% for col in tabla.columnas %}
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  {% if not loop.last %}
+                  <th class="cpc-gap"></th>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                {% endif %}
+              </thead>
+              <tbody>
+                {% for fila in tabla.filas %}
+                {% set row_class = "" %}
+                {% if fila.es_total %}
+                {% set row_class = "cpc-row-total" %}
+                {% elif fila.es_subtotal %}
+                {% set row_class = "cpc-row-subtotal" %}
+                {% endif %}
+                <tr class="{{ row_class }}">
+                  <td style="padding-left: {{ ((fila.nivel or 1) - 1) * 18 }}px;{% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}font-weight:700;{% endif %}{% if fila.subrayado %}text-decoration: underline;{% endif %}">
+                    <div class="cpc-complex-desc">{{ fila.descripcion or fila.codigo_fila or "-" }}</div>
+                  </td>
+                  {% for celda in fila.celdas %}
+                  <td{% if celda.alineacion == "Right" %} class="num"{% elif celda.alineacion == "Center" %} style="text-align:center;"{% endif %}>{% if celda.es_moneda and celda.texto and celda.texto != "-" %}{{ currency_symbol }} {{ celda.texto }}{% else %}{{ celda.texto or "" }}{% endif %}</td>
+                  {% if not loop.last %}
+                  <td class="cpc-gap"></td>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+          {% endfor %}
+
+          {% if sec.observaciones %}
+          <div class="cpc-note-comment">{{ sec.observaciones }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      {% if nota_doc.observaciones %}
+      <div class="cpc-note-observaciones">
+        <div>{{ nota_doc.render_observaciones() | safe }}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No hay notas registradas para este paquete.</p>
+    {% endif %}
+  </div>
+
+
+</div>

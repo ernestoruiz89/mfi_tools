@@ -1,0 +1,212 @@
+{
+    "actions": [],
+    "creation": "2026-03-12 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "identificacion_section",
+        "codigo_linea",
+        "descripcion",
+        "nota",
+        "identificacion_column",
+        "nivel",
+        "calculo_section",
+        "origen_dato",
+        "es_manual",
+        "calculo_column",
+        "calculo_automatico",
+        "modo_formula",
+        "formula_lineas",
+        "presentacion_section",
+        "no_imprimir",
+        "negrita",
+        "presentacion_column",
+        "subrayado",
+        "formato_presentacion",
+        "valor_texto",
+        "es_linea_blanco",
+        "es_titulo",
+        "es_total",
+        "es_subtotal",
+        "montos_section",
+        "monto_actual",
+        "monto_comparativo",
+        "monto_base_actual",
+        "monto_base_comparativo"
+    ],
+    "fields": [
+        {
+            "fieldname": "identificacion_section",
+            "fieldtype": "Section Break",
+            "label": "Identificacion"
+        },
+        {
+            "fieldname": "codigo_linea",
+            "fieldtype": "Data",
+            "label": "Codigo Linea",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "descripcion",
+            "fieldtype": "Data",
+            "label": "Descripcion",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "nota",
+            "fieldtype": "Data",
+            "label": "Nota",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "identificacion_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "nivel",
+            "fieldtype": "Int",
+            "label": "Nivel",
+            "default": 1
+        },
+        {
+            "fieldname": "calculo_section",
+            "fieldtype": "Section Break",
+            "label": "Origen y Calculo"
+        },
+        {
+            "fieldname": "origen_dato",
+            "fieldtype": "Select",
+            "label": "Origen Dato",
+            "options": "Manual\nBalanza\nFormula",
+            "default": "Manual"
+        },
+        {
+            "fieldname": "es_manual",
+            "fieldtype": "Check",
+            "label": "Es Manual",
+            "default": 0
+        },
+        {
+            "fieldname": "calculo_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "calculo_automatico",
+            "fieldtype": "Check",
+            "label": "Calculo Automatico",
+            "default": 0
+        },
+        {
+            "fieldname": "modo_formula",
+            "fieldtype": "Select",
+            "label": "Modo Formula",
+            "options": "Vertical\nMulticolumna",
+            "default": "Vertical"
+        },
+        {
+            "fieldname": "formula_lineas",
+            "fieldtype": "Small Text",
+            "label": "Formula Lineas",
+            "description": "Vertical: codigos separados por coma/punto y coma/salto de linea (ej: INGRESOS, -COSTOS). Multicolumna: CODIGO (misma columna), BASE.CODIGO (base de la misma columna), o referencias explicitas ACT/COMP/BASE_ACT/BASE_COMP."
+        },
+        {
+            "fieldname": "presentacion_section",
+            "fieldtype": "Section Break",
+            "label": "Presentacion"
+        },
+        {
+            "fieldname": "no_imprimir",
+            "fieldtype": "Check",
+            "label": "No Imprimir",
+            "default": 0
+        },
+        {
+            "fieldname": "negrita",
+            "fieldtype": "Check",
+            "label": "Negrita",
+            "default": 0
+        },
+        {
+            "fieldname": "presentacion_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "subrayado",
+            "fieldtype": "Check",
+            "label": "Subrayado",
+            "default": 0
+        },
+        {
+            "fieldname": "formato_presentacion",
+            "fieldtype": "Select",
+            "label": "Formato Presentacion",
+            "options": "Numero\nMoneda\nPorcentaje\nTexto",
+            "default": "Numero"
+        },
+        {
+            "fieldname": "valor_texto",
+            "fieldtype": "Data",
+            "label": "Valor Texto",
+            "depends_on": "eval:doc.formato_presentacion=='Texto'"
+        },
+        {
+            "fieldname": "es_linea_blanco",
+            "fieldtype": "Check",
+            "label": "Es Linea en Blanco",
+            "default": 0
+        },
+        {
+            "fieldname": "es_titulo",
+            "fieldtype": "Check",
+            "label": "Es Titulo",
+            "default": 0
+        },
+        {
+            "fieldname": "es_total",
+            "fieldtype": "Check",
+            "label": "Es Total",
+            "default": 0
+        },
+        {
+            "fieldname": "es_subtotal",
+            "fieldtype": "Check",
+            "label": "Es Subtotal",
+            "default": 0
+        },
+        {
+            "fieldname": "montos_section",
+            "fieldtype": "Section Break",
+            "label": "Montos"
+        },
+        {
+            "fieldname": "monto_actual",
+            "fieldtype": "Float",
+            "label": "Monto Actual",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "monto_comparativo",
+            "fieldtype": "Float",
+            "label": "Monto Comparativo",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "monto_base_actual",
+            "fieldtype": "Float",
+            "label": "Monto Base Actual"
+        },
+        {
+            "fieldname": "monto_base_comparativo",
+            "fieldtype": "Float",
+            "label": "Monto Base Comparativo"
+        }
+    ],
+    "istable": 1,
+    "module": "MFI Tools",
+    "name": "Linea Estado Financiero EEFF",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC"
+}

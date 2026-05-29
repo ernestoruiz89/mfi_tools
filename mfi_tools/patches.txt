@@ -1,0 +1,9 @@
+[pre_model_sync]
+
+[post_model_sync]
+mfi_tools.mfi_tools.patches.v1_0.migrate_balanza_saldos
+mfi_tools.mfi_tools.patches.v1_0.backfill_balanza_derived_amounts
+mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v1
+mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v2
+mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v3
+mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v4

@@ -1,0 +1,352 @@
+<style>
+  .cef-wrap,
+  .cef-wrap * {
+    font-family: "Arial Narrow", Arial, "Helvetica Neue", sans-serif !important;
+    color: #000000 !important;
+    font-size: 12pt;
+    line-height: 1.25;
+  }
+
+  .cef-wrap {
+    padding: 0 24px;
+    box-sizing: border-box;
+  }
+
+  .cef-head {
+    border-bottom: 2px solid #000000;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .cef-head h1 {
+    margin: 0;
+    font-size: 12pt;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .cef-head p {
+    margin: 4px 0 0;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cef-head .cef-subtitle {
+    font-weight: 400;
+  }
+
+  .cef-table {
+    width: var(--cef-table-width, 100%);
+    border-collapse: collapse;
+    margin-top: 8px;
+    table-layout: fixed;
+  }
+
+  .cef-table.cef-align-left {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  .cef-table.cef-align-center {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cef-table.cef-align-right {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .cef-table,
+  .cef-table * {
+    font-size: var(--cef-table-font-size, 12pt) !important;
+    line-height: 1.1;
+  }
+
+  .cef-table th,
+  .cef-table td {
+    border: none;
+    padding: 1px 0 !important;
+    vertical-align: middle;
+  }
+
+  .cef-table th {
+    background: transparent;
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .cef-col-desc {
+    width: 46%;
+  }
+
+  .cef-col-nota {
+    width: 8%;
+    text-align: center;
+  }
+
+  .cef-col-monto {
+    width: 21%;
+    text-align: right;
+  }
+
+  .cef-col-gap {
+    width: 2px;
+  }
+
+  .cef-table th.num,
+  .cef-table td.num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .cef-table th.cef-note,
+  .cef-table td.cef-note {
+    text-align: center;
+    white-space: nowrap;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .cef-table th.cef-val-actual,
+  .cef-table td.cef-val-actual {
+    padding-left: 18px !important;
+    padding-right: 12px !important;
+  }
+
+  .cef-table th.cef-val-comparativo,
+  .cef-table td.cef-val-comparativo {
+    padding-left: 22px !important;
+  }
+
+  .cef-table th.cef-gap,
+  .cef-table td.cef-gap {
+    padding: 0 !important;
+    width: 2px;
+  }
+
+  .cef-money {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .cef-money-symbol {
+    text-align: left;
+    padding-right: 6px;
+    white-space: nowrap;
+  }
+
+  .cef-money-value {
+    text-align: right;
+    white-space: nowrap;
+    flex: 1 1 auto;
+  }
+
+  .cef-line-total td,
+  .cef-line-subtotal td {
+    font-weight: 700;
+  }
+
+  .cef-line-subtotal td.num {
+    border-top: 1px solid #000000;
+    border-bottom: 1px solid #000000;
+  }
+
+  .cef-line-total td.num {
+    border-top: 1px solid #000000;
+    border-bottom: 3px double #000000;
+  }
+
+  .cef-desc {
+    display: block;
+  }
+
+  .cef-line-blank td {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .cef-line-blank .cef-desc {
+    height: 1em;
+  }
+
+
+  .cef-signatures-wrapper {
+    margin-top: 30px;
+    text-align: center;
+    width: 100%;
+    page-break-inside: avoid;
+  }
+
+  .cef-sig-box {
+    display: inline-block;
+    vertical-align: top;
+    width: 30%;
+    min-width: 180px;
+    margin: 0 10px;
+    text-align: center;
+  }
+
+  .cef-sig-gap {
+    height: 60px;
+  }
+
+  .cef-sig-line {
+    border-top: 1px solid #000000;
+    padding-top: 4px;
+    font-weight: 700;
+    font-size: 10pt;
+  }
+
+  .cef-sig-name {
+    font-size: 11pt;
+    font-weight: 400;
+    margin-top: 4px;
+  }
+
+  .cef-sig-title {
+    font-size: 11pt;
+    margin-top: 2px;
+  }
+</style>
+
+{% set package = frappe.get_doc("Paquete EEFF", doc.paquete_eeff) %}
+{% set labels = package.get_column_labels() %}
+{% set currency_ctx = package.get_currency_context() %}
+{% set currency_symbol = currency_ctx.symbol or "$" %}
+{% set lineas = (doc.lineas or []) %}
+{% set header = doc.get_print_header() %}
+
+<div class="cef-wrap" style="--cef-table-font-size: {{ doc.get_print_font_size() }}pt; --cef-table-width: {{ doc.get_print_table_width() }};">
+  <div class="cef-head">
+    <h1>{{ header.cliente or "-" }}</h1>
+    <p>{{ header.titulo or "-" }}</p>
+    {% if header.periodo %}<p>{{ header.periodo }}</p>{% endif %}
+    {% if header.subtitulo %}<p class="cef-subtitle">{{ header.subtitulo }}</p>{% endif %}
+    {% if doc.observaciones %}<p>{{ doc.observaciones }}</p>{% endif %}
+  </div>
+
+  <table class="cef-table cef-align-{{ doc.get_print_table_alignment_css() }}">
+    <colgroup>
+      <col class="cef-col-desc">
+      <col class="cef-col-nota">
+      <col class="cef-col-monto">
+      <col class="cef-col-gap">
+      <col class="cef-col-monto">
+    </colgroup>
+    <thead>
+      <tr>
+        <th></th>
+        <th class="cef-note">Nota</th>
+        <th class="num cef-val-actual">{{ labels.actual }}</th>
+        <th class="cef-gap"></th>
+        <th class="num cef-val-comparativo">{{ labels.comparativo }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for linea in lineas %}
+      {% if not linea.no_imprimir %}
+      {% set row_class = "" %}
+      {% if linea.es_linea_blanco %}
+      {% set row_class = "cef-line-blank" %}
+      {% endif %}
+      {% if linea.es_total %}
+      {% set row_class = "cef-line-total" %}
+      {% elif linea.es_subtotal %}
+      {% set row_class = "cef-line-subtotal" %}
+      {% endif %}
+      <tr class="{{ row_class }}">
+        <td>
+          <span class="cef-desc" style="margin-left: {{ ((linea.nivel or 1) - 1) * 16 }}px;{% if linea.negrita %}font-weight: 700;{% endif %}{% if linea.subrayado %}text-decoration: underline;{% endif %}">
+            {% if not linea.es_linea_blanco %}{{ linea.descripcion or "-" }}{% endif %}
+          </span>
+        </td>
+        {% if linea.es_linea_blanco %}
+        <td class="cef-note"></td>
+        <td class="cef-val-actual"></td>
+        <td class="cef-gap"></td>
+        <td class="cef-val-comparativo"></td>
+        {% elif linea.es_titulo %}
+        <td class="cef-note">{{ linea.nota or "" }}</td>
+        <td class="num cef-val-actual"></td>
+        <td class="cef-gap"></td>
+        <td class="num cef-val-comparativo"></td>
+        {% elif doc.is_text_line(linea) %}
+        <td class="cef-note">{{ linea.nota or "" }}</td>
+        <td class="cef-val-actual">
+          {% if linea.formato_presentacion == "Moneda" and doc.format_line_value(linea, "monto_actual") %}
+          <span class="cef-money">
+            <span class="cef-money-symbol">{{ currency_symbol }}</span>
+            <span class="cef-money-value">{{ doc.format_line_value(linea, "monto_actual") }}</span>
+          </span>
+          {% else %}
+          {{ doc.format_line_value(linea, "monto_actual") }}
+          {% endif %}
+        </td>
+        <td class="cef-gap"></td>
+        <td class="num cef-val-comparativo"></td>
+        {% else %}
+        <td class="cef-note">{{ linea.nota or "" }}</td>
+        <td class="num cef-val-actual">
+          {% if linea.formato_presentacion == "Moneda" and doc.format_line_value(linea, "monto_actual") %}
+          <span class="cef-money">
+            <span class="cef-money-symbol">{{ currency_symbol }}</span>
+            <span class="cef-money-value">{{ doc.format_line_value(linea, "monto_actual") }}</span>
+          </span>
+          {% else %}
+          {{ doc.format_line_value(linea, "monto_actual") }}
+          {% endif %}
+        </td>
+        <td class="cef-gap"></td>
+        <td class="num cef-val-comparativo">
+          {% if linea.formato_presentacion == "Moneda" and doc.format_line_value(linea, "monto_comparativo") %}
+          <span class="cef-money">
+            <span class="cef-money-symbol">{{ currency_symbol }}</span>
+            <span class="cef-money-value">{{ doc.format_line_value(linea, "monto_comparativo") }}</span>
+          </span>
+          {% else %}
+          {{ doc.format_line_value(linea, "monto_comparativo") }}
+          {% endif %}
+        </td>
+        {% endif %}
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if package.elaborado_por or package.revisado_por or package.autorizado_por %}
+  <div class="cef-signatures-wrapper">
+    {% if package.elaborado_por %}
+    <div class="cef-sig-box">
+      <div class="cef-sig-gap"></div>
+      <div class="cef-sig-line"></div>
+      <div class="cef-sig-name">{{ package.elaborado_por }}</div>
+      {% if package.cargo_elaborado_por %}<div class="cef-sig-title">{{ package.cargo_elaborado_por }}</div>{% endif %}
+    </div>
+    {% endif %}
+    {% if package.revisado_por %}
+    <div class="cef-sig-box">
+      <div class="cef-sig-gap"></div>
+      <div class="cef-sig-line"></div>
+      <div class="cef-sig-name">{{ package.revisado_por }}</div>
+      {% if package.cargo_revisado_por %}<div class="cef-sig-title">{{ package.cargo_revisado_por }}</div>{% endif %}
+    </div>
+    {% endif %}
+    {% if package.autorizado_por %}
+    <div class="cef-sig-box">
+      <div class="cef-sig-gap"></div>
+      <div class="cef-sig-line"></div>
+      <div class="cef-sig-name">{{ package.autorizado_por }}</div>
+      {% if package.cargo_autorizado_por %}<div class="cef-sig-title">{{ package.cargo_autorizado_por }}</div>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>

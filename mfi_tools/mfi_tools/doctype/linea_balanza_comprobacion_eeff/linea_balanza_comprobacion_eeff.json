@@ -1,0 +1,43 @@
+{
+    "actions": [],
+    "creation": "2026-03-12 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "codigo_cuenta",
+        "descripcion_cuenta",
+        "centro_costo",
+        "moneda",
+        "debe_saldo_anterior",
+        "haber_saldo_anterior",
+        "saldo_anterior",
+        "debe_mes",
+        "haber_mes",
+        "movimiento_del_mes",
+        "debe_saldo",
+        "haber_saldo",
+        "saldo"
+    ],
+    "fields": [
+        {"fieldname": "codigo_cuenta", "fieldtype": "Data", "label": "Codigo Cuenta", "in_list_view": 1},
+        {"fieldname": "descripcion_cuenta", "fieldtype": "Data", "label": "Descripcion Cuenta", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "centro_costo", "fieldtype": "Data", "label": "Centro Costo", "in_list_view": 1},
+        {"fieldname": "moneda", "fieldtype": "Link", "label": "Moneda", "options": "Currency", "hidden": 1, "read_only": 1, "no_copy": 1},
+        {"fieldname": "debe_saldo_anterior", "fieldtype": "Currency", "label": "Debe Saldo Anterior", "options": "moneda", "default": 0},
+        {"fieldname": "haber_saldo_anterior", "fieldtype": "Currency", "label": "Haber Saldo Anterior", "options": "moneda", "default": 0},
+        {"fieldname": "saldo_anterior", "fieldtype": "Currency", "label": "Saldo Anterior", "options": "moneda", "read_only": 1},
+        {"fieldname": "debe_mes", "fieldtype": "Currency", "label": "Debe Mes", "options": "moneda", "default": 0, "in_list_view": 1},
+        {"fieldname": "haber_mes", "fieldtype": "Currency", "label": "Haber Mes", "options": "moneda", "default": 0, "in_list_view": 1},
+        {"fieldname": "movimiento_del_mes", "fieldtype": "Currency", "label": "Movimiento del Mes", "options": "moneda", "read_only": 1},
+        {"fieldname": "debe_saldo", "fieldtype": "Currency", "label": "Debe Saldo", "options": "moneda", "default": 0, "in_list_view": 1},
+        {"fieldname": "haber_saldo", "fieldtype": "Currency", "label": "Haber Saldo", "options": "moneda", "default": 0, "in_list_view": 1},
+        {"fieldname": "saldo", "fieldtype": "Currency", "label": "Saldo", "options": "moneda", "read_only": 1, "in_list_view": 1}
+    ],
+    "istable": 1,
+    "module": "MFI Tools",
+    "name": "Linea Balanza Comprobacion EEFF",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC"
+}

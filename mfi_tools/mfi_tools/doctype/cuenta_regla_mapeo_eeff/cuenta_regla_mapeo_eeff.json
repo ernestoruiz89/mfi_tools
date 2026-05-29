@@ -1,0 +1,29 @@
+{
+    "actions": [],
+    "creation": "2026-03-12 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "cuenta",
+        "campo_balanza",
+        "operacion",
+        "porcentaje",
+        "centro_costo",
+        "comentario"
+    ],
+    "fields": [
+        {"fieldname": "cuenta", "fieldtype": "Data", "label": "Cuenta", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "campo_balanza", "fieldtype": "Select", "label": "Campo Balanza", "options": "codigo_cuenta\ndescripcion_cuenta", "default": "codigo_cuenta", "in_list_view": 1},
+        {"fieldname": "operacion", "fieldtype": "Select", "label": "Operacion", "options": "+\n-", "default": "+", "in_list_view": 1},
+        {"fieldname": "porcentaje", "fieldtype": "Percent", "label": "Porcentaje", "default": 100, "in_list_view": 1},
+        {"fieldname": "centro_costo", "fieldtype": "Data", "label": "Centro Costo"},
+        {"fieldname": "comentario", "fieldtype": "Small Text", "label": "Comentario"}
+    ],
+    "istable": 1,
+    "module": "MFI Tools",
+    "name": "Cuenta Regla Mapeo EEFF",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC"
+}

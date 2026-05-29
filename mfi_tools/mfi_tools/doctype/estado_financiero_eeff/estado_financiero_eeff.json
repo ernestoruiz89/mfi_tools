@@ -1,0 +1,193 @@
+{
+    "actions": [],
+    "creation": "2026-03-12 00:00:00.000000",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "identificacion_section",
+        "nombre_del_estado",
+        "paquete_eeff",
+        "identificacion_column",
+        "tipo_estado",
+        "codigo_estado",
+        "definicion_section",
+        "titulo",
+        "orden_presentacion",
+        "definicion_column",
+        "subtitulo",
+        "impresion_section",
+        "tamano_letra_impresion",
+        "impresion_column",
+        "ancho_tabla_impresion",
+        "alineacion_tabla_impresion",
+        "estado_aprobacion",
+        "total_lineas",
+        "lineas_tab",
+        "lineas_section",
+        "lineas",
+        "notas_tab",
+        "notas_section",
+        "observaciones"
+    ],
+    "fields": [
+        {
+            "fieldname": "identificacion_section",
+            "fieldtype": "Section Break",
+            "label": "Identificacion"
+        },
+        {
+            "fieldname": "nombre_del_estado",
+            "fieldtype": "Data",
+            "label": "Nombre del Estado",
+            "read_only": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "paquete_eeff",
+            "fieldtype": "Link",
+            "label": "Paquete EEFF",
+            "options": "Paquete EEFF",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "identificacion_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "tipo_estado",
+            "fieldtype": "Select",
+            "label": "Tipo Estado",
+            "options": "Estado de Situacion Financiera\nEstado de Resultados\nEstado de Cambios en el Patrimonio\nEstado de Flujos de Efectivo\nOtro",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "codigo_estado",
+            "fieldtype": "Data",
+            "label": "Codigo Estado",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "definicion_section",
+            "fieldtype": "Section Break",
+            "label": "Definicion y Control"
+        },
+        {
+            "fieldname": "titulo",
+            "fieldtype": "Data",
+            "label": "Titulo"
+        },
+        {
+            "fieldname": "orden_presentacion",
+            "fieldtype": "Int",
+            "label": "Orden Presentacion",
+            "default": 0
+        },
+        {
+            "fieldname": "definicion_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "subtitulo",
+            "fieldtype": "Data",
+            "label": "Subtitulo"
+        },
+        {
+            "fieldname": "impresion_section",
+            "fieldtype": "Section Break",
+            "label": "Impresion"
+        },
+        {
+            "fieldname": "tamano_letra_impresion",
+            "fieldtype": "Float",
+            "label": "Tamano Letra Tabla",
+            "default": 12,
+            "description": "Tamano de letra de la tabla en impresion."
+        },
+        {
+            "fieldname": "impresion_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "ancho_tabla_impresion",
+            "fieldtype": "Data",
+            "label": "Ancho Tabla Impresion",
+            "default": "100%",
+            "description": "Acepta porcentajes o anchos CSS para impresion HTML/PDF, por ejemplo 100%, 92% o 18cm. En Word este campo no aplica; Word usa anchos fijos en cm."
+        },
+        {
+            "fieldname": "alineacion_tabla_impresion",
+            "fieldtype": "Select",
+            "label": "Alineacion Tabla Impresion",
+            "options": "Izquierda\nCentro\nDerecha",
+            "default": "Centro"
+        },
+        {
+            "fieldname": "estado_aprobacion",
+            "fieldtype": "Select",
+            "label": "Estado Aprobacion",
+            "options": "Borrador\nRevision\nAprobado",
+            "default": "Borrador",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "total_lineas",
+            "fieldtype": "Int",
+            "label": "Total Lineas",
+            "read_only": 1
+        },
+        {
+            "fieldname": "lineas_tab",
+            "fieldtype": "Tab Break",
+            "label": "Lineas"
+        },
+        {
+            "fieldname": "lineas_section",
+            "fieldtype": "Section Break",
+            "label": "Estructura del Estado"
+        },
+        {
+            "fieldname": "lineas",
+            "fieldtype": "Table",
+            "label": "Lineas",
+            "options": "Linea Estado Financiero EEFF",
+            "allow_bulk_edit": 1
+        },
+        {
+            "fieldname": "notas_tab",
+            "fieldtype": "Tab Break",
+            "label": "Notas"
+        },
+        {
+            "fieldname": "notas_section",
+            "fieldtype": "Section Break",
+            "label": "Notas"
+        },
+        {
+            "fieldname": "observaciones",
+            "fieldtype": "Small Text",
+            "label": "Observaciones"
+        }
+    ],
+    "module": "MFI Tools",
+    "name": "Estado Financiero EEFF",
+    "naming_rule": "By fieldname",
+    "autoname": "field:nombre_del_estado",
+    "permissions": [
+        {
+            "role": "System Manager",
+            "create": 1,
+            "read": 1,
+            "write": 1,
+            "delete": 1,
+            "report": 1,
+            "export": 1,
+            "print": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "track_changes": 1
+}

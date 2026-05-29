@@ -1,0 +1,12 @@
+{
+    "creation": "2026-03-12 00:00:00.000000",
+    "doc_type": "Nota EEFF",
+    "doctype": "Print Format",
+    "html": "{% include \"mfi_tools/templates/print_formats/nota_eeff_individual.html\" %}",
+    "idx": 0,
+    "module": "MFI Tools",
+    "name": "Nota EEFF - Individual",
+    "owner": "Administrator",
+    "print_format_type": "Jinja",
+    "standard": "Yes"
+}

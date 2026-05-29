@@ -1,0 +1,41 @@
+{
+    "actions": [],
+    "creation": "2026-03-12 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "codigo_dato",
+        "descripcion",
+        "categoria",
+        "unidad_medida",
+        "orden",
+        "es_manual",
+        "calculo_automatico",
+        "formula_datos",
+        "no_imprimir",
+        "valor_actual",
+        "origen_dato",
+        "comentario"
+    ],
+    "fields": [
+        {"fieldname": "codigo_dato", "fieldtype": "Data", "label": "Codigo Dato", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "descripcion", "fieldtype": "Data", "label": "Descripcion", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "categoria", "fieldtype": "Data", "label": "Categoria", "in_list_view": 1},
+        {"fieldname": "unidad_medida", "fieldtype": "Data", "label": "Unidad Medida"},
+        {"fieldname": "orden", "fieldtype": "Int", "label": "Orden", "default": 0},
+        {"fieldname": "es_manual", "fieldtype": "Check", "label": "Es Manual", "default": 1},
+        {"fieldname": "calculo_automatico", "fieldtype": "Check", "label": "Calculo Automatico", "default": 0},
+        {"fieldname": "formula_datos", "fieldtype": "Small Text", "label": "Formula Datos"},
+        {"fieldname": "no_imprimir", "fieldtype": "Check", "label": "No Imprimir", "default": 0},
+        {"fieldname": "valor_actual", "fieldtype": "Float", "label": "Valor Actual", "in_list_view": 1},
+        {"fieldname": "origen_dato", "fieldtype": "Select", "label": "Origen Dato", "options": "Manual\nBalanza\nDato Estadistico\nFormula", "default": "Manual"},
+        {"fieldname": "comentario", "fieldtype": "Small Text", "label": "Comentario"}
+    ],
+    "istable": 1,
+    "module": "MFI Tools",
+    "name": "Dato Estadistico EEFF",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC"
+}

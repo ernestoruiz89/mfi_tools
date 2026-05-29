@@ -1,0 +1,20 @@
+{
+    "align_labels_right": 0,
+    "creation": "2026-03-12 00:00:00.000000",
+    "custom_format": 1,
+    "default_print_language": "es",
+    "disabled": 0,
+    "doc_type": "Estado Financiero EEFF",
+    "doctype": "Print Format",
+    "format": "Custom",
+    "html": "{% include \"mfi_tools/templates/print_formats/estado_financiero_eeff_base.html\" %}",
+    "module": "MFI Tools",
+    "name": "Estado Financiero EEFF - Base",
+    "owner": "Administrator",
+    "print_format_builder": 0,
+    "print_format_for": "DocType",
+    "print_format_type": "Jinja",
+    "raw_printing": 0,
+    "show_section_headings": 0,
+    "standard": "Yes"
+}

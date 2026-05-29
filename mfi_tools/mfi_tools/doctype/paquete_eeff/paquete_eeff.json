@@ -1,0 +1,269 @@
+{
+    "actions": [],
+    "creation": "2026-03-12 00:00:00.000000",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "identificacion_section",
+        "nombre_paquete",
+        "cliente",
+        "moneda",
+        "periodo_column",
+        "anio",
+        "mes",
+        "periodo_nombre",
+        "fuentes_section",
+        "balanza_comprobacion_eeff",
+        "balanza_comparativa_eeff",
+        "balanza_base_actual_eeff",
+        "balanza_base_comparativa_eeff",
+        "fuentes_column",
+        "datos_estadisticos_actual_eeff",
+        "datos_estadisticos_comparativo_eeff",
+        "control_section",
+        "estado_preparacion",
+        "fecha_emision",
+        "control_column",
+        "total_estados",
+        "total_notas",
+        "total_datos_estadisticos",
+        "datos_consolidados_section",
+        "datos_estadisticos",
+        "firmas_section",
+        "elaborado_por",
+        "cargo_elaborado_por",
+        "firmas_column_1",
+        "revisado_por",
+        "cargo_revisado_por",
+        "firmas_column_2",
+        "autorizado_por",
+        "cargo_autorizado_por",
+        "notas_section",
+        "observaciones"
+    ],
+    "fields": [
+        {
+            "fieldname": "identificacion_section",
+            "fieldtype": "Section Break",
+            "label": "Identificacion y Periodo"
+        },
+        {
+            "fieldname": "nombre_paquete",
+            "fieldtype": "Data",
+            "label": "Nombre Paquete",
+            "read_only": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "cliente",
+            "fieldtype": "Link",
+            "label": "Cliente",
+            "options": "Customer",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "moneda",
+            "fieldtype": "Link",
+            "label": "Moneda",
+            "options": "Currency"
+        },
+        {
+            "fieldname": "periodo_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "anio",
+            "fieldtype": "Int",
+            "label": "Anio",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "mes",
+            "fieldtype": "Select",
+            "label": "Mes",
+            "reqd": 1,
+            "options": "Enero\nFebrero\nMarzo\nAbril\nMayo\nJunio\nJulio\nAgosto\nSeptiembre\nOctubre\nNoviembre\nDiciembre",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "periodo_nombre",
+            "fieldtype": "Data",
+            "label": "Periodo Nombre",
+            "read_only": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "fuentes_section",
+            "fieldtype": "Section Break",
+            "label": "Fuentes"
+        },
+        {
+            "fieldname": "balanza_comprobacion_eeff",
+            "fieldtype": "Link",
+            "label": "Balanza Comprobacion",
+            "options": "Balanza Comprobacion EEFF",
+            "reqd": 1
+        },
+        {
+            "fieldname": "balanza_comparativa_eeff",
+            "fieldtype": "Link",
+            "label": "Balanza Comparativa",
+            "options": "Balanza Comprobacion EEFF"
+        },
+        {
+            "fieldname": "balanza_base_actual_eeff",
+            "fieldtype": "Link",
+            "label": "Balanza Base Actual",
+            "options": "Balanza Comprobacion EEFF"
+        },
+        {
+            "fieldname": "balanza_base_comparativa_eeff",
+            "fieldtype": "Link",
+            "label": "Balanza Base Comparativa",
+            "options": "Balanza Comprobacion EEFF"
+        },
+        {
+            "fieldname": "fuentes_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "datos_estadisticos_actual_eeff",
+            "fieldtype": "Link",
+            "label": "Datos Estadisticos Mes",
+            "options": "Datos Estadisticos EEFF"
+        },
+        {
+            "fieldname": "datos_estadisticos_comparativo_eeff",
+            "fieldtype": "Link",
+            "label": "Datos Estadisticos Comparativo",
+            "options": "Datos Estadisticos EEFF"
+        },
+        {
+            "fieldname": "control_section",
+            "fieldtype": "Section Break",
+            "label": "Control"
+        },
+        {
+            "fieldname": "estado_preparacion",
+            "fieldtype": "Select",
+            "label": "Estado Preparacion",
+            "options": "Borrador\nEn Preparacion\nListo para Emitir\nEmitido",
+            "default": "Borrador",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "fecha_emision",
+            "fieldtype": "Date",
+            "label": "Fecha Emision"
+        },
+        {
+            "fieldname": "control_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "total_estados",
+            "fieldtype": "Int",
+            "label": "Total Estados",
+            "read_only": 1
+        },
+        {
+            "fieldname": "total_notas",
+            "fieldtype": "Int",
+            "label": "Total Notas",
+            "read_only": 1
+        },
+        {
+            "fieldname": "total_datos_estadisticos",
+            "fieldtype": "Int",
+            "label": "Total Datos Estadisticos",
+            "read_only": 1
+        },
+        {
+            "fieldname": "datos_consolidados_section",
+            "fieldtype": "Section Break",
+            "label": "Datos Estadisticos Consolidados",
+            "collapsible": 1
+        },
+        {
+            "fieldname": "datos_estadisticos",
+            "fieldtype": "Table",
+            "label": "Datos Estadisticos Consolidados",
+            "options": "Dato Estadistico EEFF",
+            "read_only": 1
+        },
+        {
+            "fieldname": "firmas_section",
+            "fieldtype": "Section Break",
+            "label": "Firmas"
+        },
+        {
+            "fieldname": "elaborado_por",
+            "fieldtype": "Data",
+            "label": "Elaborado Por"
+        },
+        {
+            "fieldname": "cargo_elaborado_por",
+            "fieldtype": "Data",
+            "label": "Cargo Elaborado Por"
+        },
+        {
+            "fieldname": "firmas_column_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "revisado_por",
+            "fieldtype": "Data",
+            "label": "Revisado Por"
+        },
+        {
+            "fieldname": "cargo_revisado_por",
+            "fieldtype": "Data",
+            "label": "Cargo Revisado Por"
+        },
+        {
+            "fieldname": "firmas_column_2",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "autorizado_por",
+            "fieldtype": "Data",
+            "label": "Autorizado Por"
+        },
+        {
+            "fieldname": "cargo_autorizado_por",
+            "fieldtype": "Data",
+            "label": "Cargo Autorizado Por"
+        },
+        {
+            "fieldname": "notas_section",
+            "fieldtype": "Section Break",
+            "label": "Notas"
+        },
+        {
+            "fieldname": "observaciones",
+            "fieldtype": "Small Text",
+            "label": "Observaciones"
+        }
+    ],
+    "module": "MFI Tools",
+    "name": "Paquete EEFF",
+    "naming_rule": "By fieldname",
+    "autoname": "field:nombre_paquete",
+    "permissions": [
+        {
+            "role": "System Manager",
+            "create": 1,
+            "read": 1,
+            "write": 1,
+            "delete": 1,
+            "report": 1,
+            "export": 1,
+            "print": 1
+        }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "track_changes": 1
+}

@@ -1,0 +1,35 @@
+{
+    "actions": [],
+    "creation": "2026-03-13 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "codigo_tabla",
+        "codigo_fila",
+        "descripcion",
+        "nivel",
+        "tipo_fila",
+        "calculo_automatico",
+        "formula_filas",
+        "negrita",
+        "subrayado"
+    ],
+    "fields": [
+        {"fieldname": "codigo_tabla", "fieldtype": "Data", "label": "Codigo Tabla", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "codigo_fila", "fieldtype": "Data", "label": "Codigo Fila", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "descripcion", "fieldtype": "Data", "label": "Descripcion", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "nivel", "fieldtype": "Int", "label": "Nivel", "default": 1},
+        {"fieldname": "tipo_fila", "fieldtype": "Select", "label": "Tipo Fila", "options": "Detalle\nSubtotal\nTotal\nTitulo", "default": "Detalle", "in_list_view": 1},
+        {"fieldname": "calculo_automatico", "fieldtype": "Check", "label": "Calculo Automatico", "default": 0},
+        {"fieldname": "formula_filas", "fieldtype": "Small Text", "label": "Formula Filas"},
+        {"fieldname": "negrita", "fieldtype": "Check", "label": "Negrita", "default": 0},
+        {"fieldname": "subrayado", "fieldtype": "Check", "label": "Subrayado", "default": 0}
+    ],
+    "istable": 1,
+    "module": "MFI Tools",
+    "name": "Fila Seccion Nota EEFF",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC"
+}

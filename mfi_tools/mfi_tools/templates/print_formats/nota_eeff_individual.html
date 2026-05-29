@@ -1,0 +1,475 @@
+<style>
+  .cni-wrap,
+  .cni-wrap * {
+    font-family: "Arial Narrow", Arial, "Helvetica Neue", sans-serif !important;
+    color: #000000 !important;
+    font-size: 12pt;
+    line-height: 1.25;
+  }
+
+  .cni-wrap {
+    padding: 0 24px;
+    box-sizing: border-box;
+  }
+
+  .cni-head {
+    margin-bottom: 18px;
+    border-bottom: 2px solid #000000;
+    padding-bottom: 10px;
+    line-height: 1;
+  }
+
+  .cni-head h1,
+  .cni-head h1 * {
+    margin: 0;
+    font-size: 14pt !important;
+    line-height: 1;
+  }
+
+  .cni-head p {
+    margin: 4px 0 0;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cni-section {
+    margin: 0 0 10px;
+  }
+
+  .cni-section,
+  .cni-section *,
+  .cni-table,
+  .cni-table * {
+    line-height: 1.25 !important;
+  }
+
+  .cni-section h2 {
+    margin: 0 0 4px;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cni-section h3 {
+    margin: 0 0 4px;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cni-section h4 {
+    margin: 0 0 4px;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cni-note-narrative {
+    margin-bottom: 1em;
+  }
+
+  .cni-note-block + .cni-note-block {
+    margin-top: 12pt;
+  }
+
+  .cni-section p,
+  .cni-section ul,
+  .cni-section ol,
+  .cni-section div.ql-editor p {
+    margin-top: 0;
+    margin-bottom: 2px;
+  }
+
+  .cni-table {
+    width: var(--cni-table-width, 100%);
+    border-collapse: collapse;
+    margin-top: 4px;
+    table-layout: fixed;
+  }
+
+  .cni-table,
+  .cni-table * {
+    font-size: var(--cni-table-font-size, 12pt) !important;
+    line-height: 1.1 !important;
+  }
+
+  .cni-table.cni-align-left {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  .cni-table.cni-align-center {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cni-table.cni-align-right {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .cni-table th,
+  .cni-table td {
+    border: none;
+    padding: 1px 0 !important;
+    vertical-align: middle;
+  }
+
+  .cni-table th {
+    background: transparent;
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .cni-col-desc {
+    width: 60%;
+  }
+
+  .cni-col-monto {
+    width: 19.5%;
+    text-align: right;
+  }
+
+  .cni-table td.num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .cni-table th.num {
+    text-align: right;
+  }
+
+  .cni-table th.cni-val-actual,
+  .cni-table td.cni-val-actual {
+    padding-left: 18px !important;
+    padding-right: 12px !important;
+  }
+
+  .cni-table th.cni-val-comparativo,
+  .cni-table td.cni-val-comparativo {
+    padding-left: 22px !important;
+  }
+
+  .cni-table th.cni-gap,
+  .cni-table td.cni-gap {
+    padding: 0 !important;
+    width: 2px;
+  }
+
+  .cni-money {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .cni-money-symbol {
+    text-align: left;
+    padding-right: 6px;
+    white-space: nowrap;
+  }
+
+  .cni-money-value {
+    text-align: right;
+    white-space: nowrap;
+    flex: 1 1 auto;
+  }
+
+  .cni-row-subtotal td,
+  .cni-row-total td {
+    font-weight: 700;
+  }
+
+  .cni-row-blank td {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .cni-row-subtotal td.num {
+    border-top: 1px solid #000000;
+    border-bottom: 1px solid #000000;
+  }
+
+  .cni-row-total td.num {
+    border-top: 1px solid #000000;
+    border-bottom: 3px double #000000;
+  }
+
+  .cni-note-comment {
+    margin-top: 1px;
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  .cni-note-observaciones {
+    margin-top: 12pt;
+  }
+
+  .cni-note-desc,
+  .cni-complex-desc {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  .cni-subnotes {
+    margin-top: 12pt;
+    padding-top: 6pt;
+    border-top: 1px solid #000000;
+  }
+</style>
+
+{% macro render_note_body(note_doc, labels, currency_symbol) %}
+  {% set cifras = note_doc.cifras_nota or [] %}
+  {% set secciones_complejas = frappe.get_all("Seccion Nota EEFF", filters={"nota_eeff": note_doc.name}, fields=["name", "orden"], order_by="orden asc, creation asc") %}
+  {% set note_font_size = note_doc.get_print_font_size() %}
+  {% set note_table_width = note_doc.get_print_table_width() %}
+  {% set note_table_align = note_doc.get_print_table_alignment_css() %}
+
+  {% if note_doc.contenido_narrativo %}
+  <div class="cni-section cni-note-narrative">
+    <div>{{ note_doc.render_contenido_narrativo() | safe }}</div>
+  </div>
+  {% endif %}
+
+  {% set ns_fig = namespace(tiene=0) %}
+  {% for cifra in cifras %}
+  {% if not cifra.no_imprimir %}{% set ns_fig.tiene = 1 %}{% endif %}
+  {% endfor %}
+  {% if ns_fig.tiene %}
+  <div class="cni-section">
+    <table class="cni-table cni-align-{{ note_table_align }}" style="margin-top: {{ '0' if note_doc.contenido_narrativo else '4px' }}; --cni-table-width: {{ note_table_width }}; --cni-table-font-size: {{ note_font_size }}pt;">
+      <colgroup>
+        <col class="cni-col-desc">
+        <col class="cni-col-monto">
+        <col class="cni-gap">
+        <col class="cni-col-monto">
+      </colgroup>
+      <thead>
+        <tr>
+          <th></th>
+          <th class="num cni-val-actual">{{ labels.actual }}</th>
+          <th class="cni-gap"></th>
+          <th class="num cni-val-comparativo">{{ labels.comparativo }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set ns = namespace(total_actual=0, total_comparativo=0, tiene_total=0) %}
+        {% set total_format = note_doc.get_figures_total_format(cifras) %}
+        {% for cifra in cifras %}
+        {% if not cifra.no_imprimir %}
+        {% set cifra_es_texto = note_doc.is_text_figure(cifra) %}
+        {% set row_class = "" %}
+        {% if cifra.es_linea_blanco %}
+        {% set row_class = "cni-row-blank" %}
+        {% elif cifra.es_total %}
+        {% set row_class = "cni-row-total" %}
+        {% set ns.tiene_total = 1 %}
+        {% elif cifra.es_subtotal %}
+        {% set row_class = "cni-row-subtotal" %}
+        {% elif not cifra_es_texto and not cifra.es_titulo %}
+        {% set ns.total_actual = ns.total_actual + (cifra.monto_actual or 0) %}
+        {% set ns.total_comparativo = ns.total_comparativo + (cifra.monto_comparativo or 0) %}
+          {% endif %}
+          <tr class="{{ row_class }}">
+            <td style="padding-left: {{ ((cifra.nivel or 1) - 1) * 18 }}px !important;{% if cifra.negrita or cifra.es_titulo %}font-weight: 700;{% endif %}{% if cifra.subrayado %}text-decoration: underline;{% endif %}">
+              <div class="cni-note-desc">{% if not cifra.es_linea_blanco %}{{ cifra.concepto or "-" }}{% endif %}</div>
+              {% if cifra.comentario %}<div class="cni-note-comment">{{ cifra.comentario }}</div>{% endif %}
+            </td>
+            <td class="num cni-val-actual">
+              {% if not cifra.es_linea_blanco and not cifra.es_titulo %}
+                {% if note_doc.get_figure_number_format(cifra) == "Moneda" and note_doc.format_figure_value(cifra, "monto_actual") %}
+                <span class="cni-money">
+                  <span class="cni-money-symbol">{{ currency_symbol }}</span>
+                  <span class="cni-money-value">{{ note_doc.format_figure_value(cifra, "monto_actual") }}</span>
+                </span>
+                {% else %}
+                {{ note_doc.format_figure_value(cifra, "monto_actual") }}
+                {% endif %}
+              {% endif %}
+            </td>
+            <td class="cni-gap"></td>
+            <td class="num cni-val-comparativo">
+              {% if not cifra.es_linea_blanco and not cifra.es_titulo %}
+                {% if note_doc.get_figure_number_format(cifra) == "Moneda" and note_doc.format_figure_value(cifra, "monto_comparativo") %}
+                <span class="cni-money">
+                  <span class="cni-money-symbol">{{ currency_symbol }}</span>
+                  <span class="cni-money-value">{{ note_doc.format_figure_value(cifra, "monto_comparativo") }}</span>
+                </span>
+                {% else %}
+                {{ note_doc.format_figure_value(cifra, "monto_comparativo") }}
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+        {% endif %}
+        {% endfor %}
+        {% if not ns.tiene_total %}
+        <tr class="cni-row-total">
+          <td>Total</td>
+          <td class="num cni-val-actual">
+            {% if total_format == "Moneda" %}
+            <span class="cni-money">
+              <span class="cni-money-symbol">{{ currency_symbol }}</span>
+              <span class="cni-money-value">{{ note_doc.format_figure_amount(ns.total_actual, total_format) }}</span>
+            </span>
+            {% else %}
+            {{ note_doc.format_figure_amount(ns.total_actual, total_format) }}
+            {% endif %}
+          </td>
+          <td class="cni-gap"></td>
+          <td class="num cni-val-comparativo">
+            {% if total_format == "Moneda" %}
+            <span class="cni-money">
+              <span class="cni-money-symbol">{{ currency_symbol }}</span>
+              <span class="cni-money-value">{{ note_doc.format_figure_amount(ns.total_comparativo, total_format) }}</span>
+            </span>
+            {% else %}
+            {{ note_doc.format_figure_amount(ns.total_comparativo, total_format) }}
+            {% endif %}
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if note_doc.estructura_nota == "Compleja" and secciones_complejas %}
+    <div style="height: 1em;"></div>
+    {% for sec_meta in secciones_complejas %}
+      {% set sec = frappe.get_doc("Seccion Nota EEFF", sec_meta.name) %}
+      <div class="cni-section">
+        {% if sec.mostrar_titulo %}
+        <h2 style="font-weight:700; font-style:italic; text-decoration: underline;">{{ sec.titulo_seccion or sec.codigo_seccion or "Seccion" }}</h2>
+        {% endif %}
+
+        {% if sec.contenido_narrativo %}
+        <div>{{ sec.render_contenido_narrativo() | safe }}</div>
+        {% endif %}
+
+        {% set tablas = sec.get_render_tables() %}
+        {% for tabla in tablas %}
+          {% if tabla.columnas and tabla.filas %}
+          {% set compact_table = (tabla.columnas | length) > 5 %}
+          <div class="cni-section">
+            <table class="cni-table cni-align-{{ note_table_align }}" style="--cni-table-width: {{ note_table_width }}; --cni-table-font-size: {{ 10 if compact_table else note_font_size }}pt;">
+              <thead>
+                {% if tabla.tiene_grupos %}
+                <tr>
+                  <th rowspan="2">Concepto</th>
+                  {% for grupo in tabla.grupos_columnas %}
+                  <th colspan="{{ (grupo.span * 2) - 1 }}">{{ grupo.label or "" }}</th>
+                  {% if not loop.last %}
+                  <th class="cni-gap" rowspan="2"></th>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                <tr>
+                  {% for col in tabla.columnas %}
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  {% if not loop.last %}
+                  <th class="cni-gap"></th>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                {% else %}
+                <tr>
+                  <th>Concepto</th>
+                  {% for col in tabla.columnas %}
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  {% if not loop.last %}
+                  <th class="cni-gap"></th>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                {% endif %}
+              </thead>
+              <tbody>
+                {% for fila in tabla.filas %}
+                {% set row_class = "" %}
+                {% if fila.es_total %}
+                {% set row_class = "cni-row-total" %}
+                {% elif fila.es_subtotal %}
+                {% set row_class = "cni-row-subtotal" %}
+                {% endif %}
+                <tr class="{{ row_class }}">
+                  <td style="padding-left: {{ ((fila.nivel or 1) - 1) * 18 }}px;{% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}font-weight:700;{% endif %}{% if fila.subrayado %}text-decoration: underline;{% endif %}">
+                    <div class="cni-complex-desc">{{ fila.descripcion or fila.codigo_fila or "-" }}</div>
+                  </td>
+                  {% for celda in fila.celdas %}
+                  <td{% if celda.alineacion == "Right" %} class="num"{% elif celda.alineacion == "Center" %} style="text-align:center;"{% endif %}>{% if celda.es_moneda and celda.texto and celda.texto != "-" %}{{ currency_symbol }} {{ celda.texto }}{% else %}{{ celda.texto or "" }}{% endif %}</td>
+                  {% if not loop.last %}
+                  <td class="cni-gap"></td>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        {% endfor %}
+
+        {% if sec.observaciones %}
+        <div class="cni-note-comment">{{ sec.observaciones }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if note_doc.observaciones %}
+  <div class="cni-section cni-note-observaciones">
+    <div>{{ note_doc.render_observaciones() | safe }}</div>
+  </div>
+  {% endif %}
+{% endmacro %}
+
+{% set package = frappe.get_doc("Paquete EEFF", doc.paquete_eeff) %}
+{% set labels = package.get_column_labels() %}
+{% set currency_ctx = package.get_currency_context() %}
+{% set currency_symbol = currency_ctx.symbol or "$" %}
+{% set sub_notas = [] %}
+{% if not doc.sub_nota %}
+  {% set sub_notas = frappe.get_all(
+    "Nota EEFF",
+    filters={
+      "paquete_eeff": doc.paquete_eeff,
+      "numero_nota": doc.numero_nota,
+      "name": ["!=", doc.name],
+      "sub_nota": ["is", "set"]
+    },
+    fields=["name", "numero_nota", "sub_nota", "titulo"],
+    order_by="sub_nota asc, creation asc",
+    limit_page_length=100
+  ) %}
+{% endif %}
+
+<div class="cni-wrap">
+  <div class="cni-head">
+    <h1{% if doc.sub_nota %} style="font-weight: 400;"{% endif %}>
+      {% if doc.sub_nota %}
+      {{ doc.get_print_heading() }}
+      {% else %}
+      <strong>{{ doc.get_print_heading() }}</strong>
+      {% endif %}
+    </h1>
+  </div>
+
+  {{ render_note_body(doc, labels, currency_symbol) }}
+
+  {% if sub_notas %}
+  <div class="cni-subnotes">
+    <div class="cni-section">
+      <h2>Sub-notas</h2>
+    </div>
+
+    {% for sub_nota_meta in sub_notas %}
+      {% set sub_doc = frappe.get_doc("Nota EEFF", sub_nota_meta.name) %}
+      <div class="cni-note-block">
+        <div class="cni-section">
+          <h2 style="font-weight: 400;">{{ sub_doc.get_print_heading() }}</h2>
+        </div>
+        {{ render_note_body(sub_doc, labels, currency_symbol) }}
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
