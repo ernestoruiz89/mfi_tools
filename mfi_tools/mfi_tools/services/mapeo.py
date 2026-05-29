@@ -826,6 +826,11 @@ def aplicar_mapeo_paquete(paquete_name):
         doc = factsheet_docs.get(name)
         if doc:
             doc.save(ignore_permissions=True)
+            
+    # Asegurar que todos los factsheets del paquete se recalculen al final
+    # para que las formulas cruzadas lean los valores finales reales de la base de datos
+    for fs_name in frappe.get_all("Factsheet", filters={"paquete_eeff": package.name}, pluck="name", limit_page_length=200):
+        frappe.get_doc("Factsheet", fs_name).save(ignore_permissions=True)
 
     frappe.db.set_value(
         "Paquete EEFF",
