@@ -17,7 +17,7 @@
             "hidden": 0,
             "is_query_report": 0,
             "label": "Flujo EEFF",
-            "link_count": 7,
+            "link_count": 8,
             "link_type": "DocType",
             "onboard": 0,
             "type": "Card Break"
@@ -88,6 +88,16 @@
             "label": "Reglas de Mapeo",
             "link_count": 0,
             "link_to": "Regla Mapeo Contable EEFF",
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Link"
+        },
+        {
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Factsheets",
+            "link_count": 0,
+            "link_to": "Factsheet",
             "link_type": "DocType",
             "onboard": 0,
             "type": "Link"
