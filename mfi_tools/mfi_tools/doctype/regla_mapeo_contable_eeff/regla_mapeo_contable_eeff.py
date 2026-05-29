@@ -13,6 +13,10 @@ FIGURE_VALUE_PERIODS = (
     "Movimiento Mes Actual",
     "Saldo Anterior Comparativo",
     "Movimiento Mes Comparativo",
+    "Saldo Cierre Anterior Actual",
+    "Saldo Año Anterior Actual",
+    "Saldo Cierre Anterior Comparativo",
+    "Saldo Año Anterior Comparativo",
 )
 SECTION_CELL_PERIODS = (
     "Actual",
@@ -23,6 +27,10 @@ SECTION_CELL_PERIODS = (
     "Movimiento Mes Actual",
     "Saldo Anterior Comparativo",
     "Movimiento Mes Comparativo",
+    "Saldo Cierre Anterior Actual",
+    "Saldo Año Anterior Actual",
+    "Saldo Cierre Anterior Comparativo",
+    "Saldo Año Anterior Comparativo",
 )
 
 

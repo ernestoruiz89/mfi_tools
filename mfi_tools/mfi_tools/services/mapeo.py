@@ -154,7 +154,10 @@ def _select_figure_amount(
     comparative_balances,
     actual_stats,
     comparative_stats,
+    historical_data=None,
 ):
+    if historical_data is None:
+        historical_data = {}
     selected_period = cstr(period or "Actual").strip()
     if selected_period == "Comparativo":
         return comparative_amount
@@ -176,8 +179,23 @@ def _select_figure_amount(
             comparative_stats or {},
             balance_value_field="movimiento_del_mes",
         )
+    if selected_period == "Saldo Cierre Anterior Actual":
+        historical = historical_data.get("cierre_anterior_actual_balances", {})
+        h_stats = historical_data.get("cierre_anterior_actual_stats", {})
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
+    if selected_period == "Saldo Año Anterior Actual":
+        historical = historical_data.get("anio_anterior_actual_balances", {})
+        h_stats = historical_data.get("anio_anterior_actual_stats", {})
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
+    if selected_period == "Saldo Cierre Anterior Comparativo":
+        historical = historical_data.get("cierre_anterior_comparativo_balances", {})
+        h_stats = historical_data.get("cierre_anterior_comparativo_stats", {})
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
+    if selected_period == "Saldo Año Anterior Comparativo":
+        historical = historical_data.get("anio_anterior_comparativo_balances", {})
+        h_stats = historical_data.get("anio_anterior_comparativo_stats", {})
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
     return actual_amount
-
 
 def _select_figure_amounts(
     rule_doc,
@@ -187,7 +205,10 @@ def _select_figure_amounts(
     comparative_balances,
     actual_stats,
     comparative_stats,
+    historical_data=None,
 ):
+    if historical_data is None:
+        historical_data = {}
     if not cint(getattr(rule_doc, "usar_periodos_especiales_cifra", 0) or 0):
         return actual_amount, comparative_amount
 
@@ -200,6 +221,7 @@ def _select_figure_amounts(
         comparative_balances,
         actual_stats,
         comparative_stats,
+        historical_data=historical_data,
     )
     selected_comparative = _select_figure_amount(
         rule_doc,
@@ -210,6 +232,7 @@ def _select_figure_amounts(
         comparative_balances,
         actual_stats,
         comparative_stats,
+        historical_data=historical_data,
     )
     return selected_actual, selected_comparative
 
@@ -224,7 +247,10 @@ def _select_section_cell_amount(
     comparative_balances,
     actual_stats,
     comparative_stats,
+    historical_data=None,
 ):
+    if historical_data is None:
+        historical_data = {}
     period = cstr(getattr(rule_doc, "destino_periodo_celda", "") or "Actual").strip()
     if period == "Saldo Anterior Actual":
         return _compute_rule_amount(rule_doc, actual_balances, actual_stats, balance_value_field="saldo_anterior")
@@ -241,6 +267,22 @@ def _select_section_cell_amount(
             comparative_stats or {},
             balance_value_field="movimiento_del_mes",
         )
+    if period == "Saldo Cierre Anterior Actual":
+        historical = historical_data.get("cierre_anterior_actual_balances", {})
+        h_stats = historical_data.get("cierre_anterior_actual_stats", {})
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
+    if period == "Saldo Año Anterior Actual":
+        historical = historical_data.get("anio_anterior_actual_balances", {})
+        h_stats = historical_data.get("anio_anterior_actual_stats", {})
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
+    if period == "Saldo Cierre Anterior Comparativo":
+        historical = historical_data.get("cierre_anterior_comparativo_balances", {})
+        h_stats = historical_data.get("cierre_anterior_comparativo_stats", {})
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
+    if period == "Saldo Año Anterior Comparativo":
+        historical = historical_data.get("anio_anterior_comparativo_balances", {})
+        h_stats = historical_data.get("anio_anterior_comparativo_stats", {})
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
     if period == "Base Actual":
         return base_actual_amount
     if period == "Base Comparativo":
@@ -452,6 +494,49 @@ def aplicar_mapeo_paquete(paquete_name):
             base_comparative_balances = _build_balance_map(base_comparative_doc)
     actual_stats, comparative_stats = _build_stat_maps(package)
 
+    historical_data = {}
+    def _get_historical(doctype, field_filters, anio, mes):
+        filters = field_filters.copy()
+        filters["anio"] = anio
+        filters["mes"] = mes
+        docs = frappe.get_all(doctype, filters=filters, pluck="name", limit_page_length=1)
+        if docs:
+            doc = frappe.get_doc(doctype, docs[0])
+            if doctype == "Balanza Comprobacion EEFF":
+                return _build_balance_map(doc)
+            else:
+                stats = {}
+                for row in getattr(doc, "lineas", []):
+                    code = _normalize(getattr(row, "codigo_dato", ""))
+                    if code:
+                        stats[code] = flt(getattr(row, "valor_actual", 0) or 0)
+                return stats
+        return {}
+
+    if balanza:
+        f_bal = {"cliente": balanza.cliente, "moneda": balanza.moneda}
+        historical_data["cierre_anterior_actual_balances"] = _get_historical("Balanza Comprobacion EEFF", f_bal, balanza.anio - 1, "Diciembre")
+        historical_data["anio_anterior_actual_balances"] = _get_historical("Balanza Comprobacion EEFF", f_bal, balanza.anio - 1, balanza.mes)
+
+    if comparative_doc:
+        f_comp = {"cliente": comparative_doc.cliente, "moneda": comparative_doc.moneda}
+        historical_data["cierre_anterior_comparativo_balances"] = _get_historical("Balanza Comprobacion EEFF", f_comp, comparative_doc.anio - 1, "Diciembre")
+        historical_data["anio_anterior_comparativo_balances"] = _get_historical("Balanza Comprobacion EEFF", f_comp, comparative_doc.anio - 1, comparative_doc.mes)
+
+    act_stat_name = getattr(package, "datos_estadisticos_actual_eeff", "")
+    if act_stat_name and frappe.db.exists("Datos Estadisticos EEFF", act_stat_name):
+        act_stat_doc = frappe.get_doc("Datos Estadisticos EEFF", act_stat_name)
+        f_act_stat = {"company": act_stat_doc.company, "moneda": act_stat_doc.moneda}
+        historical_data["cierre_anterior_actual_stats"] = _get_historical("Datos Estadisticos EEFF", f_act_stat, act_stat_doc.anio - 1, "Diciembre")
+        historical_data["anio_anterior_actual_stats"] = _get_historical("Datos Estadisticos EEFF", f_act_stat, act_stat_doc.anio - 1, act_stat_doc.mes)
+
+    comp_stat_name = getattr(package, "datos_estadisticos_comparativo_eeff", "")
+    if comp_stat_name and frappe.db.exists("Datos Estadisticos EEFF", comp_stat_name):
+        comp_stat_doc = frappe.get_doc("Datos Estadisticos EEFF", comp_stat_name)
+        f_comp_stat = {"company": comp_stat_doc.company, "moneda": comp_stat_doc.moneda}
+        historical_data["cierre_anterior_comparativo_stats"] = _get_historical("Datos Estadisticos EEFF", f_comp_stat, comp_stat_doc.anio - 1, "Diciembre")
+        historical_data["anio_anterior_comparativo_stats"] = _get_historical("Datos Estadisticos EEFF", f_comp_stat, comp_stat_doc.anio - 1, comp_stat_doc.mes)
+
     _reset_package_targets(paquete_name)
 
     rules = frappe.get_all(
@@ -567,6 +652,7 @@ def aplicar_mapeo_paquete(paquete_name):
                 comparative_balances,
                 actual_stats,
                 comparative_stats,
+                historical_data=historical_data,
             )
 
             line.monto_actual = flt(line.monto_actual or 0) + selected_actual_amount
@@ -589,6 +675,7 @@ def aplicar_mapeo_paquete(paquete_name):
                 comparative_balances,
                 actual_stats,
                 comparative_stats,
+                historical_data=historical_data,
             )
             figure = _find_note_figure(note_doc, rule.destino_codigo_cifra)
             if not figure:
@@ -633,6 +720,7 @@ def aplicar_mapeo_paquete(paquete_name):
                 comparative_balances,
                 actual_stats,
                 comparative_stats,
+                historical_data=historical_data,
             )
             table_code = _normalize(rule.destino_codigo_tabla or "TABLA_01")
             row_code = _normalize(rule.destino_codigo_fila)
@@ -712,6 +800,7 @@ def aplicar_mapeo_paquete(paquete_name):
                 comparative_balances,
                 actual_stats,
                 comparative_stats,
+                historical_data=historical_data,
             )
 
             line.monto_actual = flt(line.monto_actual or 0) + selected_actual_amount
