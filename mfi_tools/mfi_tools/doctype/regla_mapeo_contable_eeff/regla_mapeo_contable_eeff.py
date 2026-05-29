@@ -237,17 +237,17 @@ def get_autocomplete_options(company):
         "factsheets": [], "lineas_factsheet": []
     }
 
-    estados = frappe.get_all("Estado Financiero EEFF", filters={"paquete_eeff": package_name}, fields=["name", "codigo_estado", "titulo_estado"])
+    estados = frappe.get_all("Estado Financiero EEFF", filters={"paquete_eeff": package_name}, fields=["name", "codigo_estado", "titulo"])
     for est in estados:
-        options["estados"].append({"code": est.codigo_estado, "label": est.titulo_estado})
+        options["estados"].append({"code": est.codigo_estado, "label": est.titulo})
         doc = frappe.get_doc("Estado Financiero EEFF", est.name)
         for linea in doc.get("lineas", []):
             if not linea.es_titulo and not linea.calculo_automatico:
                 options["lineas_estado"].append({"code": linea.codigo_linea, "label": linea.descripcion, "estado": est.codigo_estado})
     
-    notas = frappe.get_all("Nota EEFF", filters={"paquete_eeff": package_name}, fields=["name", "numero_nota", "titulo_nota"])
+    notas = frappe.get_all("Nota EEFF", filters={"paquete_eeff": package_name}, fields=["name", "numero_nota", "titulo"])
     for nota in notas:
-        options["notas"].append({"code": nota.numero_nota, "label": nota.titulo_nota})
+        options["notas"].append({"code": nota.numero_nota, "label": nota.titulo})
         doc = frappe.get_doc("Nota EEFF", nota.name)
         for cifra in doc.get("cifras", []):
             options["cifras_nota"].append({"code": cifra.codigo_cifra, "label": cifra.descripcion, "nota": nota.numero_nota})
