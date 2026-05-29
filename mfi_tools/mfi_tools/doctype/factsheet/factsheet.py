@@ -7,7 +7,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, cstr, flt
 
-VAR_REGEX = re.compile(r"\b([A-Z_][A-Z0-9_]*)\b")
+VAR_REGEX = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*|[A-Za-z0-9_]+\.[A-Za-z_][A-Za-z0-9_]*)\b")
 
 class Factsheet(Document):
     def autoname(self):
@@ -73,6 +73,20 @@ class Factsheet(Document):
                     mes_comp = mes_act
                     anio_comp = anio_act
 
+        def get_external_value(fs_code, line_code, fieldname):
+            if not self.paquete_eeff:
+                return 0.0
+            
+            fs_name = frappe.db.get_value("Factsheet", {"codigo_factsheet": fs_code, "paquete_eeff": self.paquete_eeff}, "name")
+            if not fs_name:
+                frappe.throw(_("Factsheet base con codigo {0} no encontrado en el paquete {1} para resolver la linea {2}").format(fs_code, self.paquete_eeff, line_code))
+            
+            val = frappe.db.get_value("Linea Factsheet", {"parent": fs_name, "codigo_linea": line_code}, fieldname)
+            if val is None:
+                frappe.throw(_("Linea {0} no encontrada en el Factsheet base {1}").format(line_code, fs_code))
+            
+            return flt(val)
+
         def get_value(code, fieldname, stack):
             is_comp = (fieldname == "monto_comparativo")
             cache = cache_comp if is_comp else cache_act
@@ -114,15 +128,22 @@ class Factsheet(Document):
                 target_field = fieldname
                 target_var = var_name
                 
-                # Para simplificar la sintaxis si alguien pone ACT_EMPLEADOS
-                if var_name.startswith("COMP_"):
+                if target_var.startswith("COMP_"):
                     target_field = "monto_comparativo"
-                    target_var = var_name[5:]
-                elif var_name.startswith("ACT_"):
+                    target_var = target_var[5:]
+                elif target_var.startswith("ACT_"):
                     target_field = "monto_actual"
-                    target_var = var_name[4:]
+                    target_var = target_var[4:]
                 
-                val = get_value(target_var, target_field, next_stack)
+                if "." in target_var:
+                    fs_code, line_code = target_var.split(".", 1)
+                    if fs_code == self.codigo_factsheet:
+                        val = get_value(line_code, target_field, next_stack)
+                    else:
+                        val = get_external_value(fs_code, line_code, target_field)
+                else:
+                    val = get_value(target_var, target_field, next_stack)
+                
                 return str(val)
 
             expr = VAR_REGEX.sub(replacer, formula_str)
