@@ -119,12 +119,6 @@ class ReglaMapeoContableEEFF(Document):
         if not self.usar_periodos_especiales_cifra:
             self.destino_periodo_cifra_actual = "Actual"
             self.destino_periodo_cifra_comparativo = "Comparativo"
-        destino = cstr(self.destino_tipo or "").strip()
-        if destino == "Linea Estado":
-            if not cstr(self.destino_codigo_estado or "").strip() or not cstr(self.destino_codigo_linea or "").strip():
-                frappe.throw(_("Para Linea Estado debes indicar estado y codigo de linea destino."), title=_("Destino Incompleto"))
-        elif destino == "Cifra Nota":
-
 
     def _normalizar_cuentas(self):
         if not self.cuentas:
