@@ -5,7 +5,7 @@
     "engine": "InnoDB",
     "field_order": [
         "nombre_datos_estadisticos",
-        "cliente",
+        "company",
         "anio",
         "mes",
         "periodo_nombre",
@@ -15,7 +15,7 @@
     ],
     "fields": [
         {"fieldname": "nombre_datos_estadisticos", "fieldtype": "Data", "label": "Nombre Datos Estadisticos", "read_only": 1, "in_list_view": 1, "no_copy": 1},
-        {"fieldname": "cliente", "fieldtype": "Link", "label": "Cliente", "options": "Customer", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "reqd": 1, "in_list_view": 1},
         {"fieldname": "anio", "fieldtype": "Int", "label": "Anio", "reqd": 1, "in_list_view": 1},
         {"fieldname": "mes", "fieldtype": "Select", "label": "Mes", "reqd": 1, "options": "Enero\nFebrero\nMarzo\nAbril\nMayo\nJunio\nJulio\nAgosto\nSeptiembre\nOctubre\nNoviembre\nDiciembre", "in_list_view": 1},
         {"fieldname": "periodo_nombre", "fieldtype": "Data", "label": "Periodo Nombre", "read_only": 1, "in_list_view": 1},

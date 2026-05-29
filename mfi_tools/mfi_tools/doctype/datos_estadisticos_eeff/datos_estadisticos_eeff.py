@@ -2,9 +2,6 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import cint, cstr, flt
 
-from mfi_tools.mfi_tools.utils.customer import get_customer_display
-
-
 class DatosEstadisticosEEFF(Document):
     def autoname(self):
         self._sync_period_fields()
@@ -17,14 +14,13 @@ class DatosEstadisticosEEFF(Document):
         self.total_lineas = len(self.get("lineas") or [])
 
     def _sync_period_fields(self):
-        cliente = cstr(self.cliente or "").strip()
+        company = cstr(self.company or "").strip()
         mes = cstr(self.mes or "").strip()
         anio = cint(self.anio or 0)
-        if not cliente or not mes or not anio:
+        if not company or not mes or not anio:
             return
 
-        cliente_display = get_customer_display(cliente)
-        self.periodo_nombre = f"{cliente_display or cliente}-{mes}-{anio}"
+        self.periodo_nombre = f"{company}-{mes}-{anio}"
         self.nombre_datos_estadisticos = self.nombre_datos_estadisticos or f"Datos-{self.periodo_nombre}"
 
     def _normalizar_lineas(self):
