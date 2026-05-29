@@ -366,7 +366,7 @@ def _resolve_rule_targets(rule_doc, package_name):
         if not numero_nota:
             return False, _("La regla {0} no tiene numero de nota destino.").format(rule_doc.name), targets
 
-        note_name, _, _ = find_note_name(package_name, numero_nota)
+        note_name, _ignored1, _ignored2 = find_note_name(package_name, numero_nota)
         if not note_name:
             return False, _("La regla {0} no encontro una nota con numero {1} dentro del paquete.").format(
                 rule_doc.name, numero_nota
