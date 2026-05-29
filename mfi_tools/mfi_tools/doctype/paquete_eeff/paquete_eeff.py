@@ -26,6 +26,126 @@ class PaqueteEEFF(Document):
         self._calcular_datos_formula()
         self._sync_totals()
 
+    def before_insert(self):
+        if self.paquete_origen:
+            self._clonar_notas(self.paquete_origen)
+            self._clonar_factsheets(self.paquete_origen)
+
+    def _clonar_estados(self):
+        if not frappe.db.exists("Paquete EEFF", self.paquete_origen):
+            return
+        
+        estados = frappe.get_all(
+            "Estado Financiero EEFF",
+            filters={"paquete_eeff": self.paquete_origen},
+            pluck="name",
+            order_by="creation asc"
+        )
+        for state_name in estados:
+            source = frappe.get_doc("Estado Financiero EEFF", state_name)
+            new_state = frappe.copy_doc(source)
+            new_state.name = None
+            new_state.nombre_estado = None
+            new_state.paquete_eeff = self.name
+            new_state.flags.ignore_permissions = True
+            new_state.flags.ignore_mandatory = True
+            self.append("estados_copiados", new_state) # Store temporarily to insert after save
+
+    def _clonar_factsheets(self, paquete_origen):
+        origin_factsheets = frappe.get_all(
+            "Factsheet",
+            filters={"paquete_eeff": paquete_origen},
+            pluck="name",
+            order_by="codigo_factsheet asc",
+            limit_page_length=50,
+        )
+        for origin_factsheet_name in origin_factsheets:
+            origin_doc = frappe.get_doc("Factsheet", origin_factsheet_name)
+            cloned_doc = frappe.copy_doc(origin_doc)
+            cloned_doc.paquete_eeff = self.name
+            
+            for row in cloned_doc.lineas or []:
+                row.monto_actual = None
+                row.monto_comparativo = None
+
+            if not hasattr(self, "factsheets_copiados"):
+                self.factsheets_copiados = []
+            self.factsheets_copiados.append(cloned_doc)
+
+    def _clonar_notas(self, paquete_origen):
+        notas = frappe.get_all(
+            "Nota EEFF",
+            filters={"paquete_eeff": paquete_origen},
+            pluck="name",
+            order_by="numero_nota asc"
+        )
+        for nota_name in notas:
+            source = frappe.get_doc("Nota EEFF", nota_name)
+            new_note = frappe.copy_doc(source)
+            new_note.name = None
+            new_note.nombre_nota = None
+            new_note.paquete_eeff = self.name
+            new_note.estado_aprobacion = "Borrador"
+            new_note.flags.ignore_permissions = True
+            new_note.flags.ignore_mandatory = True
+            self.append("notas_copiadas_docs", new_note)
+            
+            if cstr(getattr(source, "estructura_nota", "Simple") or "Simple").strip() == "Compleja":
+                sections = frappe.get_all(
+                    "Seccion Nota EEFF",
+                    filters={"nota_eeff": source.name},
+                    pluck="name",
+                    order_by="orden asc"
+                )
+                for sec_name in sections:
+                    source_sec = frappe.get_doc("Seccion Nota EEFF", sec_name)
+                    new_sec = frappe.copy_doc(source_sec)
+                    new_sec.name = None
+                    new_sec.nombre_seccion = None
+                    new_sec.paquete_eeff = self.name
+                    new_sec.flags.source_note_name = source.name # Link later
+                    new_sec.flags.ignore_permissions = True
+                    new_sec.flags.ignore_mandatory = True
+                    self.append("secciones_copiadas_docs", new_sec)
+
+    def on_update(self):
+        self._insert_copied_structure()
+
+    def _insert_copied_structure(self):
+        if hasattr(self, "estados_copiados"):
+            for doc in self.estados_copiados:
+                doc.paquete_eeff = self.name
+                doc.insert(ignore_permissions=True)
+            delattr(self, "estados_copiados")
+            
+        if hasattr(self, "notas_copiadas_docs"):
+            note_mapping = {}
+            for doc in self.notas_copiadas_docs:
+                old_source_name = doc.get("__islocal") and doc.get("name") # Will be None, we need to map by identifier
+                # Map by numero_nota + sub_nota
+                identifier = f"{doc.numero_nota}-{doc.sub_nota}"
+                doc.paquete_eeff = self.name
+                doc.insert(ignore_permissions=True)
+                note_mapping[identifier] = doc.name
+            delattr(self, "notas_copiadas_docs")
+            
+            if hasattr(self, "secciones_copiadas_docs"):
+                for doc in self.secciones_copiadas_docs:
+                    # Find matching new note
+                    source_note_doc = frappe.get_doc("Nota EEFF", doc.flags.source_note_name)
+                    identifier = f"{source_note_doc.numero_nota}-{source_note_doc.sub_nota}"
+                    if identifier in note_mapping:
+                        doc.paquete_eeff = self.name
+                        doc.nota_eeff = note_mapping[identifier]
+                delattr(self, "secciones_copiadas_docs")
+            
+        if hasattr(self, "factsheets_copiados"):
+            for doc in self.factsheets_copiados:
+                doc.paquete_eeff = self.name
+                doc.insert(ignore_permissions=True)
+            delattr(self, "factsheets_copiados")
+
+
     def _sync_names(self):
         cliente = cstr(self.cliente or "").strip()
         mes = cstr(self.mes or "").strip()
@@ -290,75 +410,6 @@ def _clear_package_datos_estadisticos(package_name):
     package_doc.save(ignore_permissions=True)
 
 
-def _throw_if_mapping_targets_are_in_use(package_name, limpiar_estados=0, limpiar_notas=0):
-    if cint(limpiar_estados):
-        state_rules = frappe.get_all(
-            "Regla Mapeo Contable EEFF",
-            filters={
-                "paquete_eeff": package_name,
-                "activo": 1,
-                "destino_tipo": "Linea Estado",
-                "estado_financiero_eeff": ["is", "set"],
-            },
-            fields=["name", "estado_financiero_eeff", "destino_codigo_linea"],
-            order_by="modified desc",
-            limit_page_length=20,
-        )
-        if state_rules:
-            refs = ", ".join(
-                f"{row.name} -> {row.estado_financiero_eeff}/{cstr(row.destino_codigo_linea or '-').strip() or '-'}"
-                for row in state_rules[:5]
-            )
-            if len(state_rules) > 5:
-                refs = f"{refs}, ..."
-            frappe.throw(
-                _(
-                    "No puedes reemplazar estados mientras existan reglas de mapeo activas que apuntan a esos destinos. "
-                    "Desactiva, elimina o actualiza primero las reglas afectadas. Reglas detectadas: {0}"
-                ).format(refs),
-                title=_("Estados Referenciados por Reglas"),
-            )
-
-    if cint(limpiar_notas):
-        note_rules = frappe.get_all(
-            "Regla Mapeo Contable EEFF",
-            filters={
-                "paquete_eeff": package_name,
-                "activo": 1,
-                "destino_tipo": ["in", ["Cifra Nota", "Celda Seccion Nota"]],
-                "nota_eeff": ["is", "set"],
-            },
-            fields=[
-                "name",
-                "nota_eeff",
-                "destino_tipo",
-                "destino_codigo_seccion",
-                "destino_codigo_tabla",
-                "destino_codigo_cifra",
-                "destino_codigo_fila",
-                "destino_codigo_columna",
-            ],
-            order_by="modified desc",
-            limit_page_length=20,
-        )
-        if note_rules:
-            refs = ", ".join(
-                f"{row.name} -> {row.nota_eeff}/"
-                f"{cstr(row.destino_codigo_cifra or row.destino_codigo_tabla or row.destino_codigo_fila or '-').strip() or '-'}"
-                for row in note_rules[:5]
-            )
-            if len(note_rules) > 5:
-                refs = f"{refs}, ..."
-            frappe.throw(
-                _(
-                    "No puedes reemplazar notas mientras existan reglas de mapeo activas que apuntan a esas notas. "
-                    "Desactiva, elimina o actualiza primero las reglas afectadas. Reglas detectadas: {0}"
-                ).format(refs),
-                title=_("Notas Referenciadas por Reglas"),
-            )
-
-
-@frappe.whitelist()
 def copiar_notas_desde_paquete(paquete_name, paquete_fuente, limpiar_notas=0):
     if not frappe.db.exists("Paquete EEFF", paquete_name):
         frappe.throw(_("El paquete destino no existe."), title=_("Paquete Invalido"))
@@ -371,8 +422,6 @@ def copiar_notas_desde_paquete(paquete_name, paquete_fuente, limpiar_notas=0):
     fuente = frappe.get_doc("Paquete EEFF", paquete_fuente)
     if cstr(destino.cliente or "").strip() and cstr(fuente.cliente or "").strip() and destino.cliente != fuente.cliente:
         frappe.throw(_("Solo puedes copiar notas entre paquetes del mismo cliente."), title=_("Cliente Inconsistente"))
-
-    _throw_if_mapping_targets_are_in_use(paquete_name, limpiar_notas=limpiar_notas)
 
     if cint(limpiar_notas):
         _delete_package_notas(paquete_name)

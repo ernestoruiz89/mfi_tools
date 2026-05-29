@@ -1060,8 +1060,7 @@ class HelperMapeoNotasEEFF {
     open_rule_list(extraFilters = {}) {
         const doc = this.get_note_doc();
         const filters = {
-            paquete_eeff: this.state.package_name || undefined,
-            nota_eeff: doc ? doc.name : undefined,
+            destino_numero_nota: doc ? (doc.identificador_nota || doc.numero_nota || undefined) : undefined,
             ...extraFilters,
         };
         Object.keys(filters).forEach((key) => {

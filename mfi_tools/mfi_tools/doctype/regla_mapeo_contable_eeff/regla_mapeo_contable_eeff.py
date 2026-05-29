@@ -48,7 +48,7 @@ class ReglaMapeoContableEEFF(Document):
 
     def _build_name_base(self):
         destino = cstr(self.destino_tipo or "Regla").strip().replace(" ", "-")
-        return f"{destino}-{self.paquete_eeff or frappe.generate_hash(length=6)}-{cint(self.orden or 0):03d}"
+        return f"{destino}-{self.company or frappe.generate_hash(length=6)}-{cint(self.orden or 0):03d}"
 
     def _sync_display_name(self):
         if self.is_new():
@@ -92,6 +92,7 @@ class ReglaMapeoContableEEFF(Document):
 
     def _normalizar_destinos_estables(self):
         self.destino_codigo_estado = cstr(getattr(self, "destino_codigo_estado", "") or "").strip().upper()
+        self.destino_codigo_factsheet = cstr(getattr(self, "destino_codigo_factsheet", "") or "").strip().upper()
         self.destino_codigo_linea = _extract_code_token(getattr(self, "destino_codigo_linea", ""))
         self.destino_numero_nota = cstr(getattr(self, "destino_numero_nota", "") or "").strip().upper()
         self.destino_codigo_seccion = _extract_code_token(getattr(self, "destino_codigo_seccion", ""))
@@ -118,30 +119,12 @@ class ReglaMapeoContableEEFF(Document):
         if not self.usar_periodos_especiales_cifra:
             self.destino_periodo_cifra_actual = "Actual"
             self.destino_periodo_cifra_comparativo = "Comparativo"
+        destino = cstr(self.destino_tipo or "").strip()
+        if destino == "Linea Estado":
+            if not cstr(self.destino_codigo_estado or "").strip() or not cstr(self.destino_codigo_linea or "").strip():
+                frappe.throw(_("Para Linea Estado debes indicar estado y codigo de linea destino."), title=_("Destino Incompleto"))
+        elif destino == "Cifra Nota":
 
-        if self.estado_financiero_eeff and frappe.db.exists("Estado Financiero EEFF", self.estado_financiero_eeff) and not self.destino_codigo_estado:
-            self.destino_codigo_estado = cstr(
-                frappe.db.get_value("Estado Financiero EEFF", self.estado_financiero_eeff, "codigo_estado") or ""
-            ).strip().upper()
-
-        if self.nota_eeff and frappe.db.exists("Nota EEFF", self.nota_eeff) and not self.destino_numero_nota:
-            note_values = frappe.db.get_value("Nota EEFF", self.nota_eeff, ["numero_nota", "sub_nota"], as_dict=True) or {}
-            self.destino_numero_nota = build_note_identifier(
-                note_values.get("numero_nota"),
-                note_values.get("sub_nota"),
-            )
-
-        if self.seccion_nota_eeff and frappe.db.exists("Seccion Nota EEFF", self.seccion_nota_eeff):
-            section_values = frappe.db.get_value(
-                "Seccion Nota EEFF",
-                self.seccion_nota_eeff,
-                ["codigo_seccion", "nota_eeff"],
-                as_dict=True,
-            ) or {}
-            if not self.destino_codigo_seccion:
-                self.destino_codigo_seccion = cstr(section_values.get("codigo_seccion") or "").strip().upper()
-            if not self.nota_eeff and section_values.get("nota_eeff"):
-                self.nota_eeff = section_values.get("nota_eeff")
 
     def _normalizar_cuentas(self):
         if not self.cuentas:
@@ -163,14 +146,14 @@ class ReglaMapeoContableEEFF(Document):
         self._normalizar_destinos_estables()
         destino = cstr(self.destino_tipo or "").strip()
         if destino == "Linea Estado":
-            if not self.estado_financiero_eeff or not cstr(self.destino_codigo_linea or "").strip():
+            if not cstr(self.destino_codigo_estado or "").strip() or not cstr(self.destino_codigo_linea or "").strip():
                 frappe.throw(_("Para Linea Estado debes indicar estado y codigo de linea destino."), title=_("Destino Incompleto"))
         elif destino == "Cifra Nota":
-            if not self.nota_eeff or not cstr(self.destino_codigo_cifra or "").strip():
-                frappe.throw(_("Para Cifra Nota debes indicar nota y codigo de cifra destino."), title=_("Destino Incompleto"))
+            if not cstr(self.destino_numero_nota or "").strip() or not cstr(self.destino_codigo_cifra or "").strip():
+                frappe.throw(_("Para Cifra Nota debes indicar numero de nota y codigo de cifra destino."), title=_("Destino Incompleto"))
         elif destino == "Celda Seccion Nota":
             if (
-                not self.nota_eeff
+                not cstr(self.destino_numero_nota or "").strip()
                 or not cstr(self.destino_codigo_seccion or "").strip()
                 or not cstr(self.destino_codigo_tabla or "").strip()
                 or not cstr(self.destino_codigo_fila or "").strip()
@@ -180,6 +163,9 @@ class ReglaMapeoContableEEFF(Document):
                     _("Para Celda Seccion Nota debes indicar nota, seccion, tabla, fila y columna destino."),
                     title=_("Destino Incompleto"),
                 )
+        elif destino == "Linea Factsheet":
+            if not cstr(self.destino_codigo_factsheet or "").strip() or not cstr(self.destino_codigo_linea or "").strip():
+                frappe.throw(_("Para Linea Factsheet debes indicar codigo de factsheet y codigo de linea destino."), title=_("Destino Incompleto"))
         else:
             frappe.throw(_("El destino de la regla no es valido."), title=_("Destino Invalido"))
 

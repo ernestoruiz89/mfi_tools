@@ -78,13 +78,23 @@ class SeccionNotaEEFF(Document):
         self._sync_note_summary()
 
     def on_trash(self):
+        company = ""
+        if self.paquete_eeff and frappe.db.exists("Paquete EEFF", self.paquete_eeff):
+            company = cstr(frappe.db.get_value("Paquete EEFF", self.paquete_eeff, "company") or "").strip()
+        nota_identifier = ""
+        if self.nota_eeff and frappe.db.exists("Nota EEFF", self.nota_eeff):
+            note_values = frappe.db.get_value("Nota EEFF", self.nota_eeff, ["numero_nota", "sub_nota"], as_dict=True) or {}
+            from mfi_tools.mfi_tools.utils.nota_eeff import build_note_identifier
+            nota_identifier = build_note_identifier(note_values.get("numero_nota"), note_values.get("sub_nota"))
+
         active_rules = frappe.get_all(
             "Regla Mapeo Contable EEFF",
             filters={
-                "paquete_eeff": self.paquete_eeff,
+                "company": company,
                 "activo": 1,
                 "destino_tipo": "Celda Seccion Nota",
-                "seccion_nota_eeff": self.name,
+                "destino_numero_nota": nota_identifier,
+                "destino_codigo_seccion": self.codigo_seccion,
             },
             fields=["name", "destino_tipo", "destino_codigo_tabla", "destino_codigo_fila", "destino_codigo_columna"],
             order_by="modified desc",

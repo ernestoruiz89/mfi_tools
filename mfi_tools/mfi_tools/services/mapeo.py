@@ -296,111 +296,79 @@ def _find_section_column_definition(doc, codigo_tabla, codigo_columna):
     return None
 
 
-def _ensure_rule_target_link(rule_doc, package_name):
+def _resolve_rule_targets(rule_doc, package_name):
+    """Resolve rule destinations within the given package using stable codes only."""
     destino = cstr(rule_doc.destino_tipo or "").strip()
+    targets = {}
 
     if destino == "Linea Estado":
-        current = cstr(getattr(rule_doc, "estado_financiero_eeff", "") or "").strip()
-        if current and frappe.db.exists("Estado Financiero EEFF", current):
-            current_package = cstr(frappe.db.get_value("Estado Financiero EEFF", current, "paquete_eeff") or "").strip()
-            if current_package == package_name:
-                return True, None
-
         codigo_estado = _normalize(getattr(rule_doc, "destino_codigo_estado", ""))
         if not codigo_estado:
-            return False, _("La regla {0} no tiene codigo de estado destino para re-vincular.").format(rule_doc.name)
+            return False, _("La regla {0} no tiene codigo de estado destino.").format(rule_doc.name), targets
 
         names = frappe.get_all(
             "Estado Financiero EEFF",
             filters={"paquete_eeff": package_name, "codigo_estado": codigo_estado},
             pluck="name",
-            order_by="creation asc",
             limit_page_length=2,
         )
         if not names:
             return False, _("La regla {0} no encontro un estado con codigo {1} dentro del paquete.").format(
                 rule_doc.name, codigo_estado
-            )
-        if len(names) > 1:
-            return False, _("La regla {0} encontro mas de un estado con codigo {1} dentro del paquete.").format(
-                rule_doc.name, codigo_estado
-            )
-
-        rule_doc.estado_financiero_eeff = names[0]
-        rule_doc.save(ignore_permissions=True)
-        return True, None
+            ), targets
+        targets["estado_name"] = names[0]
+        return True, None, targets
 
     if destino in ("Cifra Nota", "Celda Seccion Nota"):
-        changed = False
-        current = cstr(getattr(rule_doc, "nota_eeff", "") or "").strip()
-        if current and frappe.db.exists("Nota EEFF", current):
-            current_package = cstr(frappe.db.get_value("Nota EEFF", current, "paquete_eeff") or "").strip()
-            if current_package == package_name:
-                note_name = current
-            else:
-                note_name = None
-        else:
-            note_name = None
+        numero_nota = _normalize(getattr(rule_doc, "destino_numero_nota", ""))
+        if not numero_nota:
+            return False, _("La regla {0} no tiene numero de nota destino.").format(rule_doc.name), targets
 
+        note_name, _, _ = find_note_name(package_name, numero_nota)
         if not note_name:
-            numero_nota = _normalize(getattr(rule_doc, "destino_numero_nota", ""))
-            if not numero_nota:
-                return False, _("La regla {0} no tiene numero de nota destino para re-vincular.").format(rule_doc.name)
-
-            note_name, _, _ = find_note_name(package_name, numero_nota)
-            if not note_name:
-                return False, _("La regla {0} no encontro una nota con numero {1} dentro del paquete.").format(
-                    rule_doc.name, numero_nota
-                )
-
-            rule_doc.nota_eeff = note_name
-            changed = True
+            return False, _("La regla {0} no encontro una nota con numero {1} dentro del paquete.").format(
+                rule_doc.name, numero_nota
+            ), targets
+        targets["note_name"] = note_name
 
         if destino == "Celda Seccion Nota":
-            current_section = cstr(getattr(rule_doc, "seccion_nota_eeff", "") or "").strip()
-            if current_section and frappe.db.exists("Seccion Nota EEFF", current_section):
-                section_values = frappe.db.get_value(
-                    "Seccion Nota EEFF",
-                    current_section,
-                    ["nota_eeff", "codigo_seccion"],
-                    as_dict=True,
-                ) or {}
-                if cstr(section_values.get("nota_eeff") or "").strip() == note_name:
-                    if not _normalize(getattr(rule_doc, "destino_codigo_seccion", "")):
-                        rule_doc.destino_codigo_seccion = _normalize(section_values.get("codigo_seccion"))
-                        changed = True
-                else:
-                    current_section = ""
+            codigo_seccion = _normalize(getattr(rule_doc, "destino_codigo_seccion", ""))
+            if not codigo_seccion:
+                return False, _("La regla {0} no tiene codigo de seccion destino.").format(rule_doc.name), targets
 
-            if not current_section:
-                codigo_seccion = _normalize(getattr(rule_doc, "destino_codigo_seccion", ""))
-                if not codigo_seccion:
-                    return False, _("La regla {0} no tiene codigo de seccion destino para re-vincular.").format(rule_doc.name)
+            section_names = frappe.get_all(
+                "Seccion Nota EEFF",
+                filters={"nota_eeff": note_name, "codigo_seccion": codigo_seccion},
+                pluck="name",
+                limit_page_length=2,
+            )
+            if not section_names:
+                return False, _("La regla {0} no encontro una seccion con codigo {1} dentro de la nota destino.").format(
+                    rule_doc.name, codigo_seccion
+                ), targets
+            targets["section_name"] = section_names[0]
 
-                names = frappe.get_all(
-                    "Seccion Nota EEFF",
-                    filters={"nota_eeff": note_name, "codigo_seccion": codigo_seccion},
-                    pluck="name",
-                    order_by="creation asc",
-                    limit_page_length=2,
-                )
-                if not names:
-                    return False, _("La regla {0} no encontro una seccion con codigo {1} dentro de la nota destino.").format(
-                        rule_doc.name, codigo_seccion
-                    )
-                if len(names) > 1:
-                    return False, _("La regla {0} encontro mas de una seccion con codigo {1} dentro de la nota destino.").format(
-                        rule_doc.name, codigo_seccion
-                    )
+        return True, None, targets
 
-                rule_doc.seccion_nota_eeff = names[0]
-                changed = True
+    if destino == "Linea Factsheet":
+        codigo_factsheet = _normalize(getattr(rule_doc, "destino_codigo_factsheet", ""))
+        if not codigo_factsheet:
+            return False, _("La regla {0} no tiene codigo de factsheet destino.").format(rule_doc.name), targets
 
-        if changed:
-            rule_doc.save(ignore_permissions=True)
-        return True, None
+        names = frappe.get_all(
+            "Factsheet",
+            filters={"paquete_eeff": package_name, "codigo_factsheet": codigo_factsheet},
+            pluck="name",
+            limit_page_length=2,
+        )
+        if not names:
+            return False, _("La regla {0} no encontro un factsheet con codigo {1} dentro del paquete.").format(
+                rule_doc.name, codigo_factsheet
+            ), targets
+        targets["factsheet_name"] = names[0]
+        return True, None, targets
 
-    return False, _("La regla {0} tiene un tipo de destino no valido.").format(rule_doc.name)
+    return False, _("La regla {0} tiene un tipo de destino no valido.").format(rule_doc.name), targets
 
 
 def _reset_package_targets(package_name):
@@ -448,6 +416,15 @@ def _reset_package_targets(package_name):
                 cell.ultima_regla_mapeo = None
         doc.save(ignore_permissions=True)
 
+    for name in frappe.get_all("Factsheet", filters={"paquete_eeff": package_name}, pluck="name", limit_page_length=200):
+        doc = frappe.get_doc("Factsheet", name)
+        for row in doc.lineas or []:
+            if not cint(getattr(row, "es_manual", 0)):
+                row.monto_actual = 0
+                row.monto_comparativo = 0
+                row.origen_dato = "Manual"
+        doc.save(ignore_permissions=True)
+
 
 def aplicar_mapeo_paquete(paquete_name):
     if not frappe.db.exists("Paquete EEFF", paquete_name):
@@ -480,15 +457,18 @@ def aplicar_mapeo_paquete(paquete_name):
 
     rules = frappe.get_all(
         "Regla Mapeo Contable EEFF",
-        filters={"paquete_eeff": paquete_name, "activo": 1},
+        filters={"company": package.company, "activo": 1},
         fields=[
             "name",
             "fuente_tipo",
             "destino_tipo",
-            "estado_financiero_eeff",
+            "destino_codigo_estado",
+            "destino_codigo_factsheet",
             "destino_codigo_linea",
-            "nota_eeff",
+            "destino_numero_nota",
             "destino_codigo_cifra",
+            "destino_codigo_seccion",
+            "destino_codigo_tabla",
             "destino_seccion_id",
             "destino_codigo_fila",
             "destino_codigo_columna",
@@ -501,9 +481,11 @@ def aplicar_mapeo_paquete(paquete_name):
     touched_states = set()
     touched_notes = set()
     touched_sections = set()
+    touched_factsheets = set()
     state_docs = {}
     note_docs = {}
     section_docs = {}
+    factsheet_docs = {}
     alertas = []
 
     def get_state_doc(name):
@@ -527,9 +509,16 @@ def aplicar_mapeo_paquete(paquete_name):
             section_docs[name] = doc
         return doc
 
+    def get_factsheet_doc(name):
+        doc = factsheet_docs.get(name)
+        if not doc:
+            doc = frappe.get_doc("Factsheet", name)
+            factsheet_docs[name] = doc
+        return doc
+
     for rule_row in rules:
         rule = frappe.get_doc("Regla Mapeo Contable EEFF", rule_row.name)
-        target_ready, target_alert = _ensure_rule_target_link(rule, package.name)
+        target_ready, target_alert, resolved = _resolve_rule_targets(rule, package.name)
         if not target_ready:
             alertas.append(target_alert)
             continue
@@ -546,10 +535,10 @@ def aplicar_mapeo_paquete(paquete_name):
 
         destino = cstr(rule.destino_tipo or "").strip()
         if destino == "Linea Estado":
-            if not rule.estado_financiero_eeff or not frappe.db.exists("Estado Financiero EEFF", rule.estado_financiero_eeff):
+            if not resolved.get("estado_name"):
                 alertas.append(_("La regla {0} apunta a un estado inexistente.").format(rule.name))
                 continue
-            state_doc = get_state_doc(rule.estado_financiero_eeff)
+            state_doc = get_state_doc(resolved["estado_name"])
             line = _find_state_line(state_doc, rule.destino_codigo_linea)
             if not line:
                 state_doc.append(
@@ -578,10 +567,10 @@ def aplicar_mapeo_paquete(paquete_name):
             touched_states.add(state_doc.name)
 
         elif destino == "Cifra Nota":
-            if not rule.nota_eeff or not frappe.db.exists("Nota EEFF", rule.nota_eeff):
+            if not resolved.get("note_name"):
                 alertas.append(_("La regla {0} apunta a una nota inexistente.").format(rule.name))
                 continue
-            note_doc = get_note_doc(rule.nota_eeff)
+            note_doc = get_note_doc(resolved["note_name"])
             selected_actual_amount, selected_comparative_amount = _select_figure_amounts(
                 rule,
                 amount,
@@ -620,10 +609,10 @@ def aplicar_mapeo_paquete(paquete_name):
             touched_notes.add(note_doc.name)
 
         elif destino == "Celda Seccion Nota":
-            if not rule.seccion_nota_eeff or not frappe.db.exists("Seccion Nota EEFF", rule.seccion_nota_eeff):
+            if not resolved.get("section_name"):
                 alertas.append(_("La regla {0} apunta a una seccion inexistente.").format(rule.name))
                 continue
-            section_doc = get_section_doc(rule.seccion_nota_eeff)
+            section_doc = get_section_doc(resolved["section_name"])
             selected_amount = _select_section_cell_amount(
                 rule,
                 amount,
@@ -686,6 +675,29 @@ def aplicar_mapeo_paquete(paquete_name):
             cell.ultima_regla_mapeo = rule.name
             touched_sections.add(section_doc.name)
 
+        elif destino == "Linea Factsheet":
+            if not resolved.get("factsheet_name"):
+                alertas.append(_("La regla {0} apunta a un factsheet inexistente.").format(rule.name))
+                continue
+            fact_doc = get_factsheet_doc(resolved["factsheet_name"])
+            line = None
+            for row in fact_doc.lineas or []:
+                if _normalize(row.codigo_linea) == _normalize(rule.destino_codigo_linea):
+                    line = row
+                    break
+            if not line:
+                fact_doc.append("lineas", {
+                    "codigo_linea": _normalize(rule.destino_codigo_linea),
+                    "descripcion": rule.destino_codigo_linea,
+                })
+                line = fact_doc.lineas[-1]
+            if cint(getattr(line, "es_manual", 0)):
+                continue
+            line.monto_actual = flt(line.monto_actual or 0) + amount
+            line.monto_comparativo = flt(line.monto_comparativo or 0) + comparative_amount
+            line.origen_dato = source_type
+            touched_factsheets.add(fact_doc.name)
+
     for name in touched_states:
         doc = state_docs.get(name)
         if doc:
@@ -701,11 +713,16 @@ def aplicar_mapeo_paquete(paquete_name):
         if doc:
             doc.save(ignore_permissions=True)
 
+    for name in touched_factsheets:
+        doc = factsheet_docs.get(name)
+        if doc:
+            doc.save(ignore_permissions=True)
+
     frappe.db.set_value(
         "Paquete EEFF",
         package.name,
         {
-            "estado_preparacion": "En Preparacion" if touched_states or touched_notes or touched_sections else package.estado_preparacion,
+            "estado_preparacion": "En Preparacion" if touched_states or touched_notes or touched_sections or touched_factsheets else package.estado_preparacion,
         },
         update_modified=False,
     )
@@ -716,5 +733,6 @@ def aplicar_mapeo_paquete(paquete_name):
         "estados_actualizados": len(touched_states),
         "notas_actualizadas": len(touched_notes),
         "secciones_actualizadas": len(touched_sections),
+        "factsheets_actualizados": len(touched_factsheets),
         "alertas": alertas,
     }

@@ -3,15 +3,16 @@
     "creation": "2026-03-12 00:00:00.000000",
     "doctype": "DocType",
     "engine": "InnoDB",
-    "field_order": [
         "identificacion_section",
         "nombre_paquete",
         "cliente",
+        "company",
         "moneda",
         "periodo_column",
         "anio",
         "mes",
         "periodo_nombre",
+        "paquete_origen",
         "fuentes_section",
         "balanza_comprobacion_eeff",
         "balanza_comparativa_eeff",
@@ -63,6 +64,14 @@
             "in_list_view": 1
         },
         {
+            "fieldname": "company",
+            "fieldtype": "Link",
+            "label": "Company",
+            "options": "Company",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
             "fieldname": "moneda",
             "fieldtype": "Link",
             "label": "Moneda",
@@ -93,6 +102,13 @@
             "label": "Periodo Nombre",
             "read_only": 1,
             "in_list_view": 1
+        },
+        {
+            "fieldname": "paquete_origen",
+            "fieldtype": "Link",
+            "label": "Paquete Origen",
+            "options": "Paquete EEFF",
+            "description": "Selecciona un paquete anterior para copiar la estructura de estados financieros y notas."
         },
         {
             "fieldname": "fuentes_section",

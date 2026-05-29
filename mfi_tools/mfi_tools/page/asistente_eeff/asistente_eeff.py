@@ -176,7 +176,7 @@ def _build_status(package_name=None, balanza_name=None):
         status["estado_preparacion"] = package.estado_preparacion
         status["total_estados"] = cint(package.total_estados or 0)
         status["total_notas"] = cint(package.total_notas or 0)
-        status["reglas_activas"] = frappe.db.count("Regla Mapeo Contable EEFF", {"paquete_eeff": package.name, "activo": 1})
+        status["reglas_activas"] = frappe.db.count("Regla Mapeo Contable EEFF", {"company": package.company, "activo": 1})
         if package.balanza_comprobacion_eeff:
             status["balanza_name"] = package.balanza_comprobacion_eeff
 

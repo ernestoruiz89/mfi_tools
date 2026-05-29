@@ -1,0 +1,79 @@
+{
+    "actions": [],
+    "creation": "2026-05-29 12:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "codigo_linea",
+        "descripcion",
+        "origen_dato",
+        "formula",
+        "es_manual",
+        "formato_presentacion",
+        "monto_actual",
+        "monto_comparativo"
+    ],
+    "fields": [
+        {
+            "fieldname": "codigo_linea",
+            "fieldtype": "Data",
+            "label": "Codigo Linea",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "descripcion",
+            "fieldtype": "Data",
+            "label": "Descripcion",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "origen_dato",
+            "fieldtype": "Select",
+            "label": "Origen Dato",
+            "options": "Manual\nMapeo\nFormula",
+            "default": "Manual",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "formula",
+            "fieldtype": "Small Text",
+            "label": "Formula",
+            "depends_on": "eval:doc.origen_dato=='Formula'",
+            "description": "Ej: (CARTERA / EMPLEADOS) * 100"
+        },
+        {
+            "fieldname": "es_manual",
+            "fieldtype": "Check",
+            "label": "Es Manual",
+            "default": 0,
+            "hidden": 1
+        },
+        {
+            "fieldname": "formato_presentacion",
+            "fieldtype": "Select",
+            "label": "Formato Presentacion",
+            "options": "Numero\nMoneda\nPorcentaje",
+            "default": "Numero"
+        },
+        {
+            "fieldname": "monto_actual",
+            "fieldtype": "Float",
+            "label": "Monto Actual",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "monto_comparativo",
+            "fieldtype": "Float",
+            "label": "Monto Comparativo",
+            "in_list_view": 1
+        }
+    ],
+    "istable": 1,
+    "module": "MFI Tools",
+    "name": "Linea Factsheet",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC"
+}

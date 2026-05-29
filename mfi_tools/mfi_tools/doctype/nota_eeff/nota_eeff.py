@@ -57,13 +57,17 @@ class NotaEEFF(Document):
         self._sync_complex_sections_summary()
 
     def on_trash(self):
+        company = ""
+        if self.paquete_eeff and frappe.db.exists("Paquete EEFF", self.paquete_eeff):
+            company = cstr(frappe.db.get_value("Paquete EEFF", self.paquete_eeff, "company") or "").strip()
+        nota_identifier = build_note_identifier(self.numero_nota, self.sub_nota) if self.numero_nota else ""
         active_rules = frappe.get_all(
             "Regla Mapeo Contable EEFF",
             filters={
-                "paquete_eeff": self.paquete_eeff,
+                "company": company,
                 "activo": 1,
                 "destino_tipo": ["in", ["Cifra Nota", "Celda Seccion Nota"]],
-                "nota_eeff": self.name,
+                "destino_numero_nota": nota_identifier,
             },
             fields=[
                 "name",

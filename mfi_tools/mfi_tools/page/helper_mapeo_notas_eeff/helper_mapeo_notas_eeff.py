@@ -215,12 +215,13 @@ def _serialize_rule_detail(rule_doc):
 
 
 def _get_note_rule_rows(note_doc):
+    company = frappe.db.get_value("Paquete EEFF", note_doc.paquete_eeff, "company")
     rows = frappe.get_all(
         "Regla Mapeo Contable EEFF",
         filters={
-            "paquete_eeff": note_doc.paquete_eeff,
+            "company": company,
             "destino_tipo": ["in", list(NOTE_RULE_TARGET_TYPES)],
-            "nota_eeff": note_doc.name,
+            "destino_numero_nota": build_note_identifier(note_doc.numero_nota, note_doc.sub_nota),
         },
         fields=[
             "name",
@@ -406,7 +407,7 @@ def _build_package_summary(package_name):
         "reglas_notas_activas": frappe.db.count(
             "Regla Mapeo Contable EEFF",
             {
-                "paquete_eeff": package_name,
+                "company": frappe.db.get_value("Paquete EEFF", package_name, "company"),
                 "activo": 1,
                 "destino_tipo": ["in", list(NOTE_RULE_TARGET_TYPES)],
             },
@@ -484,8 +485,8 @@ def _apply_rule_payload(rule_doc, note_doc, payload):
     if destino_tipo not in NOTE_RULE_TARGET_TYPES:
         frappe.throw(_("El destino de la regla no es valido."), title=_("Destino Invalido"))
 
-    rule_doc.paquete_eeff = note_doc.paquete_eeff
-    rule_doc.nota_eeff = note_doc.name
+    if not getattr(rule_doc, "company", None):
+        rule_doc.company = frappe.db.get_value("Paquete EEFF", note_doc.paquete_eeff, "company")
     rule_doc.destino_numero_nota = build_note_identifier(note_doc.numero_nota, note_doc.sub_nota)
     rule_doc.activo = cint(payload.get("activo", 1) or 0)
     rule_doc.orden = cint(payload.get("orden") or 0)
