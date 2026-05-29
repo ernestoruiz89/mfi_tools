@@ -211,3 +211,69 @@ def _update_last_rule_references(old_name, new_name):
         """,
         {"old_name": old_value, "new_name": new_value},
     )
+
+
+@frappe.whitelist()
+def get_autocomplete_options(company):
+    if not company:
+        return {}
+
+    packages = frappe.get_all(
+        "Paquete EEFF",
+        filters={"company": company},
+        order_by="creation desc",
+        limit_page_length=1,
+        pluck="name"
+    )
+
+    if not packages:
+        return {}
+    
+    package_name = packages[0]
+    options = {
+        "estados": [], "lineas_estado": [],
+        "notas": [], "cifras_nota": [],
+        "secciones": [], "tablas": [], "filas": [], "columnas": [],
+        "factsheets": [], "lineas_factsheet": []
+    }
+
+    estados = frappe.get_all("Estado Financiero EEFF", filters={"paquete_eeff": package_name}, fields=["name", "codigo_estado", "titulo_estado"])
+    for est in estados:
+        options["estados"].append({"code": est.codigo_estado, "label": est.titulo_estado})
+        doc = frappe.get_doc("Estado Financiero EEFF", est.name)
+        for linea in doc.get("lineas", []):
+            if not linea.es_titulo and not linea.calculo_automatico:
+                options["lineas_estado"].append({"code": linea.codigo_linea, "label": linea.descripcion, "estado": est.codigo_estado})
+    
+    notas = frappe.get_all("Nota EEFF", filters={"paquete_eeff": package_name}, fields=["name", "numero_nota", "titulo_nota"])
+    for nota in notas:
+        options["notas"].append({"code": nota.numero_nota, "label": nota.titulo_nota})
+        doc = frappe.get_doc("Nota EEFF", nota.name)
+        for cifra in doc.get("cifras", []):
+            options["cifras_nota"].append({"code": cifra.codigo_cifra, "label": cifra.descripcion, "nota": nota.numero_nota})
+            
+        secciones = frappe.get_all("Seccion Nota EEFF", filters={"nota_eeff": nota.name}, fields=["name", "codigo_seccion", "titulo_seccion"])
+        for sec in secciones:
+            options["secciones"].append({"code": sec.codigo_seccion, "label": sec.titulo_seccion, "nota": nota.numero_nota})
+            sdoc = frappe.get_doc("Seccion Nota EEFF", sec.name)
+            tablas_set = set()
+            for f in sdoc.get("filas_tabulares", []):
+                if f.codigo_tabla: tablas_set.add(f.codigo_tabla)
+                options["filas"].append({"code": f.codigo_fila, "label": f.descripcion, "seccion": sec.codigo_seccion})
+            for c in sdoc.get("columnas_tabulares", []):
+                if c.codigo_tabla: tablas_set.add(c.codigo_tabla)
+                options["columnas"].append({"code": c.codigo_columna, "label": c.etiqueta, "seccion": sec.codigo_seccion})
+            for c in sdoc.get("celdas_tabulares", []):
+                if c.codigo_tabla: tablas_set.add(c.codigo_tabla)
+            for t in tablas_set:
+                options["tablas"].append({"code": t, "label": t, "seccion": sec.codigo_seccion})
+                
+    factsheets = frappe.get_all("Factsheet", filters={"paquete_eeff": package_name}, fields=["name", "codigo_factsheet", "titulo"])
+    for fs in factsheets:
+        options["factsheets"].append({"code": fs.codigo_factsheet, "label": fs.titulo})
+        fdoc = frappe.get_doc("Factsheet", fs.name)
+        for l in fdoc.get("lineas", []):
+            if l.origen_dato != "Formula":
+                options["lineas_factsheet"].append({"code": l.codigo_linea, "label": l.descripcion, "factsheet": fs.codigo_factsheet})
+                
+    return options
