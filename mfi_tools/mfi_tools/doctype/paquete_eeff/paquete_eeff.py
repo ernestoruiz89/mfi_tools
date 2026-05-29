@@ -6,7 +6,6 @@ from frappe.model.document import Document
 from frappe.utils import cint, cstr, flt
 
 from mfi_tools.mfi_tools.services.mapeo import aplicar_mapeo_paquete
-from mfi_tools.mfi_tools.utils.customer import get_customer_display
 from mfi_tools.mfi_tools.utils.nota_eeff import get_package_note_rows
 from mfi_tools.mfi_tools.utils.word_export import build_paquete_eeff_word_content, export_paquete_eeff_to_word
 
@@ -147,13 +146,12 @@ class PaqueteEEFF(Document):
 
 
     def _sync_names(self):
-        cliente = cstr(self.cliente or "").strip()
+        company = cstr(self.company or "").strip()
         mes = cstr(self.mes or "").strip()
         anio = cint(self.anio or 0)
-        if cliente and mes and anio:
-            cliente_display = get_customer_display(cliente)
-            self.periodo_nombre = f"{cliente_display or cliente}-{mes}-{anio}"
-            self.nombre_paquete = self.nombre_paquete or f"EEFF - {cliente_display or cliente} - {mes} {anio}"
+        if company and mes and anio:
+            self.periodo_nombre = f"{company}-{mes}-{anio}"
+            self.nombre_paquete = self.nombre_paquete or f"EEFF - {company} - {mes} {anio}"
 
     def _sync_totals(self):
         if not self.name:
@@ -420,8 +418,8 @@ def copiar_notas_desde_paquete(paquete_name, paquete_fuente, limpiar_notas=0):
 
     destino = frappe.get_doc("Paquete EEFF", paquete_name)
     fuente = frappe.get_doc("Paquete EEFF", paquete_fuente)
-    if cstr(destino.cliente or "").strip() and cstr(fuente.cliente or "").strip() and destino.cliente != fuente.cliente:
-        frappe.throw(_("Solo puedes copiar notas entre paquetes del mismo cliente."), title=_("Cliente Inconsistente"))
+    if cstr(destino.company or "").strip() and cstr(fuente.company or "").strip() and destino.company != fuente.company:
+        frappe.throw(_("Solo puedes copiar notas entre paquetes de la misma compania."), title=_("Compania Inconsistente"))
 
     if cint(limpiar_notas):
         _delete_package_notas(paquete_name)
