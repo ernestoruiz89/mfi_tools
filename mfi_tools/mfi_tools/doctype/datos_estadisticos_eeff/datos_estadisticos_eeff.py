@@ -46,3 +46,30 @@ class DatosEstadisticosEEFF(Document):
             if row.codigo_dato in seen:
                 frappe.throw(f"El dato estadistico con codigo {row.codigo_dato} esta duplicado.", title="Codigo Duplicado")
             seen.add(row.codigo_dato)
+
+
+@frappe.whitelist()
+def duplicar_a_moneda(docname, moneda_destino, tasa_cambio, operacion):
+    from frappe import _
+    if not frappe.db.exists("Datos Estadisticos EEFF", docname):
+        frappe.throw(_("El documento de datos estadisticos indicado no existe."))
+        
+    doc = frappe.get_doc("Datos Estadisticos EEFF", docname)
+    moneda_destino = cstr(moneda_destino or "").strip().upper()
+    tasa_cambio = flt(tasa_cambio or 1)
+    if tasa_cambio <= 0:
+        frappe.throw(_("La tasa de cambio debe ser mayor a cero."))
+        
+    new_doc = frappe.copy_doc(doc)
+    new_doc.moneda = moneda_destino
+    new_doc.nombre_datos_estadisticos = f"{doc.nombre_datos_estadisticos} - {moneda_destino}"
+    new_doc.set("tasas_cambio", [])
+    
+    for row in new_doc.get("lineas") or []:
+        if operacion == "Multiplicar":
+            row.valor_actual = flt(row.valor_actual) * tasa_cambio
+        else:
+            row.valor_actual = flt(row.valor_actual) / tasa_cambio
+            
+    new_doc.save(ignore_permissions=True)
+    return new_doc.name

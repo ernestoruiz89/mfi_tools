@@ -306,3 +306,39 @@ def cargar_balanza_csv(balanza_name, csv_content, tasa_cambio=None, moneda=None)
             if cstr(getattr(row, "moneda", "") or "").strip()
         ],
     }
+
+
+@frappe.whitelist()
+def duplicar_a_moneda(docname, moneda_destino, tasa_cambio, operacion):
+    if not frappe.db.exists("Balanza Comprobacion EEFF", docname):
+        frappe.throw(_("La balanza indicada no existe."))
+        
+    doc = frappe.get_doc("Balanza Comprobacion EEFF", docname)
+    moneda_destino = cstr(moneda_destino or "").strip().upper()
+    tasa_cambio = flt(tasa_cambio or 1)
+    if tasa_cambio <= 0:
+        frappe.throw(_("La tasa de cambio debe ser mayor a cero."))
+        
+    new_doc = frappe.copy_doc(doc)
+    new_doc.moneda = moneda_destino
+    new_doc.nombre_balanza = f"{doc.nombre_balanza} - {moneda_destino}"
+    new_doc.set("tasas_cambio", [])
+    
+    for row in new_doc.get("lineas") or []:
+        if operacion == "Multiplicar":
+            row.debe_saldo_anterior = flt(row.debe_saldo_anterior) * tasa_cambio
+            row.haber_saldo_anterior = flt(row.haber_saldo_anterior) * tasa_cambio
+            row.debe_mes = flt(row.debe_mes) * tasa_cambio
+            row.haber_mes = flt(row.haber_mes) * tasa_cambio
+            row.debe_saldo = flt(row.debe_saldo) * tasa_cambio
+            row.haber_saldo = flt(row.haber_saldo) * tasa_cambio
+        else:
+            row.debe_saldo_anterior = flt(row.debe_saldo_anterior) / tasa_cambio
+            row.haber_saldo_anterior = flt(row.haber_saldo_anterior) / tasa_cambio
+            row.debe_mes = flt(row.debe_mes) / tasa_cambio
+            row.haber_mes = flt(row.haber_mes) / tasa_cambio
+            row.debe_saldo = flt(row.debe_saldo) / tasa_cambio
+            row.haber_saldo = flt(row.haber_saldo) / tasa_cambio
+            
+    new_doc.save(ignore_permissions=True)
+    return new_doc.name
