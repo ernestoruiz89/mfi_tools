@@ -1,6 +1,10 @@
 import frappe
 
 def before_install():
+    # Unconditionally ensure MFI Tools Module Def does not exist so Frappe can create it
+    if frappe.db.exists("Module Def", "MFI Tools"):
+        frappe.delete_doc("Module Def", "MFI Tools", force=True, ignore_missing=True)
+
     # Check if 'contafacil' is in the installed apps
     installed_apps = frappe.get_installed_apps()
     if "contafacil" in installed_apps:
@@ -16,9 +20,6 @@ def before_install():
         # 2. Update Module Def
         if frappe.db.exists("Module Def", "Contafacil"):
             frappe.delete_doc("Module Def", "Contafacil", force=True, ignore_missing=True)
-            
-        if frappe.db.exists("Module Def", "MFI Tools"):
-            frappe.delete_doc("Module Def", "MFI Tools", force=True, ignore_missing=True)
 
         # 3. Update Patch Log
         frappe.db.sql("UPDATE `tabPatch Log` SET patch = REPLACE(patch, 'contafacil.contafacil', 'mfi_tools.mfi_tools') WHERE patch LIKE 'contafacil.contafacil%'")
