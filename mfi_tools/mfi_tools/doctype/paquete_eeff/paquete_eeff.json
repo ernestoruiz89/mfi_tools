@@ -3,6 +3,7 @@
     "creation": "2026-03-12 00:00:00.000000",
     "doctype": "DocType",
     "engine": "InnoDB",
+    "field_order": [
         "identificacion_section",
         "nombre_paquete",
         "cliente",
