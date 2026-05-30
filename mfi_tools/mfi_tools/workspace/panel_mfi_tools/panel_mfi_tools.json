@@ -1,172 +1,172 @@
 {
-    "charts": [],
-    "content": "[{\"id\":\"hdr_cf\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Panel MFI Tools</span>\",\"col\":12}},{\"id\":\"card_flujo\",\"type\":\"card\",\"data\":{\"card_name\":\"Flujo EEFF\",\"col\":6}},{\"id\":\"card_tools\",\"type\":\"card\",\"data\":{\"card_name\":\"Herramientas\",\"col\":6}}]",
-    "creation": "2026-03-12 00:00:00.000000",
-    "custom_blocks": [],
-    "docstatus": 0,
-    "doctype": "Workspace",
-    "for_user": "",
-    "hide_custom": 0,
-    "icon": "file",
-    "idx": 0,
-    "indicator_color": "green",
-    "is_hidden": 0,
-    "label": "Panel MFI Tools",
-    "links": [
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Flujo EEFF",
-            "link_count": 8,
-            "link_type": "DocType",
-            "onboard": 0,
-            "type": "Card Break"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Paquetes EEFF",
-            "link_count": 0,
-            "link_to": "Paquete EEFF",
-            "link_type": "DocType",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Balanza Comprobacion",
-            "link_count": 0,
-            "link_to": "Balanza Comprobacion EEFF",
-            "link_type": "DocType",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Datos Estadisticos",
-            "link_count": 0,
-            "link_to": "Datos Estadisticos EEFF",
-            "link_type": "DocType",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Estados Financieros",
-            "link_count": 0,
-            "link_to": "Estado Financiero EEFF",
-            "link_type": "DocType",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Notas EEFF",
-            "link_count": 0,
-            "link_to": "Nota EEFF",
-            "link_type": "DocType",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Secciones Nota EEFF",
-            "link_count": 0,
-            "link_to": "Seccion Nota EEFF",
-            "link_type": "DocType",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Reglas de Mapeo",
-            "link_count": 0,
-            "link_to": "Regla Mapeo Contable EEFF",
-            "link_type": "DocType",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Factsheets",
-            "link_count": 0,
-            "link_to": "Factsheet",
-            "link_type": "DocType",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Herramientas",
-            "link_count": 4,
-            "link_type": "DocType",
-            "onboard": 0,
-            "type": "Card Break"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Asistente EEFF",
-            "link_count": 0,
-            "link_to": "asistente-eeff",
-            "link_type": "Page",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Indicadores Emision",
-            "link_count": 0,
-            "link_to": "indicadores-emision-eeff",
-            "link_type": "Page",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Asistente Notas",
-            "link_count": 0,
-            "link_to": "asistente-notas-eeff",
-            "link_type": "Page",
-            "onboard": 0,
-            "type": "Link"
-        },
-        {
-            "hidden": 0,
-            "is_query_report": 0,
-            "label": "Helper Mapeo Notas",
-            "link_count": 0,
-            "link_to": "helper-mapeo-notas-eeff",
-            "link_type": "Page",
-            "onboard": 0,
-            "type": "Link"
-        }
-    ],
-    "modified": "2026-05-29 13:25:00.000000",
-    "modified_by": "Administrator",
-    "module": "MFI Tools",
-    "name": "Panel MFI Tools",
-    "number_cards": [],
-    "owner": "Administrator",
-    "parent_page": "",
-    "public": 1,
-    "quick_lists": [],
-    "roles": [
-        {
-            "role": "System Manager"
-        }
-    ],
-    "sequence_id": 1.0,
-    "shortcuts": [],
-    "title": "Panel MFI Tools"
+ "charts": [],
+ "content": "[{\"id\":\"hdr_cf\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Panel MFI Tools</span>\",\"col\":12}},{\"id\":\"card_flujo\",\"type\":\"card\",\"data\":{\"card_name\":\"Flujo EEFF\",\"col\":6}},{\"id\":\"card_tools\",\"type\":\"card\",\"data\":{\"card_name\":\"Herramientas\",\"col\":6}}]",
+ "creation": "2026-03-12 00:00:00",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "file",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Panel MFI Tools",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Herramientas",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Asistente EEFF",
+   "link_count": 0,
+   "link_to": "asistente-eeff",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Indicadores Emision",
+   "link_count": 0,
+   "link_to": "indicadores-emision-eeff",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Asistente Notas",
+   "link_count": 0,
+   "link_to": "asistente-notas-eeff",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Helper Mapeo Notas",
+   "link_count": 0,
+   "link_to": "helper-mapeo-notas-eeff",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Flujo EEFF",
+   "link_count": 8,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Paquetes EEFF",
+   "link_count": 0,
+   "link_to": "Paquete EEFF",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Balanza Comprobacion",
+   "link_count": 0,
+   "link_to": "Balanza Comprobacion EEFF",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Datos Estadisticos",
+   "link_count": 0,
+   "link_to": "Datos Estadisticos EEFF",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Estados Financieros",
+   "link_count": 0,
+   "link_to": "Estado Financiero EEFF",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Notas EEFF",
+   "link_count": 0,
+   "link_to": "Nota EEFF",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Secciones Nota EEFF",
+   "link_count": 0,
+   "link_to": "Seccion Nota EEFF",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Factsheet",
+   "link_count": 0,
+   "link_to": "Factsheet",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reglas de Mapeo",
+   "link_count": 0,
+   "link_to": "Regla Mapeo Contable EEFF",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-05-30 13:08:31.074530",
+ "modified_by": "Administrator",
+ "module": "MFI Tools",
+ "name": "Panel MFI Tools",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ],
+ "sequence_id": 1.0,
+ "shortcuts": [],
+ "title": "Panel MFI Tools"
 }
