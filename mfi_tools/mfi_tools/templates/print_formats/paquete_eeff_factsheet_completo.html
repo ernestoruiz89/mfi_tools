@@ -1,0 +1,346 @@
+<style>
+  .cpc-wrap,
+  .cpc-wrap * {
+    font-family: "Arial Narrow", Arial, "Helvetica Neue", sans-serif !important;
+    color: #000000 !important;
+    font-size: 12pt;
+    line-height: 1.25;
+  }
+
+  .cpc-wrap {
+    padding: 0 24px;
+    box-sizing: border-box;
+  }
+
+  .cpc-head {
+    position: relative;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+    line-height: 1;
+  }
+
+  .cpc-head::after {
+    content: "";
+    display: block;
+    width: calc(100% + 48px);
+    margin-left: -24px;
+    margin-top: 10px;
+    border-bottom: 2px solid #000000;
+  }
+
+  .cpc-head h1 {
+    margin: 0;
+    font-size: 12pt;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .cpc-head p {
+    margin: 4px 0 0;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cpc-meta {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 18px;
+  }
+
+  .cpc-meta td {
+    border: 1px solid #dbe3ef;
+    padding: 6px 8px;
+    vertical-align: top;
+    font-size: 12pt;
+  }
+
+  .cpc-section {
+    margin: 0 0 10px;
+    page-break-inside: avoid;
+  }
+
+  .cpc-section,
+  .cpc-section *,
+  .cpc-table,
+  .cpc-table * {
+    line-height: 1.25 !important;
+  }
+
+  .cpc-section h2 {
+    margin: 0 0 4px;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cpc-section h3 {
+    margin: 0 0 4px;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cpc-table {
+    width: var(--cpc-table-width, 100%);
+    border-collapse: collapse;
+    margin-top: 4px;
+    table-layout: fixed;
+  }
+
+  .cpc-table.cpc-align-left {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  .cpc-table.cpc-align-center {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cpc-table.cpc-align-right {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .cpc-table,
+  .cpc-table * {
+    font-size: var(--cpc-table-font-size, 12pt) !important;
+    line-height: 1.1 !important;
+  }
+
+  .cpc-table th,
+  .cpc-table td {
+    border: none;
+    padding: 1px 0 !important;
+    vertical-align: middle;
+  }
+
+  .cpc-table th {
+    background: transparent;
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .cpc-col-desc {
+    width: 46%;
+  }
+
+  .cpc-col-nota {
+    width: 8%;
+    text-align: center;
+  }
+
+  .cpc-col-monto {
+    width: 21%;
+    text-align: right;
+  }
+
+  .cpc-col-gap {
+    width: 2px;
+  }
+
+  .cpc-table th.num,
+  .cpc-table td.num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .cpc-table th.cpc-note,
+  .cpc-table td.cpc-note {
+    text-align: center;
+    white-space: nowrap;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .cpc-table th.cpc-val-actual,
+  .cpc-table td.cpc-val-actual {
+    padding-left: 18px !important;
+    padding-right: 12px !important;
+  }
+
+  .cpc-table th.cpc-val-comparativo,
+  .cpc-table td.cpc-val-comparativo {
+    padding-left: 22px !important;
+  }
+
+  .cpc-table th.cpc-gap,
+  .cpc-table td.cpc-gap {
+    padding: 0 !important;
+    width: 2px;
+  }
+
+  .cpc-money {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .cpc-money-symbol {
+    text-align: left;
+    padding-right: 6px;
+    white-space: nowrap;
+  }
+
+  .cpc-money-value {
+    text-align: right;
+    white-space: nowrap;
+    flex: 1 1 auto;
+  }
+
+  .cpc-line-total td,
+  .cpc-line-subtotal td {
+    font-weight: 700;
+  }
+
+  .cpc-line-subtotal td.num {
+    border-top: 1px solid #000000;
+    border-bottom: 1px solid #000000;
+  }
+
+  .cpc-line-total td.num {
+    border-top: 1px solid #000000;
+    border-bottom: 3px double #000000;
+  }
+
+  .cpc-desc {
+    display: block;
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  .cpc-line-blank td {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .cpc-line-blank .cpc-desc {
+    min-height: 1.25em;
+  }
+
+  .cpc-note-comment {
+    margin-top: 1px;
+    font-size: 10pt !important;
+    line-height: inherit !important;
+    color: #555555 !important;
+  }
+</style>
+
+{% set factsheets = frappe.get_all(
+  "Factsheet",
+  filters={"paquete_eeff": doc.name},
+  fields=["name", "codigo_factsheet", "titulo"],
+  order_by="codigo_factsheet asc",
+  limit_page_length=100
+) %}
+{% set labels = doc.get_column_labels() %}
+{% set currency_ctx = doc.get_currency_context() %}
+{% set currency_symbol = currency_ctx.symbol or "$" %}
+
+<div class="cpc-wrap">
+  <div class="cpc-head">
+    <h1>{{ doc.cliente or "-" }}</h1>
+    <p>Reporte de Factsheets Completo</p>
+    <p>Periodo: {{ doc.periodo_nombre or "-" }}</p>
+  </div>
+
+  <table class="cpc-meta">
+    <tr>
+      <td><strong>Paquete</strong><br>{{ doc.name or "-" }}</td>
+      <td><strong>Cliente</strong><br>{{ doc.cliente or "-" }}</td>
+      <td><strong>Mes</strong><br>{{ doc.mes or "-" }}</td>
+      <td><strong>Anio</strong><br>{{ doc.anio or "-" }}</td>
+    </tr>
+  </table>
+
+  {% set ns_fs = namespace(tiene=0) %}
+  {% for fs in factsheets or [] %}
+    {% set fs_doc = frappe.get_doc("Factsheet", fs.name) %}
+    {% if not fs_doc.no_imprimir %}{% set ns_fs.tiene = 1 %}{% endif %}
+  {% endfor %}
+
+  {% if ns_fs.tiene %}
+  <div class="cpc-section">
+    <h2>Factsheets (Indicadores y Datos)</h2>
+    {% for fs in factsheets %}
+      {% set fs_doc = frappe.get_doc("Factsheet", fs.name) %}
+      {% if not fs_doc.no_imprimir %}
+        {% set lines = fs_doc.lineas or [] %}
+        <div class="cpc-section" {% if not loop.first %}style="page-break-before: always;"{% endif %}>
+          <h3>{{ fs_doc.titulo or fs_doc.codigo_factsheet or "Factsheet" }}</h3>
+
+          <table class="cpc-table cpc-align-{{ fs_doc.get_print_table_alignment_css() }}" style="--cpc-table-font-size: {{ fs_doc.get_print_font_size() }}pt; --cpc-table-width: {{ fs_doc.get_print_table_width() }};">
+            <colgroup>
+              <col class="cpc-col-desc">
+              <col class="cpc-col-nota">
+              <col class="cpc-col-monto">
+              <col class="cpc-col-gap">
+              <col class="cpc-col-monto">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Concepto</th>
+                <th class="cpc-note"></th>
+                <th class="num cpc-val-actual">{{ labels.actual }}</th>
+                <th class="cpc-gap"></th>
+                <th class="num cpc-val-comparativo">{{ labels.comparativo }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in lines %}
+                {% if not row.no_imprimir %}
+                  {% set row_class = "" %}
+                  {% if row.es_linea_blanco %}
+                    {% set row_class = "cpc-line-blank" %}
+                  {% endif %}
+                  {% if row.es_total %}
+                    {% set row_class = "cpc-line-total" %}
+                  {% elif row.es_subtotal %}
+                    {% set row_class = "cpc-line-subtotal" %}
+                  {% endif %}
+                  <tr class="{{ row_class }}">
+                    <td>
+                      <span class="cpc-desc" style="{% if row.negrita %}font-weight: 700;{% endif %}{% if row.subrayado %}text-decoration: underline;{% endif %}{% if row.cursiva %}font-style: italic;{% endif %}">
+                        {% if not row.es_linea_blanco %}{{ row.descripcion or row.codigo_linea or "-" }}{% endif %}
+                      </span>
+                      {% if row.comentario %}<div class="cpc-note-comment">{{ row.comentario }}</div>{% endif %}
+                    </td>
+                    <td class="cpc-note"></td>
+                    <td class="num cpc-val-actual">
+                      {% if not row.es_linea_blanco and not row.es_titulo %}
+                        {% if row.formato_presentacion == "Moneda" %}
+                          <span class="cpc-money">
+                            <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                            <span class="cpc-money-value">{{ fs_doc.format_line_value(row, "monto_actual") }}</span>
+                          </span>
+                        {% else %}
+                          {{ fs_doc.format_line_value(row, "monto_actual") }}
+                        {% endif %}
+                      {% endif %}
+                    </td>
+                    <td class="cpc-gap"></td>
+                    <td class="num cpc-val-comparativo">
+                      {% if not row.es_linea_blanco and not row.es_titulo %}
+                        {% if row.formato_presentacion == "Moneda" %}
+                          <span class="cpc-money">
+                            <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                            <span class="cpc-money-value">{{ fs_doc.format_line_value(row, "monto_comparativo") }}</span>
+                          </span>
+                        {% else %}
+                          {{ fs_doc.format_line_value(row, "monto_comparativo") }}
+                        {% endif %}
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <p>No hay factsheets imprimibles registrados para este paquete.</p>
+  {% endif %}
+</div>

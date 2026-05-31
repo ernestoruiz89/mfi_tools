@@ -189,6 +189,10 @@ frappe.ui.form.on("Paquete EEFF", {
             openPrint(frm, "Paquete EEFF - Completo");
         }, __("Impresion"));
 
+        frm.add_custom_button(__("Imprimir Factsheets"), () => {
+            openPrint(frm, "Paquete EEFF - Factsheet Completo");
+        }, __("Impresion"));
+
         frm.add_custom_button(__("Exportar Word EEFF"), () => {
             callWordExport(frm);
         }, __("Impresion"));
