@@ -14,6 +14,7 @@
         "impresion_section",
         "tamano_letra_impresion",
         "no_imprimir",
+        "no_imprimir_comentarios",
         "impresion_column",
         "ancho_tabla_impresion",
         "alineacion_tabla_impresion",
@@ -82,6 +83,13 @@
             "label": "No Imprimir",
             "default": 0,
             "description": "Evita que este Factsheet se imprima en el reporte del paquete completo."
+        },
+        {
+            "fieldname": "no_imprimir_comentarios",
+            "fieldtype": "Check",
+            "label": "No imprimir Comentarios",
+            "default": 0,
+            "description": "Evita que se impriman comentarios en todas las lineas de este Factsheet, independientemente de la configuracion de cada linea."
         },
         {
             "fieldname": "impresion_column",
