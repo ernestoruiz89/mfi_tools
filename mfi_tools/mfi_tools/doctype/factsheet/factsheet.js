@@ -32,12 +32,23 @@ function runPackageMappingFromFactsheet(frm) {
     });
 }
 
+function openFactsheetPrint(frm) {
+    const url = frappe.urllib.get_full_url(
+        `/printview?doctype=${encodeURIComponent(frm.doctype)}&name=${encodeURIComponent(frm.doc.name)}&format=${encodeURIComponent("Factsheet - Individual")}&trigger_print=1`
+    );
+    window.open(url, "_blank");
+}
+
 frappe.ui.form.on("Factsheet", {
     refresh(frm) {
         if (frm.is_new()) return;
 
         frm.add_custom_button(__("Ejecutar Mapeo"), () => {
             runPackageMappingFromFactsheet(frm);
-        });
+        }, __("Revision"));
+
+        frm.add_custom_button(__("Imprimir Factsheet"), () => {
+            openFactsheetPrint(frm);
+        }, __("Impresion"));
     },
 });
