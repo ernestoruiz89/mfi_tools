@@ -586,13 +586,13 @@ def aplicar_mapeo_paquete(paquete_name):
         return results
 
     if balanza:
-        f_bal = {"cliente": balanza.cliente, "moneda": balanza.moneda}
+        f_bal = {"company": balanza.company, "moneda": balanza.moneda}
         historical_data["cierre_anterior_actual_balances"] = _get_historical("Balanza Comprobacion EEFF", f_bal, balanza.anio - 1, "Diciembre")
         historical_data["anio_anterior_actual_balances"] = _get_historical("Balanza Comprobacion EEFF", f_bal, balanza.anio - 1, balanza.mes)
         historical_data["promedio_12_actual_balances"] = _get_historical_12_months("Balanza Comprobacion EEFF", f_bal, balanza.anio, balanza.mes)
 
     if comparative_doc:
-        f_comp = {"cliente": comparative_doc.cliente, "moneda": comparative_doc.moneda}
+        f_comp = {"company": comparative_doc.company, "moneda": comparative_doc.moneda}
         historical_data["cierre_anterior_comparativo_balances"] = _get_historical("Balanza Comprobacion EEFF", f_comp, comparative_doc.anio - 1, "Diciembre")
         historical_data["anio_anterior_comparativo_balances"] = _get_historical("Balanza Comprobacion EEFF", f_comp, comparative_doc.anio - 1, comparative_doc.mes)
         historical_data["promedio_12_comparativo_balances"] = _get_historical_12_months("Balanza Comprobacion EEFF", f_comp, comparative_doc.anio, comparative_doc.mes)

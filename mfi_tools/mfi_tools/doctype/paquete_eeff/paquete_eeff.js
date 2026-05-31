@@ -97,7 +97,7 @@ function openCopyNotesDialog(frm) {
     dialog.fields_dict.paquete_fuente.get_query = () => ({
         filters: (() => {
             const filters = { name: ["!=", frm.doc.name] };
-            if (frm.doc.cliente) filters.cliente = frm.doc.cliente;
+            if (frm.doc.company) filters.company = frm.doc.company;
             return filters;
         })(),
     });
@@ -109,20 +109,20 @@ frappe.ui.form.on("Paquete EEFF", {
     setup(frm) {
         const get_balance_filters = () => {
             const filters = {};
-            if (frm.doc.cliente) filters.cliente = frm.doc.cliente;
+            if (frm.doc.company) filters.company = frm.doc.company;
             return { filters };
         };
 
         frm.set_query("balanza_comprobacion_eeff", get_balance_filters);
         frm.set_query("balanza_comparativa_eeff", () => {
             const filters = {};
-            if (frm.doc.cliente) filters.cliente = frm.doc.cliente;
+            if (frm.doc.company) filters.company = frm.doc.company;
             if (frm.doc.balanza_comprobacion_eeff) filters.name = ["!=", frm.doc.balanza_comprobacion_eeff];
             return { filters };
         });
         frm.set_query("balanza_base_actual_eeff", () => {
             const filters = {};
-            if (frm.doc.cliente) filters.cliente = frm.doc.cliente;
+            if (frm.doc.company) filters.company = frm.doc.company;
             const excluded = [
                 frm.doc.balanza_comprobacion_eeff,
                 frm.doc.balanza_comparativa_eeff,
@@ -133,7 +133,7 @@ frappe.ui.form.on("Paquete EEFF", {
         });
         frm.set_query("balanza_base_comparativa_eeff", () => {
             const filters = {};
-            if (frm.doc.cliente) filters.cliente = frm.doc.cliente;
+            if (frm.doc.company) filters.company = frm.doc.company;
             const excluded = [
                 frm.doc.balanza_comprobacion_eeff,
                 frm.doc.balanza_comparativa_eeff,
@@ -144,12 +144,12 @@ frappe.ui.form.on("Paquete EEFF", {
         });
         frm.set_query("datos_estadisticos_actual_eeff", () => {
             const filters = {};
-            if (frm.doc.cliente) filters.cliente = frm.doc.cliente;
+            if (frm.doc.company) filters.company = frm.doc.company;
             return { filters };
         });
         frm.set_query("datos_estadisticos_comparativo_eeff", () => {
             const filters = {};
-            if (frm.doc.cliente) filters.cliente = frm.doc.cliente;
+            if (frm.doc.company) filters.company = frm.doc.company;
             if (frm.doc.datos_estadisticos_actual_eeff) filters.name = ["!=", frm.doc.datos_estadisticos_actual_eeff];
             return { filters };
         });

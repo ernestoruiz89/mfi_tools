@@ -6,7 +6,7 @@
     "field_order": [
         "identificacion_section",
         "nombre_balanza",
-        "cliente",
+        "company",
         "moneda",
         "periodo_column",
         "anio",
@@ -29,7 +29,7 @@
     "fields": [
         {"fieldname": "identificacion_section", "fieldtype": "Section Break", "label": "Identificacion y Periodo"},
         {"fieldname": "nombre_balanza", "fieldtype": "Data", "label": "Nombre Balanza", "read_only": 1, "in_list_view": 1, "no_copy": 1},
-        {"fieldname": "cliente", "fieldtype": "Link", "label": "Cliente", "options": "Customer", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "company", "fieldtype": "Link", "label": "Compañia", "options": "Company", "reqd": 1, "in_list_view": 1},
         {"fieldname": "moneda", "fieldtype": "Link", "label": "Moneda", "options": "Currency", "in_list_view": 1},
         {"fieldname": "periodo_column", "fieldtype": "Column Break"},
         {"fieldname": "anio", "fieldtype": "Int", "label": "Anio", "reqd": 1, "in_list_view": 1},

@@ -103,14 +103,13 @@ class BalanzaComprobacionEEFF(Document):
         self.moneda = moneda
 
     def _sync_period_fields(self):
-        cliente = cstr(self.cliente or "").strip()
+        company = cstr(self.company or "").strip()
         mes = cstr(self.mes or "").strip()
         anio = cint(self.anio or 0)
-        if not cliente or not mes or not anio:
+        if not company or not mes or not anio:
             return
 
-        cliente_display = get_customer_display(cliente)
-        periodo = f"{cliente_display or cliente}-{mes}-{anio}"
+        periodo = f"{company}-{mes}-{anio}"
         self.periodo_nombre = periodo
         self.nombre_balanza = self.nombre_balanza or periodo
 
