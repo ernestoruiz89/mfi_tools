@@ -279,7 +279,7 @@ def get_autocomplete_options(company):
             for t in tablas_set:
                 options["tablas"].append({"code": t, "label": t, "seccion": sec.codigo_seccion})
                 
-    factsheets = frappe.get_all("Factsheet", filters={"paquete_eeff": package_name}, fields=["name", "codigo_factsheet", "titulo"])
+    factsheets = frappe.get_all("Factsheet", filters={"paquete_eeff": package_name}, fields=["name", "codigo_factsheet", "titulo"], order_by="numero_factsheet asc, codigo_factsheet asc")
     for fs in factsheets:
         options["factsheets"].append({"code": fs.codigo_factsheet, "label": fs.titulo})
         fdoc = frappe.get_doc("Factsheet", fs.name)

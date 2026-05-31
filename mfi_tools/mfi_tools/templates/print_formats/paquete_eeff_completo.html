@@ -87,6 +87,10 @@
     margin-top: 12pt;
   }
 
+  .cpc-factsheet-block + .cpc-factsheet-block {
+    margin-top: 18pt;
+  }
+
   .cpc-subtitle {
     margin: 2px 0 4px;
     font-size: 12pt;
@@ -328,8 +332,8 @@ limit_page_length=300
 {% set factsheets = frappe.get_all(
 "Factsheet",
 filters={"paquete_eeff": doc.name},
-fields=["name", "codigo_factsheet", "titulo"],
-order_by="codigo_factsheet asc",
+fields=["name", "codigo_factsheet", "numero_factsheet", "titulo"],
+order_by="numero_factsheet asc, codigo_factsheet asc",
 limit_page_length=100
 ) %}
 {% set labels = doc.get_column_labels() %}
@@ -721,11 +725,12 @@ limit_page_length=100
 
   {% if ns_fs.tiene %}
   <div class="cpc-section">
+    {% set ns_first_fs = namespace(printed=0) %}
     {% for fs in factsheets %}
     {% set fs_doc = frappe.get_doc("Factsheet", fs.name) %}
     {% if not fs_doc.no_imprimir %}
     {% set lines = fs_doc.lineas or [] %}
-    <div class="cpc-section" style="page-break-before: always;">
+    <div class="cpc-section cpc-factsheet-block" {% if not ns_first_fs.printed %}style="page-break-before: always;"{% set ns_first_fs.printed = 1 %}{% endif %}>
       <h3>{{ fs_doc.titulo or fs_doc.codigo_factsheet or "Factsheet" }}</h3>
       <div style="height: 1em;"></div>
 

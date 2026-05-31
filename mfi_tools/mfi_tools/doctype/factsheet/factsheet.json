@@ -10,6 +10,7 @@
         "company",
         "identificacion_column",
         "codigo_factsheet",
+        "numero_factsheet",
         "titulo",
         "impresion_section",
         "tamano_letra_impresion",
@@ -57,6 +58,13 @@
             "fieldname": "codigo_factsheet",
             "fieldtype": "Data",
             "label": "Codigo Factsheet",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "numero_factsheet",
+            "fieldtype": "Int",
+            "label": "Numero Factsheet",
             "reqd": 1,
             "in_list_view": 1
         },

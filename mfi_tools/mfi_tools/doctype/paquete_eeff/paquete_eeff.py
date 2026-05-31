@@ -55,7 +55,7 @@ class PaqueteEEFF(Document):
             "Factsheet",
             filters={"paquete_eeff": paquete_origen},
             pluck="name",
-            order_by="codigo_factsheet asc",
+            order_by="numero_factsheet asc, codigo_factsheet asc",
             limit_page_length=50,
         )
         for origin_factsheet_name in origin_factsheets:
