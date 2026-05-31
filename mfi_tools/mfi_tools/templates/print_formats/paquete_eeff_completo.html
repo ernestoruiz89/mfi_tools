@@ -713,11 +713,18 @@ limit_page_length=100
     {% endif %}
   </div>
 
+  {% set ns_fs = namespace(tiene=0) %}
+  {% for fs in factsheets or [] %}
+    {% set fs_doc = frappe.get_doc("Factsheet", fs.name) %}
+    {% if not fs_doc.no_imprimir %}{% set ns_fs.tiene = 1 %}{% endif %}
+  {% endfor %}
+
+  {% if ns_fs.tiene %}
   <div class="cpc-section">
     <h2>Factsheets (Indicadores y Datos)</h2>
-    {% if factsheets %}
     {% for fs in factsheets %}
     {% set fs_doc = frappe.get_doc("Factsheet", fs.name) %}
+    {% if not fs_doc.no_imprimir %}
     {% set lines = fs_doc.lineas or [] %}
     <div class="cpc-section" style="page-break-before: always;">
       <h3>{{ fs_doc.titulo or fs_doc.codigo_factsheet or "Factsheet" }}</h3>
@@ -790,10 +797,9 @@ limit_page_length=100
         </tbody>
       </table>
     </div>
-    {% endfor %}
-    {% else %}
-    <p>No hay factsheets registrados para este paquete.</p>
     {% endif %}
+    {% endfor %}
   </div>
+  {% endif %}
 
 </div>

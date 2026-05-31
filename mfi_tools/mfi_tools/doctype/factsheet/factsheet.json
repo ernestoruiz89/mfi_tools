@@ -13,6 +13,7 @@
         "titulo",
         "impresion_section",
         "tamano_letra_impresion",
+        "no_imprimir",
         "impresion_column",
         "ancho_tabla_impresion",
         "alineacion_tabla_impresion",
@@ -74,6 +75,13 @@
             "label": "Tamano Letra Tablas Impresion",
             "default": 12,
             "description": "Solo aplica a la tabla en impresion."
+        },
+        {
+            "fieldname": "no_imprimir",
+            "fieldtype": "Check",
+            "label": "No Imprimir",
+            "default": 0,
+            "description": "Evita que este Factsheet se imprima en el reporte del paquete completo."
         },
         {
             "fieldname": "impresion_column",
