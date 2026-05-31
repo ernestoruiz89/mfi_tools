@@ -244,14 +244,7 @@
     <p>Periodo: {{ doc.periodo_nombre or "-" }}</p>
   </div>
 
-  <table class="cpc-meta">
-    <tr>
-      <td><strong>Paquete</strong><br>{{ doc.name or "-" }}</td>
-      <td><strong>Cliente</strong><br>{{ doc.cliente or "-" }}</td>
-      <td><strong>Mes</strong><br>{{ doc.mes or "-" }}</td>
-      <td><strong>Anio</strong><br>{{ doc.anio or "-" }}</td>
-    </tr>
-  </table>
+
 
   {% set ns_fs = namespace(tiene=0) %}
   {% for fs in factsheets or [] %}
