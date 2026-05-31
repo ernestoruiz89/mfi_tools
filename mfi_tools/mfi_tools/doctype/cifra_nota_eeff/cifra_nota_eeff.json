@@ -67,10 +67,22 @@
         {"fieldname": "es_subtotal", "fieldtype": "Check", "label": "Es Subtotal", "default": 0},
         {"fieldname": "cursiva", "fieldtype": "Check", "label": "Cursiva", "default": 0},
         {"fieldname": "valores_section", "fieldtype": "Section Break", "label": "Valores"},
-        {"fieldname": "monto_actual", "fieldtype": "Float", "label": "Monto Actual", "in_list_view": 1},
+        {
+            "fieldname": "monto_actual",
+            "fieldtype": "Float",
+            "label": "Monto Actual",
+            "in_list_view": 1,
+            "read_only_depends_on": "eval:doc.origen_dato=='Balanza' || doc.origen_dato=='Formula'"
+        },
         {"fieldname": "valor_texto_actual", "fieldtype": "Data", "label": "Valor Texto Actual", "depends_on": "eval:doc.formato_numero=='Texto'"},
         {"fieldname": "valores_column", "fieldtype": "Column Break"},
-        {"fieldname": "monto_comparativo", "fieldtype": "Float", "label": "Monto Comparativo", "in_list_view": 1},
+        {
+            "fieldname": "monto_comparativo",
+            "fieldtype": "Float",
+            "label": "Monto Comparativo",
+            "in_list_view": 1,
+            "read_only_depends_on": "eval:doc.origen_dato=='Balanza' || doc.origen_dato=='Formula'"
+        },
         {"fieldname": "valor_texto_comparativo", "fieldtype": "Data", "label": "Valor Texto Comparativo", "depends_on": "eval:doc.formato_numero=='Texto'"}
     ],
     "istable": 1,
