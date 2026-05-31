@@ -201,7 +201,7 @@ def _select_figure_amount(
     if selected_period == "Saldo Cierre Anterior Actual":
         historical = historical_data.get("cierre_anterior_actual_balances", {})
         h_stats = historical_data.get("cierre_anterior_actual_stats", {})
-        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo")
     if selected_period == "Saldo Año Anterior Actual":
         historical = historical_data.get("anio_anterior_actual_balances", {})
         h_stats = historical_data.get("anio_anterior_actual_stats", {})
@@ -209,7 +209,7 @@ def _select_figure_amount(
     if selected_period == "Saldo Cierre Anterior Comparativo":
         historical = historical_data.get("cierre_anterior_comparativo_balances", {})
         h_stats = historical_data.get("cierre_anterior_comparativo_stats", {})
-        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo")
     if selected_period == "Saldo Año Anterior Comparativo":
         historical = historical_data.get("anio_anterior_comparativo_balances", {})
         h_stats = historical_data.get("anio_anterior_comparativo_stats", {})
@@ -303,7 +303,7 @@ def _select_section_cell_amount(
     if period == "Saldo Cierre Anterior Actual":
         historical = historical_data.get("cierre_anterior_actual_balances", {})
         h_stats = historical_data.get("cierre_anterior_actual_stats", {})
-        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo")
     if period == "Saldo Año Anterior Actual":
         historical = historical_data.get("anio_anterior_actual_balances", {})
         h_stats = historical_data.get("anio_anterior_actual_stats", {})
@@ -311,7 +311,7 @@ def _select_section_cell_amount(
     if period == "Saldo Cierre Anterior Comparativo":
         historical = historical_data.get("cierre_anterior_comparativo_balances", {})
         h_stats = historical_data.get("cierre_anterior_comparativo_stats", {})
-        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo_anterior")
+        return _compute_rule_amount(rule_doc, historical, h_stats, balance_value_field="saldo")
     if period == "Saldo Año Anterior Comparativo":
         historical = historical_data.get("anio_anterior_comparativo_balances", {})
         h_stats = historical_data.get("anio_anterior_comparativo_stats", {})
