@@ -763,7 +763,7 @@ limit_page_length=100
               <span class="cpc-desc" style="{% if row.negrita %}font-weight: 700;{% endif %}{% if row.subrayado %}text-decoration: underline;{% endif %}{% if row.cursiva %}font-style: italic;{% endif %}">
                 {% if not row.es_linea_blanco %}{{ row.descripcion or row.codigo_linea or "-" }}{% endif %}
               </span>
-              {% if row.comentario %}<div class="cpc-note-comment">{{ row.comentario }}</div>{% endif %}
+              {% if row.comentario and not row.no_mostrar_comentario %}<div class="cpc-note-comment">{{ row.comentario }}</div>{% endif %}
             </td>
             <td class="cpc-note"></td>
             <td class="num cpc-val-actual">

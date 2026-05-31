@@ -8,6 +8,7 @@
         "codigo_linea",
         "descripcion",
         "comentario",
+        "no_mostrar_comentario",
         "origen_dato",
         "formula",
         "es_manual",
@@ -45,6 +46,12 @@
             "fieldname": "comentario",
             "fieldtype": "Small Text",
             "label": "Comentario"
+        },
+        {
+            "fieldname": "no_mostrar_comentario",
+            "fieldtype": "Check",
+            "label": "No mostrar Comentario",
+            "default": 0
         },
         {
             "fieldname": "origen_dato",

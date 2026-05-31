@@ -217,7 +217,7 @@
             <tr class="{{ row_class }}">
               <td style="{% if row.negrita or row.es_titulo %}font-weight: 700;{% endif %}{% if row.subrayado %}text-decoration: underline;{% endif %}{% if row.cursiva %}font-style: italic;{% endif %}">
                 <div class="cfi-line-desc">{% if not row.es_linea_blanco %}{{ row.descripcion or row.codigo_linea or "-" }}{% endif %}</div>
-                {% if row.comentario %}<div class="cfi-line-comment">{{ row.comentario }}</div>{% endif %}
+                {% if row.comentario and not row.no_mostrar_comentario %}<div class="cfi-line-comment">{{ row.comentario }}</div>{% endif %}
               </td>
               <td class="num cfi-val-actual">
                 {% if not row.es_linea_blanco and not row.es_titulo %}
