@@ -325,6 +325,13 @@ fields=["name", "numero_nota", "sub_nota", "estado_aprobacion", "creation"],
 order_by="numero_nota asc, sub_nota asc, creation asc",
 limit_page_length=300
 ) %}
+{% set factsheets = frappe.get_all(
+"Factsheet",
+filters={"paquete_eeff": doc.name},
+fields=["name", "codigo_factsheet", "titulo"],
+order_by="codigo_factsheet asc",
+limit_page_length=100
+) %}
 {% set labels = doc.get_column_labels() %}
 {% set currency_ctx = doc.get_currency_context() %}
 {% set currency_symbol = currency_ctx.symbol or "$" %}
@@ -548,7 +555,7 @@ limit_page_length=300
           {% set ns.total_comparativo = ns.total_comparativo + (cifra.monto_comparativo or 0) %}
           {% endif %}
           <tr class="{{ row_class }}">
-            <td style="padding-left: {{ ((cifra.nivel or 1) - 1) * 18 }}px !important;{% if cifra.negrita or cifra.es_titulo %}font-weight: 700;{% endif %}{% if cifra.subrayado %}text-decoration: underline;{% endif %}">
+            <td style="padding-left: {{ ((cifra.nivel or 1) - 1) * 18 }}px !important;{% if cifra.negrita or cifra.es_titulo %}font-weight: 700;{% endif %}{% if cifra.subrayado %}text-decoration: underline;{% endif %}{% if cifra.cursiva %}font-style: italic;{% endif %}">
               <div class="cpc-note-desc">{% if not cifra.es_linea_blanco %}{{ cifra.concepto or "-" }}{% endif %}</div>
               {% if cifra.comentario %}<div class="cpc-note-comment">{{ cifra.comentario }}</div>{% endif %}
             </td>
@@ -706,5 +713,87 @@ limit_page_length=300
     {% endif %}
   </div>
 
+  <div class="cpc-section">
+    <h2>Factsheets (Indicadores y Datos)</h2>
+    {% if factsheets %}
+    {% for fs in factsheets %}
+    {% set fs_doc = frappe.get_doc("Factsheet", fs.name) %}
+    {% set lines = fs_doc.lineas or [] %}
+    <div class="cpc-section" style="page-break-before: always;">
+      <h3>{{ fs_doc.titulo or fs_doc.codigo_factsheet or "Factsheet" }}</h3>
+
+      <table class="cpc-table cpc-align-{{ fs_doc.get_print_table_alignment_css() }}" style="--cpc-table-font-size: {{ fs_doc.get_print_font_size() }}pt; --cpc-table-width: {{ fs_doc.get_print_table_width() }};">
+        <colgroup>
+          <col class="cpc-col-desc">
+          <col class="cpc-col-nota">
+          <col class="cpc-col-monto">
+          <col class="cpc-col-gap">
+          <col class="cpc-col-monto">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th class="cpc-note"></th>
+            <th class="num cpc-val-actual">{{ labels.actual }}</th>
+            <th class="cpc-gap"></th>
+            <th class="num cpc-val-comparativo">{{ labels.comparativo }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in lines %}
+          {% if not row.no_imprimir %}
+          {% set row_class = "" %}
+          {% if row.es_linea_blanco %}
+          {% set row_class = "cpc-line-blank" %}
+          {% endif %}
+          {% if row.es_total %}
+          {% set row_class = "cpc-line-total" %}
+          {% elif row.es_subtotal %}
+          {% set row_class = "cpc-line-subtotal" %}
+          {% endif %}
+          <tr class="{{ row_class }}">
+            <td>
+              <span class="cpc-desc" style="{% if row.negrita %}font-weight: 700;{% endif %}{% if row.subrayado %}text-decoration: underline;{% endif %}{% if row.cursiva %}font-style: italic;{% endif %}">
+                {% if not row.es_linea_blanco %}{{ row.descripcion or row.codigo_linea or "-" }}{% endif %}
+              </span>
+              {% if row.comentario %}<div class="cpc-note-comment">{{ row.comentario }}</div>{% endif %}
+            </td>
+            <td class="cpc-note"></td>
+            <td class="num cpc-val-actual">
+              {% if not row.es_linea_blanco and not row.es_titulo %}
+                {% if row.formato_presentacion == "Moneda" %}
+                <span class="cpc-money">
+                  <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                  <span class="cpc-money-value">{{ fs_doc.format_line_value(row, "monto_actual") }}</span>
+                </span>
+                {% else %}
+                {{ fs_doc.format_line_value(row, "monto_actual") }}
+                {% endif %}
+              {% endif %}
+            </td>
+            <td class="cpc-gap"></td>
+            <td class="num cpc-val-comparativo">
+              {% if not row.es_linea_blanco and not row.es_titulo %}
+                {% if row.formato_presentacion == "Moneda" %}
+                <span class="cpc-money">
+                  <span class="cpc-money-symbol">{{ currency_symbol }}</span>
+                  <span class="cpc-money-value">{{ fs_doc.format_line_value(row, "monto_comparativo") }}</span>
+                </span>
+                {% else %}
+                {{ fs_doc.format_line_value(row, "monto_comparativo") }}
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No hay factsheets registrados para este paquete.</p>
+    {% endif %}
+  </div>
 
 </div>

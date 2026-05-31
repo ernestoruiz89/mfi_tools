@@ -1,0 +1,253 @@
+<style>
+  .cfi-wrap,
+  .cfi-wrap * {
+    font-family: "Arial Narrow", Arial, "Helvetica Neue", sans-serif !important;
+    color: #000000 !important;
+    font-size: 12pt;
+    line-height: 1.25;
+  }
+
+  .cfi-wrap {
+    padding: 0 24px;
+    box-sizing: border-box;
+  }
+
+  .cfi-head {
+    margin-bottom: 18px;
+    border-bottom: 2px solid #000000;
+    padding-bottom: 10px;
+    line-height: 1;
+  }
+
+  .cfi-head h1 {
+    margin: 0;
+    font-size: 14pt !important;
+    line-height: 1;
+  }
+
+  .cfi-head p {
+    margin: 4px 0 0;
+    font-size: 12pt;
+    line-height: 1;
+  }
+
+  .cfi-section {
+    margin: 0 0 10px;
+  }
+
+  .cfi-section,
+  .cfi-section *,
+  .cfi-table,
+  .cfi-table * {
+    line-height: 1.25 !important;
+  }
+
+  .cfi-table {
+    width: var(--cfi-table-width, 100%);
+    border-collapse: collapse;
+    margin-top: 4px;
+    table-layout: fixed;
+  }
+
+  .cfi-table,
+  .cfi-table * {
+    font-size: var(--cfi-table-font-size, 12pt) !important;
+    line-height: 1.1 !important;
+  }
+
+  .cfi-table.cfi-align-left {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  .cfi-table.cfi-align-center {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cfi-table.cfi-align-right {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .cfi-table th,
+  .cfi-table td {
+    border: none;
+    padding: 1px 0 !important;
+    vertical-align: middle;
+  }
+
+  .cfi-table th {
+    background: transparent;
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .cfi-col-desc {
+    width: 60%;
+  }
+
+  .cfi-col-monto {
+    width: 19.5%;
+    text-align: right;
+  }
+
+  .cfi-table td.num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .cfi-table th.num {
+    text-align: right;
+  }
+
+  .cfi-table th.cfi-val-actual,
+  .cfi-table td.cfi-val-actual {
+    padding-left: 18px !important;
+    padding-right: 12px !important;
+  }
+
+  .cfi-table th.cfi-val-comparativo,
+  .cfi-table td.cfi-val-comparativo {
+    padding-left: 22px !important;
+  }
+
+  .cfi-table th.cfi-gap,
+  .cfi-table td.cfi-gap {
+    padding: 0 !important;
+    width: 2px;
+  }
+
+  .cfi-money {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .cfi-money-symbol {
+    text-align: left;
+    padding-right: 6px;
+    white-space: nowrap;
+  }
+
+  .cfi-money-value {
+    text-align: right;
+    white-space: nowrap;
+    flex: 1 1 auto;
+  }
+
+  .cfi-row-subtotal td,
+  .cfi-row-total td {
+    font-weight: 700;
+  }
+
+  .cfi-row-blank td {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .cfi-row-subtotal td.num {
+    border-top: 1px solid #000000;
+    border-bottom: 1px solid #000000;
+  }
+
+  .cfi-row-total td.num {
+    border-top: 1px solid #000000;
+    border-bottom: 3px double #000000;
+  }
+
+  .cfi-line-comment {
+    margin-top: 1px;
+    font-size: 10pt !important;
+    line-height: inherit !important;
+    color: #555555 !important;
+  }
+
+  .cfi-line-desc {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+</style>
+
+{% set package = frappe.get_doc("Paquete EEFF", doc.paquete_eeff) %}
+{% set labels = package.get_column_labels() %}
+{% set currency_ctx = package.get_currency_context() %}
+{% set currency_symbol = currency_ctx.symbol or "$" %}
+{% set lines = doc.lineas or [] %}
+{% set table_width = doc.get_print_table_width() %}
+{% set table_align = doc.get_print_table_alignment_css() %}
+{% set font_size = doc.get_print_font_size() %}
+
+<div class="cfi-wrap">
+  <div class="cfi-head">
+    <h1><strong>{{ doc.titulo or doc.codigo_factsheet or "Factsheet" }}</strong></h1>
+    <p>Paquete: {{ doc.paquete_eeff }}</p>
+  </div>
+
+  <div class="cfi-section">
+    <table class="cfi-table cfi-align-{{ table_align }}" style="--cfi-table-width: {{ table_width }}; --cfi-table-font-size: {{ font_size }}pt;">
+      <colgroup>
+        <col class="cfi-col-desc">
+        <col class="cfi-col-monto">
+        <col class="cfi-gap">
+        <col class="cfi-col-monto">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Concepto</th>
+          <th class="num cfi-val-actual">{{ labels.actual }}</th>
+          <th class="cfi-gap"></th>
+          <th class="num cfi-val-comparativo">{{ labels.comparativo }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in lines %}
+          {% if not row.no_imprimir %}
+            {% set row_class = "" %}
+            {% if row.es_linea_blanco %}
+              {% set row_class = "cfi-row-blank" %}
+            {% elif row.es_total %}
+              {% set row_class = "cfi-row-total" %}
+            {% elif row.es_subtotal %}
+              {% set row_class = "cfi-row-subtotal" %}
+            {% endif %}
+            
+            <tr class="{{ row_class }}">
+              <td style="{% if row.negrita or row.es_titulo %}font-weight: 700;{% endif %}{% if row.subrayado %}text-decoration: underline;{% endif %}{% if row.cursiva %}font-style: italic;{% endif %}">
+                <div class="cfi-line-desc">{% if not row.es_linea_blanco %}{{ row.descripcion or row.codigo_linea or "-" }}{% endif %}</div>
+                {% if row.comentario %}<div class="cfi-line-comment">{{ row.comentario }}</div>{% endif %}
+              </td>
+              <td class="num cfi-val-actual">
+                {% if not row.es_linea_blanco and not row.es_titulo %}
+                  {% if row.formato_presentacion == "Moneda" %}
+                    <span class="cfi-money">
+                      <span class="cfi-money-symbol">{{ currency_symbol }}</span>
+                      <span class="cfi-money-value">{{ doc.format_line_value(row, "monto_actual") }}</span>
+                    </span>
+                  {% else %}
+                    {{ doc.format_line_value(row, "monto_actual") }}
+                  {% endif %}
+                {% endif %}
+              </td>
+              <td class="cfi-gap"></td>
+              <td class="num cfi-val-comparativo">
+                {% if not row.es_linea_blanco and not row.es_titulo %}
+                  {% if row.formato_presentacion == "Moneda" %}
+                    <span class="cfi-money">
+                      <span class="cfi-money-symbol">{{ currency_symbol }}</span>
+                      <span class="cfi-money-value">{{ doc.format_line_value(row, "monto_comparativo") }}</span>
+                    </span>
+                  {% else %}
+                    {{ doc.format_line_value(row, "monto_comparativo") }}
+                  {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

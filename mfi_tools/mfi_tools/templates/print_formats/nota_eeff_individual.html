@@ -269,7 +269,7 @@
         {% set ns.total_comparativo = ns.total_comparativo + (cifra.monto_comparativo or 0) %}
           {% endif %}
           <tr class="{{ row_class }}">
-            <td style="padding-left: {{ ((cifra.nivel or 1) - 1) * 18 }}px !important;{% if cifra.negrita or cifra.es_titulo %}font-weight: 700;{% endif %}{% if cifra.subrayado %}text-decoration: underline;{% endif %}">
+            <td style="padding-left: {{ ((cifra.nivel or 1) - 1) * 18 }}px !important;{% if cifra.negrita or cifra.es_titulo %}font-weight: 700;{% endif %}{% if cifra.subrayado %}text-decoration: underline;{% endif %}{% if cifra.cursiva %}font-style: italic;{% endif %}">
               <div class="cni-note-desc">{% if not cifra.es_linea_blanco %}{{ cifra.concepto or "-" }}{% endif %}</div>
               {% if cifra.comentario %}<div class="cni-note-comment">{{ cifra.comentario }}</div>{% endif %}
             </td>

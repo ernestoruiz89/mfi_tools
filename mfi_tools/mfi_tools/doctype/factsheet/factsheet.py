@@ -174,6 +174,25 @@ class Factsheet(Document):
                 get_value(row.codigo_linea, "monto_actual", set())
                 get_value(row.codigo_linea, "monto_comparativo", set())
 
+    def get_print_font_size(self):
+        return 12
+
+    def get_print_table_width(self):
+        return "100%"
+
+    def get_print_table_alignment_css(self):
+        return "center"
+
+    def format_line_value(self, row, fieldname):
+        if cint(getattr(row, "es_linea_blanco", 0)) or cint(getattr(row, "es_titulo", 0)):
+            return ""
+        fmt = cstr(getattr(row, "formato_presentacion", "Numero")).strip()
+        val = getattr(row, fieldname, None)
+        if val in (None, ""):
+            return "-"
+        from mfi_tools.mfi_tools.utils.estado_line_format import format_accounting_number
+        return format_accounting_number(val, fmt, trim_plain=(fmt == "Numero"), none_as="-")
+
     def on_trash(self):
         # Validar si tiene reglas de mapeo asociadas
         active_rules = frappe.get_all(
