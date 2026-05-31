@@ -263,8 +263,7 @@
       {% if not fs_doc.no_imprimir %}
         {% set lines = fs_doc.lineas or [] %}
         <div class="cpc-section cpc-factsheet-block">
-          <h3>{{ fs_doc.titulo or fs_doc.codigo_factsheet or "Factsheet" }}</h3>
-          <div style="height: 1em;"></div>
+          <h3 style="text-decoration: underline;">{{ fs_doc.titulo or fs_doc.codigo_factsheet or "Factsheet" }}</h3>
 
           <table class="cpc-table cpc-align-{{ fs_doc.get_print_table_alignment_css() }}" style="--cpc-table-font-size: {{ fs_doc.get_print_font_size() }}pt; --cpc-table-width: {{ fs_doc.get_print_table_width() }};">
             <colgroup>
