@@ -184,23 +184,27 @@
             "fieldname": "monto_actual",
             "fieldtype": "Float",
             "label": "Monto Actual",
-            "in_list_view": 1
+            "in_list_view": 1,
+            "read_only_depends_on": "eval:doc.origen_dato=='Balanza' || doc.origen_dato=='Formula'"
         },
         {
             "fieldname": "monto_comparativo",
             "fieldtype": "Float",
             "label": "Monto Comparativo",
-            "in_list_view": 1
+            "in_list_view": 1,
+            "read_only_depends_on": "eval:doc.origen_dato=='Balanza' || doc.origen_dato=='Formula'"
         },
         {
             "fieldname": "monto_base_actual",
             "fieldtype": "Float",
-            "label": "Monto Base Actual"
+            "label": "Monto Base Actual",
+            "read_only_depends_on": "eval:doc.origen_dato=='Balanza' || doc.origen_dato=='Formula'"
         },
         {
             "fieldname": "monto_base_comparativo",
             "fieldtype": "Float",
-            "label": "Monto Base Comparativo"
+            "label": "Monto Base Comparativo",
+            "read_only_depends_on": "eval:doc.origen_dato=='Balanza' || doc.origen_dato=='Formula'"
         }
     ],
     "istable": 1,
