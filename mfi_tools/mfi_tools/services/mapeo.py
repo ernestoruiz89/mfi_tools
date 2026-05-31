@@ -460,58 +460,200 @@ def _resolve_rule_targets(rule_doc, package_name):
     return False, _("La regla {0} tiene un tipo de destino no valido.").format(rule_doc.name), targets
 
 
+def _build_target_lookup_maps(package_name):
+    """Pre-build lookup dictionaries for target resolution (Optimization 3).
+
+    Returns a dict with:
+      - estado_lookup: {CODIGO_ESTADO_UPPER: name}
+      - nota_lookup: {(numero_nota_int, SUB_NOTA_UPPER): name}
+      - nota_simple_lookup: {numero_nota_int: name}  (for notes without sub_nota)
+      - seccion_lookup: {(nota_name, CODIGO_SECCION_UPPER): name}
+      - factsheet_lookup: {CODIGO_FACTSHEET_UPPER: name}
+    """
+    estado_lookup = {}
+    for r in frappe.get_all("Estado Financiero EEFF",
+            filters={"paquete_eeff": package_name},
+            fields=["name", "codigo_estado"], limit_page_length=200):
+        key = _normalize(r.codigo_estado)
+        if key:
+            estado_lookup[key] = r.name
+
+    nota_lookup = {}
+    nota_simple_lookup = {}
+    for r in frappe.get_all("Nota EEFF",
+            filters={"paquete_eeff": package_name},
+            fields=["name", "numero_nota", "sub_nota"], limit_page_length=300):
+        numero = cint(r.numero_nota)
+        sub = _normalize(r.sub_nota or "")
+        if numero:
+            nota_lookup[(numero, sub)] = r.name
+            if not sub:
+                nota_simple_lookup[numero] = r.name
+
+    seccion_lookup = {}
+    for s in frappe.get_all("Seccion Nota EEFF",
+            filters={"paquete_eeff": package_name},
+            fields=["name", "nota_eeff", "codigo_seccion"], limit_page_length=600):
+        key = (s.nota_eeff, _normalize(s.codigo_seccion))
+        seccion_lookup[key] = s.name
+
+    factsheet_lookup = {}
+    for r in frappe.get_all("Factsheet",
+            filters={"paquete_eeff": package_name},
+            fields=["name", "codigo_factsheet"], limit_page_length=200):
+        key = _normalize(r.codigo_factsheet)
+        if key:
+            factsheet_lookup[key] = r.name
+
+    return {
+        "estado_lookup": estado_lookup,
+        "nota_lookup": nota_lookup,
+        "nota_simple_lookup": nota_simple_lookup,
+        "seccion_lookup": seccion_lookup,
+        "factsheet_lookup": factsheet_lookup,
+    }
+
+
+def _resolve_rule_targets_cached(rule_doc, lookup_maps):
+    """Resolve rule destinations using pre-built lookup maps (O(1) per rule)."""
+    destino = cstr(rule_doc.destino_tipo or "").strip()
+    targets = {}
+
+    if destino == "Linea Estado":
+        codigo_estado = _normalize(getattr(rule_doc, "destino_codigo_estado", ""))
+        if not codigo_estado:
+            return False, _("La regla {0} no tiene codigo de estado destino.").format(rule_doc.name), targets
+        estado_name = lookup_maps["estado_lookup"].get(codigo_estado)
+        if not estado_name:
+            return False, _("La regla {0} no encontro un estado con codigo {1} dentro del paquete.").format(
+                rule_doc.name, codigo_estado
+            ), targets
+        targets["estado_name"] = estado_name
+        return True, None, targets
+
+    if destino in ("Cifra Nota", "Celda Seccion Nota"):
+        numero_nota_raw = _normalize(getattr(rule_doc, "destino_numero_nota", ""))
+        if not numero_nota_raw:
+            return False, _("La regla {0} no tiene numero de nota destino.").format(rule_doc.name), targets
+
+        from mfi_tools.mfi_tools.utils.nota_eeff import parse_note_identifier, normalize_sub_note_key
+        numero_nota, sub_nota = parse_note_identifier(numero_nota_raw)
+        if not numero_nota:
+            return False, _("La regla {0} no encontro una nota con numero {1} dentro del paquete.").format(
+                rule_doc.name, numero_nota_raw
+            ), targets
+
+        sub_key = _normalize(sub_nota or "")
+        note_name = lookup_maps["nota_lookup"].get((numero_nota, sub_key))
+        if not note_name and not sub_key:
+            note_name = lookup_maps["nota_simple_lookup"].get(numero_nota)
+        if not note_name:
+            return False, _("La regla {0} no encontro una nota con numero {1} dentro del paquete.").format(
+                rule_doc.name, numero_nota_raw
+            ), targets
+        targets["note_name"] = note_name
+
+        if destino == "Celda Seccion Nota":
+            codigo_seccion = _normalize(getattr(rule_doc, "destino_codigo_seccion", ""))
+            if not codigo_seccion:
+                return False, _("La regla {0} no tiene codigo de seccion destino.").format(rule_doc.name), targets
+            section_name = lookup_maps["seccion_lookup"].get((note_name, codigo_seccion))
+            if not section_name:
+                return False, _("La regla {0} no encontro una seccion con codigo {1} dentro de la nota destino.").format(
+                    rule_doc.name, codigo_seccion
+                ), targets
+            targets["section_name"] = section_name
+
+        return True, None, targets
+
+    if destino == "Linea Factsheet":
+        codigo_factsheet = _normalize(getattr(rule_doc, "destino_codigo_factsheet", ""))
+        if not codigo_factsheet:
+            return False, _("La regla {0} no tiene codigo de factsheet destino.").format(rule_doc.name), targets
+        factsheet_name = lookup_maps["factsheet_lookup"].get(codigo_factsheet)
+        if not factsheet_name:
+            return False, _("La regla {0} no encontro un factsheet con codigo {1} dentro del paquete.").format(
+                rule_doc.name, codigo_factsheet
+            ), targets
+        targets["factsheet_name"] = factsheet_name
+        return True, None, targets
+
+    return False, _("La regla {0} tiene un tipo de destino no valido.").format(rule_doc.name), targets
+
+
 def _reset_package_targets(package_name):
-    for name in frappe.get_all("Estado Financiero EEFF", filters={"paquete_eeff": package_name}, pluck="name", limit_page_length=200):
-        doc = frappe.get_doc("Estado Financiero EEFF", name)
-        for row in doc.lineas or []:
-            if cint(getattr(row, "es_titulo", 0)):
-                row.monto_actual = None
-                row.monto_comparativo = None
-                row.monto_base_actual = None
-                row.monto_base_comparativo = None
-                continue
-            if not cint(getattr(row, "es_manual", 0)):
-                row.monto_actual = 0
-                row.monto_comparativo = 0
-                row.monto_base_actual = 0
-                row.monto_base_comparativo = 0
-        doc.save(ignore_permissions=True)
+    """Reset all mapping targets in the package using bulk SQL (Optimization 1).
 
-    for name in frappe.get_all("Nota EEFF", filters={"paquete_eeff": package_name}, pluck="name", limit_page_length=300):
-        doc = frappe.get_doc("Nota EEFF", name)
-        for row in doc.cifras_nota or []:
-            if cint(getattr(row, "es_linea_blanco", 0)) or cint(getattr(row, "es_titulo", 0)):
-                row.monto_actual = None
-                row.monto_comparativo = None
-                row.valor_texto_actual = ""
-                row.valor_texto_comparativo = ""
-                row.origen_dato = "Manual"
-                continue
-            if not cint(getattr(row, "es_manual", 0)):
-                row.monto_actual = 0
-                row.monto_comparativo = 0
-                row.valor_texto_actual = ""
-                row.valor_texto_comparativo = ""
-                row.origen_dato = "Manual"
-        doc.save(ignore_permissions=True)
+    This is safe because the reset only zeroes/nullifies amounts without
+    needing controller validation hooks.  The controllers will run their
+    validate logic when the documents are saved after mapping rules are
+    applied.
+    """
+    # --- Estado Financiero EEFF ---
+    # Non-manual, non-titulo lines -> zero
+    frappe.db.sql("""
+        UPDATE `tabLinea Estado Financiero EEFF` child
+        INNER JOIN `tabEstado Financiero EEFF` parent ON parent.name = child.parent
+        SET child.monto_actual = 0, child.monto_comparativo = 0,
+            child.monto_base_actual = 0, child.monto_base_comparativo = 0
+        WHERE parent.paquete_eeff = %s
+          AND IFNULL(child.es_titulo, 0) = 0
+          AND IFNULL(child.es_manual, 0) = 0
+    """, (package_name,))
+    # Titulo lines -> NULL
+    frappe.db.sql("""
+        UPDATE `tabLinea Estado Financiero EEFF` child
+        INNER JOIN `tabEstado Financiero EEFF` parent ON parent.name = child.parent
+        SET child.monto_actual = NULL, child.monto_comparativo = NULL,
+            child.monto_base_actual = NULL, child.monto_base_comparativo = NULL
+        WHERE parent.paquete_eeff = %s
+          AND IFNULL(child.es_titulo, 0) = 1
+    """, (package_name,))
 
-    for name in frappe.get_all("Seccion Nota EEFF", filters={"paquete_eeff": package_name}, pluck="name", limit_page_length=600):
-        doc = frappe.get_doc("Seccion Nota EEFF", name)
-        for cell in doc.celdas_tabulares or []:
-            if not cint(getattr(cell, "es_manual", 0)):
-                cell.valor_numero = 0
-                cell.valor_texto = ""
-                cell.origen_dato = "Manual"
-                cell.ultima_regla_mapeo = None
-        doc.save(ignore_permissions=True)
+    # --- Nota EEFF (Cifra Nota EEFF) ---
+    # Non-manual, non-titulo, non-blank lines -> zero
+    frappe.db.sql("""
+        UPDATE `tabCifra Nota EEFF` child
+        INNER JOIN `tabNota EEFF` parent ON parent.name = child.parent
+        SET child.monto_actual = 0, child.monto_comparativo = 0,
+            child.valor_texto_actual = '', child.valor_texto_comparativo = '',
+            child.origen_dato = 'Manual'
+        WHERE parent.paquete_eeff = %s
+          AND IFNULL(child.es_linea_blanco, 0) = 0
+          AND IFNULL(child.es_titulo, 0) = 0
+          AND IFNULL(child.es_manual, 0) = 0
+    """, (package_name,))
+    # Titulo or blank lines -> NULL
+    frappe.db.sql("""
+        UPDATE `tabCifra Nota EEFF` child
+        INNER JOIN `tabNota EEFF` parent ON parent.name = child.parent
+        SET child.monto_actual = NULL, child.monto_comparativo = NULL,
+            child.valor_texto_actual = '', child.valor_texto_comparativo = '',
+            child.origen_dato = 'Manual'
+        WHERE parent.paquete_eeff = %s
+          AND (IFNULL(child.es_linea_blanco, 0) = 1 OR IFNULL(child.es_titulo, 0) = 1)
+    """, (package_name,))
 
-    for name in frappe.get_all("Factsheet", filters={"paquete_eeff": package_name}, pluck="name", limit_page_length=200):
-        doc = frappe.get_doc("Factsheet", name)
-        for row in doc.lineas or []:
-            if cstr(getattr(row, "origen_dato", "")) != "Manual":
-                row.monto_actual = 0
-                row.monto_comparativo = 0
-        doc.save(ignore_permissions=True)
+    # --- Seccion Nota EEFF (Celda Seccion Nota EEFF) ---
+    frappe.db.sql("""
+        UPDATE `tabCelda Seccion Nota EEFF` child
+        INNER JOIN `tabSeccion Nota EEFF` parent ON parent.name = child.parent
+        SET child.valor_numero = 0, child.valor_texto = '',
+            child.origen_dato = 'Manual', child.ultima_regla_mapeo = NULL
+        WHERE parent.paquete_eeff = %s
+          AND IFNULL(child.es_manual, 0) = 0
+    """, (package_name,))
+
+    # --- Factsheet (Linea Factsheet) ---
+    frappe.db.sql("""
+        UPDATE `tabLinea Factsheet` child
+        INNER JOIN `tabFactsheet` parent ON parent.name = child.parent
+        SET child.monto_actual = 0, child.monto_comparativo = 0
+        WHERE parent.paquete_eeff = %s
+          AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
+    """, (package_name,))
+
+    frappe.db.commit()
 
 
 def aplicar_mapeo_paquete(paquete_name):
@@ -525,6 +667,7 @@ def aplicar_mapeo_paquete(paquete_name):
     balanza = frappe.get_doc("Balanza Comprobacion EEFF", package.balanza_comprobacion_eeff)
     balances = _build_balance_map(balanza)
     comparative_balances = None
+    comparative_doc = None
     if cstr(getattr(package, "balanza_comparativa_eeff", "") or "").strip():
         if frappe.db.exists("Balanza Comprobacion EEFF", package.balanza_comparativa_eeff):
             comparative_doc = frappe.get_doc("Balanza Comprobacion EEFF", package.balanza_comparativa_eeff)
@@ -542,23 +685,30 @@ def aplicar_mapeo_paquete(paquete_name):
     actual_stats, comparative_stats = _build_stat_maps(package)
 
     historical_data = {}
+    _historical_cache = {}
+
     def _get_historical(doctype, field_filters, anio, mes):
+        cache_key = (doctype, anio, mes, tuple(sorted(field_filters.items())))
+        if cache_key in _historical_cache:
+            return _historical_cache[cache_key]
         filters = field_filters.copy()
         filters["anio"] = anio
         filters["mes"] = mes
         docs = frappe.get_all(doctype, filters=filters, pluck="name", limit_page_length=1)
+        result = {}
         if docs:
             doc = frappe.get_doc(doctype, docs[0])
             if doctype == "Balanza Comprobacion EEFF":
-                return _build_balance_map(doc)
+                result = _build_balance_map(doc)
             else:
                 stats = {}
                 for row in getattr(doc, "lineas", []):
                     code = _normalize(getattr(row, "codigo_dato", ""))
                     if code:
                         stats[code] = flt(getattr(row, "valor_actual", 0) or 0)
-                return stats
-        return {}
+                result = stats
+        _historical_cache[cache_key] = result
+        return result
 
     MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
@@ -615,28 +765,35 @@ def aplicar_mapeo_paquete(paquete_name):
 
     _reset_package_targets(paquete_name)
 
+    # --- Optimization 2: Batch-load all rules + their child tables ---
     rules = frappe.get_all(
         "Regla Mapeo Contable EEFF",
         filters={"company": package.company, "activo": 1},
-        fields=[
-            "name",
-            "fuente_tipo",
-            "destino_tipo",
-            "destino_codigo_estado",
-            "destino_codigo_factsheet",
-            "destino_codigo_linea",
-            "destino_numero_nota",
-            "destino_codigo_cifra",
-            "destino_codigo_seccion",
-            "destino_codigo_tabla",
-            "destino_seccion_id",
-            "destino_codigo_fila",
-            "destino_codigo_columna",
-            "orden",
-        ],
+        fields=["*"],
         order_by="orden asc, creation asc",
-        limit_page_length=1000,
+        limit_page_length=0,
     )
+
+    # Pre-load all child tables in ONE query
+    rule_names = [r.name for r in rules]
+    cuentas_by_rule = {}
+    if rule_names:
+        all_cuentas = frappe.get_all(
+            "Cuenta Regla Mapeo EEFF",
+            filters={"parent": ["in", rule_names]},
+            fields=["parent", "cuenta", "operacion", "porcentaje", "campo_balanza", "centro_costo"],
+            order_by="idx asc",
+            limit_page_length=0,
+        )
+        for c in all_cuentas:
+            cuentas_by_rule.setdefault(c.parent, []).append(c)
+
+    # Attach child tables to each rule object
+    for rule in rules:
+        rule.cuentas = cuentas_by_rule.get(rule.name, [])
+
+    # --- Optimization 3: Pre-build target lookup maps ---
+    lookup_maps = _build_target_lookup_maps(package.name)
 
     touched_states = set()
     touched_notes = set()
@@ -676,9 +833,9 @@ def aplicar_mapeo_paquete(paquete_name):
             factsheet_docs[name] = doc
         return doc
 
-    for rule_row in rules:
-        rule = frappe.get_doc("Regla Mapeo Contable EEFF", rule_row.name)
-        target_ready, target_alert, resolved = _resolve_rule_targets(rule, package.name)
+    for rule in rules:
+        # rule already has all fields + cuentas preloaded (Optimization 2)
+        target_ready, target_alert, resolved = _resolve_rule_targets_cached(rule, lookup_maps)
         if not target_ready:
             alertas.append(target_alert)
             continue
@@ -902,11 +1059,37 @@ def aplicar_mapeo_paquete(paquete_name):
         doc = factsheet_docs.get(name)
         if doc:
             doc.save(ignore_permissions=True)
-            
-    # Asegurar que todos los factsheets del paquete se recalculen al final
-    # para que las formulas cruzadas lean los valores finales reales de la base de datos
-    for fs_name in frappe.get_all("Factsheet", filters={"paquete_eeff": package.name}, pluck="name", order_by="numero_factsheet asc, codigo_factsheet asc", limit_page_length=200):
-        frappe.get_doc("Factsheet", fs_name).save(ignore_permissions=True)
+
+    # --- Optimization 4: Only recalculate factsheets with formulas ---
+    # Identify factsheets that have formula lines (cross-factsheet references)
+    fs_with_formulas = set(frappe.db.sql_list("""
+        SELECT DISTINCT child.parent
+        FROM `tabLinea Factsheet` child
+        INNER JOIN `tabFactsheet` parent ON parent.name = child.parent
+        WHERE parent.paquete_eeff = %s AND child.origen_dato = 'Formula'
+    """, (package.name,)))
+
+    # Only recalculate factsheets that have formulas (to resolve cross-references)
+    # Skip those already saved above if they don't have formulas
+    fs_to_recalc = fs_with_formulas - touched_factsheets
+    if fs_to_recalc:
+        for fs_name in frappe.get_all("Factsheet",
+                filters={"paquete_eeff": package.name, "name": ["in", list(fs_to_recalc)]},
+                pluck="name",
+                order_by="numero_factsheet asc, codigo_factsheet asc",
+                limit_page_length=200):
+            frappe.get_doc("Factsheet", fs_name).save(ignore_permissions=True)
+
+    # Re-save touched factsheets that also have formulas (to pick up cross-references
+    # that may have changed after other factsheets were saved above)
+    fs_touched_with_formulas = touched_factsheets & fs_with_formulas
+    if fs_touched_with_formulas:
+        for fs_name in frappe.get_all("Factsheet",
+                filters={"paquete_eeff": package.name, "name": ["in", list(fs_touched_with_formulas)]},
+                pluck="name",
+                order_by="numero_factsheet asc, codigo_factsheet asc",
+                limit_page_length=200):
+            frappe.get_doc("Factsheet", fs_name).save(ignore_permissions=True)
 
     frappe.db.set_value(
         "Paquete EEFF",
