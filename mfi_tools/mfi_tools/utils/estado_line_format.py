@@ -24,10 +24,11 @@ def format_estado_line_value(linea, fieldname):
     if value in (None, ""):
         return ""
 
-    return format_accounting_number(value, fmt, trim_plain=(fmt == "Numero"), none_as="")
+    decimals = 0 if cint(getattr(linea, "redondear_entero", 0)) else 2
+    return format_accounting_number(value, fmt, trim_plain=(fmt == "Numero"), none_as="", decimals=decimals)
 
 
-def format_accounting_number(value, format_type="Numero", trim_plain=True, none_as="-"):
+def format_accounting_number(value, format_type="Numero", trim_plain=True, none_as="-", decimals=2):
     if value in (None, ""):
         return none_as
 
@@ -43,11 +44,11 @@ def format_accounting_number(value, format_type="Numero", trim_plain=True, none_
     abs_number = abs(number)
 
     if fmt == "Moneda":
-        text = f"{abs_number:,.2f}"
+        text = f"{abs_number:,.{decimals}f}"
     elif fmt == "Porcentaje":
-        text = f"{abs_number:,.2f}%"
+        text = f"{abs_number:,.{decimals}f}%"
     else:
-        text = f"{abs_number:,.2f}"
+        text = f"{abs_number:,.{decimals}f}"
         if trim_plain and "." in text:
             text = text.rstrip("0").rstrip(".")
 

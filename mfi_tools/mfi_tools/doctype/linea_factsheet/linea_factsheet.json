@@ -12,6 +12,7 @@
         "formula",
         "es_manual",
         "formato_presentacion",
+        "redondear_entero",
         "presentacion_section",
         "no_imprimir",
         "negrita",
@@ -73,6 +74,12 @@
             "label": "Formato Presentacion",
             "options": "Numero\nMoneda\nPorcentaje",
             "default": "Numero"
+        },
+        {
+            "fieldname": "redondear_entero",
+            "fieldtype": "Check",
+            "label": "Redondear Entero",
+            "default": 0
         },
         {
             "fieldname": "presentacion_section",

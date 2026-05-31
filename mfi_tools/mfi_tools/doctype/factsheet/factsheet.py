@@ -175,12 +175,37 @@ class Factsheet(Document):
                 get_value(row.codigo_linea, "monto_comparativo", set())
 
     def get_print_font_size(self):
-        return 12
+        import math
+        value = flt(getattr(self, "tamano_letra_impresion", 0) or 12)
+        if not math.isfinite(value):
+            value = 12
+        value = max(8.0, min(value, 18.0))
+        return int(value) if abs(value - int(value)) < 0.001 else round(value, 2)
 
     def get_print_table_width(self):
+        value = cstr(getattr(self, "ancho_tabla_impresion", "") or "").strip()
+        if not value:
+            return "100%"
+        value = re.sub(r"\s+", "", value)
+        value = re.sub(r"%{2,}", "%", value)
+        if re.fullmatch(r"\d+(?:\.\d+)?", value):
+            value = f"{value}%"
+        if re.fullmatch(r"\d+(?:\.\d+)?(?:%|px|cm|mm|in|pt|pc|rem|em|vw)", value, flags=re.IGNORECASE):
+            return value
         return "100%"
 
+    def get_print_table_alignment(self):
+        value = cstr(getattr(self, "alineacion_tabla_impresion", "") or "").strip()
+        if value not in ("Izquierda", "Centro", "Derecha"):
+            return "Centro"
+        return value
+
     def get_print_table_alignment_css(self):
+        alignment = self.get_print_table_alignment()
+        if alignment == "Izquierda":
+            return "left"
+        if alignment == "Derecha":
+            return "right"
         return "center"
 
     def format_line_value(self, row, fieldname):
@@ -190,8 +215,9 @@ class Factsheet(Document):
         val = getattr(row, fieldname, None)
         if val in (None, ""):
             return "-"
+        decimals = 0 if cint(getattr(row, "redondear_entero", 0)) else 2
         from mfi_tools.mfi_tools.utils.estado_line_format import format_accounting_number
-        return format_accounting_number(val, fmt, trim_plain=(fmt == "Numero"), none_as="-")
+        return format_accounting_number(val, fmt, trim_plain=(fmt == "Numero"), none_as="-", decimals=decimals)
 
     def on_trash(self):
         # Validar si tiene reglas de mapeo asociadas

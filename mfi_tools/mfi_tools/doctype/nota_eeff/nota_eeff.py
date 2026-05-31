@@ -148,7 +148,7 @@ class NotaEEFF(Document):
             return False
         return self.get_figure_number_format(row) == "Texto"
 
-    def format_figure_amount(self, value, format_type="Moneda"):
+    def format_figure_amount(self, value, format_type="Moneda", decimals=2):
         fmt = cstr(format_type or "").strip().title()
         if fmt not in FIGURE_FORMATS:
             fmt = "Moneda"
@@ -158,7 +158,7 @@ class NotaEEFF(Document):
         if fmt == "Texto":
             return cstr(value)
 
-        return format_accounting_number(value, fmt, trim_plain=(fmt == "Numero"), none_as="-")
+        return format_accounting_number(value, fmt, trim_plain=(fmt == "Numero"), none_as="-", decimals=decimals)
 
     def format_figure_value(self, row, fieldname):
         if not row:
@@ -173,7 +173,8 @@ class NotaEEFF(Document):
                 return text_value
             raw_value = getattr(row, fieldname, None)
             return cstr(raw_value) if raw_value not in (None, "") else "-"
-        return self.format_figure_amount(getattr(row, fieldname, None), fmt)
+        decimals = 0 if cint(getattr(row, "redondear_entero", 0)) else 2
+        return self.format_figure_amount(getattr(row, fieldname, None), fmt, decimals=decimals)
 
     def get_figures_total_format(self, rows=None):
         rows = rows or (self.cifras_nota or [])

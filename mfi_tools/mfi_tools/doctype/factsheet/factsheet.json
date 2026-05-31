@@ -11,6 +11,11 @@
         "identificacion_column",
         "codigo_factsheet",
         "titulo",
+        "impresion_section",
+        "tamano_letra_impresion",
+        "impresion_column",
+        "ancho_tabla_impresion",
+        "alineacion_tabla_impresion",
         "lineas_section",
         "lineas"
     ],
@@ -57,6 +62,36 @@
             "fieldname": "titulo",
             "fieldtype": "Data",
             "label": "Titulo"
+        },
+        {
+            "fieldname": "impresion_section",
+            "fieldtype": "Section Break",
+            "label": "Impresion"
+        },
+        {
+            "fieldname": "tamano_letra_impresion",
+            "fieldtype": "Float",
+            "label": "Tamano Letra Tablas Impresion",
+            "default": 12,
+            "description": "Solo aplica a la tabla en impresion."
+        },
+        {
+            "fieldname": "impresion_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "ancho_tabla_impresion",
+            "fieldtype": "Data",
+            "label": "Ancho Tabla Impresion",
+            "default": "100%",
+            "description": "Acepta porcentajes o anchos CSS para impresion HTML/PDF, por ejemplo 100%, 92% o 18cm."
+        },
+        {
+            "fieldname": "alineacion_tabla_impresion",
+            "fieldtype": "Select",
+            "label": "Alineacion Tabla Impresion",
+            "options": "Izquierda\nCentro\nDerecha",
+            "default": "Centro"
         },
         {
             "fieldname": "lineas_section",
