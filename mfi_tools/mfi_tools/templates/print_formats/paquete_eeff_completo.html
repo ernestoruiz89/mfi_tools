@@ -721,13 +721,13 @@ limit_page_length=100
 
   {% if ns_fs.tiene %}
   <div class="cpc-section">
-    <h2>Factsheets (Indicadores y Datos)</h2>
     {% for fs in factsheets %}
     {% set fs_doc = frappe.get_doc("Factsheet", fs.name) %}
     {% if not fs_doc.no_imprimir %}
     {% set lines = fs_doc.lineas or [] %}
     <div class="cpc-section" style="page-break-before: always;">
       <h3>{{ fs_doc.titulo or fs_doc.codigo_factsheet or "Factsheet" }}</h3>
+      <div style="height: 1em;"></div>
 
       <table class="cpc-table cpc-align-{{ fs_doc.get_print_table_alignment_css() }}" style="--cpc-table-font-size: {{ fs_doc.get_print_font_size() }}pt; --cpc-table-width: {{ fs_doc.get_print_table_width() }};">
         <colgroup>
