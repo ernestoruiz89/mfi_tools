@@ -154,13 +154,15 @@
             "fieldname": "monto_actual",
             "fieldtype": "Float",
             "label": "Monto Actual",
-            "in_list_view": 1
+            "in_list_view": 1,
+            "read_only_depends_on": "eval:doc.origen_dato=='Mapeo' || doc.origen_dato=='Formula'"
         },
         {
             "fieldname": "monto_comparativo",
             "fieldtype": "Float",
             "label": "Monto Comparativo",
-            "in_list_view": 1
+            "in_list_view": 1,
+            "read_only_depends_on": "eval:doc.origen_dato=='Mapeo' || doc.origen_dato=='Formula'"
         }
     ],
     "istable": 1,
