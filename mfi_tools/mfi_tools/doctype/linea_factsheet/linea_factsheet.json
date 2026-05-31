@@ -7,10 +7,22 @@
     "field_order": [
         "codigo_linea",
         "descripcion",
+        "comentario",
         "origen_dato",
         "formula",
         "es_manual",
         "formato_presentacion",
+        "presentacion_section",
+        "no_imprimir",
+        "negrita",
+        "presentacion_column",
+        "subrayado",
+        "es_titulo",
+        "es_linea_blanco",
+        "es_total",
+        "es_subtotal",
+        "cursiva",
+        "valores_section",
         "monto_actual",
         "monto_comparativo"
     ],
@@ -27,6 +39,11 @@
             "fieldtype": "Data",
             "label": "Descripcion",
             "in_list_view": 1
+        },
+        {
+            "fieldname": "comentario",
+            "fieldtype": "Small Text",
+            "label": "Comentario"
         },
         {
             "fieldname": "origen_dato",
@@ -56,6 +73,68 @@
             "label": "Formato Presentacion",
             "options": "Numero\nMoneda\nPorcentaje",
             "default": "Numero"
+        },
+        {
+            "fieldname": "presentacion_section",
+            "fieldtype": "Section Break",
+            "label": "Presentacion"
+        },
+        {
+            "fieldname": "no_imprimir",
+            "fieldtype": "Check",
+            "label": "No Imprimir",
+            "default": 0
+        },
+        {
+            "fieldname": "negrita",
+            "fieldtype": "Check",
+            "label": "Negrita",
+            "default": 0
+        },
+        {
+            "fieldname": "presentacion_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "subrayado",
+            "fieldtype": "Check",
+            "label": "Subrayado",
+            "default": 0
+        },
+        {
+            "fieldname": "es_titulo",
+            "fieldtype": "Check",
+            "label": "Es Titulo",
+            "default": 0
+        },
+        {
+            "fieldname": "es_linea_blanco",
+            "fieldtype": "Check",
+            "label": "Es Linea en Blanco",
+            "default": 0
+        },
+        {
+            "fieldname": "es_total",
+            "fieldtype": "Check",
+            "label": "Es Total",
+            "default": 0
+        },
+        {
+            "fieldname": "es_subtotal",
+            "fieldtype": "Check",
+            "label": "Es Subtotal",
+            "default": 0
+        },
+        {
+            "fieldname": "cursiva",
+            "fieldtype": "Check",
+            "label": "Cursiva",
+            "default": 0
+        },
+        {
+            "fieldname": "valores_section",
+            "fieldtype": "Section Break",
+            "label": "Valores"
         },
         {
             "fieldname": "monto_actual",
