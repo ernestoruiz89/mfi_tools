@@ -600,12 +600,12 @@ def _reset_package_targets(package_name):
           AND IFNULL(child.es_titulo, 0) = 0
           AND IFNULL(child.es_manual, 0) = 0
     """, (package_name,))
-    # Titulo lines -> NULL
+    # Titulo lines -> zero (NOT NULL constraint on Currency fields)
     frappe.db.sql("""
         UPDATE `tabLinea Estado Financiero EEFF` child
         INNER JOIN `tabEstado Financiero EEFF` parent ON parent.name = child.parent
-        SET child.monto_actual = NULL, child.monto_comparativo = NULL,
-            child.monto_base_actual = NULL, child.monto_base_comparativo = NULL
+        SET child.monto_actual = 0, child.monto_comparativo = 0,
+            child.monto_base_actual = 0, child.monto_base_comparativo = 0
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_titulo, 0) = 1
     """, (package_name,))
@@ -623,11 +623,11 @@ def _reset_package_targets(package_name):
           AND IFNULL(child.es_titulo, 0) = 0
           AND IFNULL(child.es_manual, 0) = 0
     """, (package_name,))
-    # Titulo or blank lines -> NULL
+    # Titulo or blank lines -> zero (NOT NULL constraint on Currency fields)
     frappe.db.sql("""
         UPDATE `tabCifra Nota EEFF` child
         INNER JOIN `tabNota EEFF` parent ON parent.name = child.parent
-        SET child.monto_actual = NULL, child.monto_comparativo = NULL,
+        SET child.monto_actual = 0, child.monto_comparativo = 0,
             child.valor_texto_actual = '', child.valor_texto_comparativo = '',
             child.origen_dato = 'Manual'
         WHERE parent.paquete_eeff = %s
