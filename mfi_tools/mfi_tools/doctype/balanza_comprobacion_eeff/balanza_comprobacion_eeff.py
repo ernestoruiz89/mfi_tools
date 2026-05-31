@@ -84,6 +84,7 @@ class BalanzaComprobacionEEFF(Document):
     def validate(self):
         self._sync_period_fields()
         self._normalizar_moneda()
+        self._normalizar_tasas_cambio()
         self._normalizar_lineas()
 
     def _normalizar_moneda(self):
@@ -172,8 +173,67 @@ class BalanzaComprobacionEEFF(Document):
         if advertencias:
             frappe.msgprint("<br>".join(advertencias), title=_("Advertencias de Carga"), indicator="orange")
 
+    def _normalizar_tasas_cambio(self):
+        seen = set()
+        for idx, row in enumerate(self.get("tasas_cambio") or [], start=1):
+            moneda = cstr(getattr(row, "moneda", "") or "").strip().upper()
+            if not moneda:
+                frappe.throw(
+                    _("La linea de tasa de cambio #{0} no tiene moneda.").format(idx),
+                    title=_("Moneda Requerida"),
+                )
+            if moneda in seen:
+                frappe.throw(
+                    _("La moneda {0} esta duplicada en tasas de cambio.").format(moneda),
+                    title=_("Moneda Duplicada"),
+                )
+            seen.add(moneda)
+            row.moneda = moneda
+
+            value = flt(getattr(row, "tasa_cambio", 0) or 0)
+            row.tasa_cambio = value if value > 0 else 1
+
+    def get_tasas_cambio_map(self):
+        output = {}
+        for row in self.get("tasas_cambio") or []:
+            moneda = cstr(getattr(row, "moneda", "") or "").strip().upper()
+            if not moneda:
+                continue
+            output[moneda] = flt(getattr(row, "tasa_cambio", 0) or 0) or 1
+        return output
+
     def get_tasa_cambio(self, moneda=None, fallback=1):
-        return flt(fallback or 1) or 1
+        tasas_map = self.get_tasas_cambio_map()
+        if not tasas_map:
+            return flt(fallback or 1) or 1
+
+        moneda = cstr(moneda or "").strip().upper()
+        if moneda and moneda in tasas_map:
+            return flt(tasas_map.get(moneda) or 1)
+
+        first = next(iter(tasas_map.values()), fallback)
+        return flt(first or fallback or 1) or 1
+
+
+def _upsert_tasa_cambio(doc, moneda, tasa_cambio):
+    moneda = cstr(moneda or "").strip().upper() or "USD"
+    tasa_cambio = flt(tasa_cambio or 0)
+    tasa_cambio = tasa_cambio if tasa_cambio > 0 else 1
+
+    for row in doc.get("tasas_cambio") or []:
+        row_moneda = cstr(getattr(row, "moneda", "") or "").strip().upper()
+        if row_moneda == moneda:
+            row.moneda = moneda
+            row.tasa_cambio = tasa_cambio
+            return
+
+    doc.append(
+        "tasas_cambio",
+        {
+            "moneda": moneda,
+            "tasa_cambio": tasa_cambio,
+        },
+    )
 
 
 @frappe.whitelist()
@@ -184,6 +244,8 @@ def cargar_balanza_csv(balanza_name, csv_content, tasa_cambio=None, moneda=None)
     doc = frappe.get_doc("Balanza Comprobacion EEFF", balanza_name)
     if moneda:
         doc.moneda = cstr(moneda or "").strip().upper()
+    if tasa_cambio not in (None, ""):
+        _upsert_tasa_cambio(doc, moneda=moneda, tasa_cambio=tasa_cambio)
     data = cstr(csv_content or "").strip()
     if not data:
         frappe.throw(_("Debes enviar el contenido CSV."), title=_("CSV Requerido"))
@@ -234,8 +296,15 @@ def cargar_balanza_csv(balanza_name, csv_content, tasa_cambio=None, moneda=None)
         "cuadra": cint(doc.cuadra),
         "moneda": cstr(getattr(doc, "moneda", "") or "").strip().upper(),
         "moneda_tasa_cambio": cstr(moneda or "").strip().upper() or "USD",
-        "tasa_cambio": flt(tasa_cambio or 1),
-        "tasas_cambio": [],
+        "tasa_cambio": flt(doc.get_tasa_cambio(moneda=moneda, fallback=1) or 1),
+        "tasas_cambio": [
+            {
+                "moneda": cstr(getattr(row, "moneda", "") or "").strip().upper(),
+                "tasa_cambio": flt(getattr(row, "tasa_cambio", 0) or 0),
+            }
+            for row in (doc.get("tasas_cambio") or [])
+            if cstr(getattr(row, "moneda", "") or "").strip()
+        ],
     }
 
 
@@ -253,6 +322,7 @@ def duplicar_a_moneda(docname, moneda_destino, tasa_cambio, operacion):
     new_doc = frappe.copy_doc(doc)
     new_doc.moneda = moneda_destino
     new_doc.nombre_balanza = f"{doc.nombre_balanza} - {moneda_destino}"
+    new_doc.set("tasas_cambio", [])
     
     for row in new_doc.get("lineas") or []:
         if operacion == "Multiplicar":

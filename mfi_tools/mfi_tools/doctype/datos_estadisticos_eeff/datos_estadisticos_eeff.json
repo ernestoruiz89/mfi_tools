@@ -10,6 +10,8 @@
         "anio",
         "mes",
         "periodo_nombre",
+        "tasas_cambio_section",
+        "tasas_cambio",
         "lineas",
         "total_lineas",
         "observaciones"
@@ -21,6 +23,8 @@
         {"fieldname": "anio", "fieldtype": "Int", "label": "Anio", "reqd": 1, "in_list_view": 1},
         {"fieldname": "mes", "fieldtype": "Select", "label": "Mes", "reqd": 1, "options": "Enero\nFebrero\nMarzo\nAbril\nMayo\nJunio\nJulio\nAgosto\nSeptiembre\nOctubre\nNoviembre\nDiciembre", "in_list_view": 1},
         {"fieldname": "periodo_nombre", "fieldtype": "Data", "label": "Periodo Nombre", "read_only": 1, "in_list_view": 1},
+        {"fieldname": "tasas_cambio_section", "fieldtype": "Section Break", "label": "Tasas de Cambio"},
+        {"fieldname": "tasas_cambio", "fieldtype": "Table", "label": "Tasas de Cambio por Moneda", "options": "Tasa Cambio Balanza EEFF"},
         {"fieldname": "lineas", "fieldtype": "Table", "label": "Lineas", "options": "Dato Estadistico EEFF"},
         {"fieldname": "total_lineas", "fieldtype": "Int", "label": "Total Lineas", "read_only": 1},
         {"fieldname": "observaciones", "fieldtype": "Small Text", "label": "Observaciones"}

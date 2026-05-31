@@ -123,9 +123,14 @@ function open_csv_import_dialog(frm) {
 }
 
 function get_default_rate_entry(frm) {
+    const rates = frm.doc.tasas_cambio || [];
+    if (!rates.length) {
+        return { moneda: "USD", tasa_cambio: 1 };
+    }
+    const first = rates[0] || {};
     return {
-        moneda: frm.doc.moneda || "USD",
-        tasa_cambio: 1,
+        moneda: first.moneda || "USD",
+        tasa_cambio: first.tasa_cambio || 1,
     };
 }
 
