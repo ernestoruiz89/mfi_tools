@@ -67,13 +67,17 @@ def _build_balance_map(balanza_doc):
 
 
 def _get_balance_amount(balance_map, cuenta, campo_balanza=None, centro_costo=None, value_field="saldo"):
+    if not balance_map:
+        return 0.0
     field = _normalize_balance_field(campo_balanza)
     amount_field = _normalize_balance_value_field(value_field)
+    if amount_field not in balance_map:
+        return 0.0
     cost_center = _normalize(centro_costo)
     if cost_center:
-        scoped_map = balance_map[amount_field][field]["by_cost_center"].get(cost_center, {})
+        scoped_map = balance_map[amount_field].get(field, {}).get("by_cost_center", {}).get(cost_center, {})
         return _resolve_balance_value(scoped_map, cuenta)
-    return _resolve_balance_value(balance_map[amount_field][field]["all"], cuenta)
+    return _resolve_balance_value(balance_map[amount_field].get(field, {}).get("all", {}), cuenta)
 
 
 def _build_stat_maps(package_doc):
