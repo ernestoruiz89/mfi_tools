@@ -63,7 +63,7 @@ def duplicar_a_moneda(docname, moneda_destino, tasa_cambio, operacion):
     new_doc = frappe.copy_doc(doc)
     new_doc.moneda = moneda_destino
     new_doc.nombre_datos_estadisticos = f"{doc.nombre_datos_estadisticos} - {moneda_destino}"
-    new_doc.set("tasas_cambio", [])
+
     
     for row in new_doc.get("lineas") or []:
         if operacion == "Multiplicar":
