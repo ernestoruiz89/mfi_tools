@@ -599,11 +599,11 @@ class HelperMapeoNotasEEFF {
     }
 
     get_figure_period_options() {
-        return "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nYTD Actual\nYTD Comparativo\nYTD Año Anterior Actual\nYTD Año Anterior Comparativo";
+        return "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nYTD Actual\nYTD Comparativo\nYTD Año Anterior Actual\nYTD Año Anterior Comparativo\nSuma Año Completo Anterior Actual\nSuma Año Completo Anterior Comparativo";
     }
 
     get_cell_period_options() {
-        return "Actual\nComparativo\nBase Actual\nBase Comparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nYTD Actual\nYTD Comparativo\nYTD Año Anterior Actual\nYTD Año Anterior Comparativo";
+        return "Actual\nComparativo\nBase Actual\nBase Comparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nYTD Actual\nYTD Comparativo\nYTD Año Anterior Actual\nYTD Año Anterior Comparativo\nSuma Año Completo Anterior Actual\nSuma Año Completo Anterior Comparativo";
     }
 
     build_rule_period_summary(rule) {

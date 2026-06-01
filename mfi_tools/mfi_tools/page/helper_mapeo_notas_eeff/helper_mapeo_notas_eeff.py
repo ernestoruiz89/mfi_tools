@@ -38,6 +38,8 @@ FIGURE_VALUE_PERIODS = (
     "YTD Comparativo",
     "YTD Año Anterior Actual",
     "YTD Año Anterior Comparativo",
+    "Suma Año Completo Anterior Actual",
+    "Suma Año Completo Anterior Comparativo",
 )
 SECTION_CELL_PERIODS = (
     "Actual",
@@ -52,6 +54,8 @@ SECTION_CELL_PERIODS = (
     "YTD Comparativo",
     "YTD Año Anterior Actual",
     "YTD Año Anterior Comparativo",
+    "Suma Año Completo Anterior Actual",
+    "Suma Año Completo Anterior Comparativo",
 )
 
 
