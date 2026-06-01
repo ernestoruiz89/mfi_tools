@@ -76,7 +76,7 @@
             "fieldname": "destino_periodo_cifra_actual",
             "fieldtype": "Select",
             "label": "Periodo Valor Cifra Actual",
-            "options": "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo Año Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo Año Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)",
+            "options": "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo Año Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo Año Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)\nYTD Actual\nYTD Comparativo",
             "default": "Actual",
             "depends_on": "eval:in_list(['Cifra Nota', 'Linea Factsheet', 'Linea Estado'], doc.destino_tipo) && doc.usar_periodos_especiales_cifra==1"
         },
@@ -84,7 +84,7 @@
             "fieldname": "destino_periodo_cifra_comparativo",
             "fieldtype": "Select",
             "label": "Periodo Valor Cifra Comparativo",
-            "options": "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo Año Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo Año Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)",
+            "options": "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo Año Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo Año Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)\nYTD Actual\nYTD Comparativo",
             "default": "Comparativo",
             "depends_on": "eval:in_list(['Cifra Nota', 'Linea Factsheet', 'Linea Estado'], doc.destino_tipo) && doc.usar_periodos_especiales_cifra==1"
         },
@@ -96,7 +96,7 @@
             "fieldname": "destino_periodo_celda",
             "fieldtype": "Select",
             "label": "Periodo Valor Celda",
-            "options": "Actual\nComparativo\nBase Actual\nBase Comparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo Año Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo Año Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)",
+            "options": "Actual\nComparativo\nBase Actual\nBase Comparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo Año Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo Año Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)\nYTD Actual\nYTD Comparativo",
             "default": "Actual",
             "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'",
             "description": "Define que monto se escribe en la celda destino de una tabla compleja."

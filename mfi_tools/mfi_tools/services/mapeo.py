@@ -68,6 +68,13 @@ def _build_balance_map(balanza_doc):
                     amount = debe_ant - haber_ant
                 else:
                     amount = flt(getattr(row, "saldo_anterior", 0) or 0)
+            elif value_field == "movimiento_del_mes":
+                debe_mov = flt(getattr(row, "debe_mes", 0) or 0)
+                haber_mov = flt(getattr(row, "haber_mes", 0) or 0)
+                if debe_mov != 0 or haber_mov != 0:
+                    amount = debe_mov - haber_mov
+                else:
+                    amount = flt(getattr(row, "movimiento_del_mes", 0) or 0)
             else:
                 amount = flt(getattr(row, value_field, 0) or 0)
             for field in BALANCE_FIELDS:
@@ -228,6 +235,20 @@ def _select_figure_amount(
         if not keys: return 0.0
         total = sum(_compute_rule_amount(rule_doc, bals.get(k, {}), sts.get(k, {}), balance_value_field="saldo") for k in keys)
         return total / 12.0
+    if selected_period == "YTD Actual":
+        bals = historical_data.get("ytd_actual_balances", {})
+        sts = historical_data.get("ytd_actual_stats", {})
+        keys = set(bals.keys()).union(set(sts.keys()))
+        if not keys: return 0.0
+        total = sum(_compute_rule_amount(rule_doc, bals.get(k, {}), sts.get(k, {}), balance_value_field="movimiento_del_mes") for k in keys)
+        return total
+    if selected_period == "YTD Comparativo":
+        bals = historical_data.get("ytd_comparativo_balances", {})
+        sts = historical_data.get("ytd_comparativo_stats", {})
+        keys = set(bals.keys()).union(set(sts.keys()))
+        if not keys: return 0.0
+        total = sum(_compute_rule_amount(rule_doc, bals.get(k, {}), sts.get(k, {}), balance_value_field="movimiento_del_mes") for k in keys)
+        return total
     return actual_amount
 
 def _select_figure_amounts(
@@ -330,6 +351,20 @@ def _select_section_cell_amount(
         if not keys: return 0.0
         total = sum(_compute_rule_amount(rule_doc, bals.get(k, {}), sts.get(k, {}), balance_value_field="saldo") for k in keys)
         return total / 12.0
+    if period == "YTD Actual":
+        bals = historical_data.get("ytd_actual_balances", {})
+        sts = historical_data.get("ytd_actual_stats", {})
+        keys = set(bals.keys()).union(set(sts.keys()))
+        if not keys: return 0.0
+        total = sum(_compute_rule_amount(rule_doc, bals.get(k, {}), sts.get(k, {}), balance_value_field="movimiento_del_mes") for k in keys)
+        return total
+    if period == "YTD Comparativo":
+        bals = historical_data.get("ytd_comparativo_balances", {})
+        sts = historical_data.get("ytd_comparativo_stats", {})
+        keys = set(bals.keys()).union(set(sts.keys()))
+        if not keys: return 0.0
+        total = sum(_compute_rule_amount(rule_doc, bals.get(k, {}), sts.get(k, {}), balance_value_field="movimiento_del_mes") for k in keys)
+        return total
     if period == "Base Actual":
         return base_actual_amount
     if period == "Base Comparativo":
@@ -735,17 +770,34 @@ def aplicar_mapeo_paquete(paquete_name):
                 
         return results
 
+    def _get_historical_ytd(doctype, field_filters, anio, mes):
+        try:
+            mes_idx = MESES.index(mes)
+        except ValueError:
+            return {}
+        
+        results = {}
+        for idx in range(mes_idx + 1):
+            curr_mes = MESES[idx]
+            m = _get_historical(doctype, field_filters, anio, curr_mes)
+            if m:
+                results[(anio, curr_mes)] = m
+                
+        return results
+
     if balanza:
         f_bal = {"company": balanza.company, "moneda": balanza.moneda}
         historical_data["cierre_anterior_actual_balances"] = _get_historical("Balanza Comprobacion EEFF", f_bal, balanza.anio - 1, "Diciembre")
         historical_data["anio_anterior_actual_balances"] = _get_historical("Balanza Comprobacion EEFF", f_bal, balanza.anio - 1, balanza.mes)
         historical_data["promedio_12_actual_balances"] = _get_historical_12_months("Balanza Comprobacion EEFF", f_bal, balanza.anio, balanza.mes)
+        historical_data["ytd_actual_balances"] = _get_historical_ytd("Balanza Comprobacion EEFF", f_bal, balanza.anio, balanza.mes)
 
     if comparative_doc:
         f_comp = {"company": comparative_doc.company, "moneda": comparative_doc.moneda}
         historical_data["cierre_anterior_comparativo_balances"] = _get_historical("Balanza Comprobacion EEFF", f_comp, comparative_doc.anio - 1, "Diciembre")
         historical_data["anio_anterior_comparativo_balances"] = _get_historical("Balanza Comprobacion EEFF", f_comp, comparative_doc.anio - 1, comparative_doc.mes)
         historical_data["promedio_12_comparativo_balances"] = _get_historical_12_months("Balanza Comprobacion EEFF", f_comp, comparative_doc.anio, comparative_doc.mes)
+        historical_data["ytd_comparativo_balances"] = _get_historical_ytd("Balanza Comprobacion EEFF", f_comp, comparative_doc.anio, comparative_doc.mes)
 
     act_stat_name = getattr(package, "datos_estadisticos_actual_eeff", "")
     if act_stat_name and frappe.db.exists("Datos Estadisticos EEFF", act_stat_name):
@@ -754,6 +806,7 @@ def aplicar_mapeo_paquete(paquete_name):
         historical_data["cierre_anterior_actual_stats"] = _get_historical("Datos Estadisticos EEFF", f_act_stat, act_stat_doc.anio - 1, "Diciembre")
         historical_data["anio_anterior_actual_stats"] = _get_historical("Datos Estadisticos EEFF", f_act_stat, act_stat_doc.anio - 1, act_stat_doc.mes)
         historical_data["promedio_12_actual_stats"] = _get_historical_12_months("Datos Estadisticos EEFF", f_act_stat, act_stat_doc.anio, act_stat_doc.mes)
+        historical_data["ytd_actual_stats"] = _get_historical_ytd("Datos Estadisticos EEFF", f_act_stat, act_stat_doc.anio, act_stat_doc.mes)
 
     comp_stat_name = getattr(package, "datos_estadisticos_comparativo_eeff", "")
     if comp_stat_name and frappe.db.exists("Datos Estadisticos EEFF", comp_stat_name):
@@ -762,6 +815,7 @@ def aplicar_mapeo_paquete(paquete_name):
         historical_data["cierre_anterior_comparativo_stats"] = _get_historical("Datos Estadisticos EEFF", f_comp_stat, comp_stat_doc.anio - 1, "Diciembre")
         historical_data["anio_anterior_comparativo_stats"] = _get_historical("Datos Estadisticos EEFF", f_comp_stat, comp_stat_doc.anio - 1, comp_stat_doc.mes)
         historical_data["promedio_12_comparativo_stats"] = _get_historical_12_months("Datos Estadisticos EEFF", f_comp_stat, comp_stat_doc.anio, comp_stat_doc.mes)
+        historical_data["ytd_comparativo_stats"] = _get_historical_ytd("Datos Estadisticos EEFF", f_comp_stat, comp_stat_doc.anio, comp_stat_doc.mes)
 
     _reset_package_targets(paquete_name)
 

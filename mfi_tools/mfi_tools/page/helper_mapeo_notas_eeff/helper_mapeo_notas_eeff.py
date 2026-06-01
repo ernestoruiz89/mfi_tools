@@ -34,6 +34,8 @@ FIGURE_VALUE_PERIODS = (
     "Movimiento Mes Actual",
     "Saldo Anterior Comparativo",
     "Movimiento Mes Comparativo",
+    "YTD Actual",
+    "YTD Comparativo",
 )
 SECTION_CELL_PERIODS = (
     "Actual",
@@ -44,6 +46,8 @@ SECTION_CELL_PERIODS = (
     "Movimiento Mes Actual",
     "Saldo Anterior Comparativo",
     "Movimiento Mes Comparativo",
+    "YTD Actual",
+    "YTD Comparativo",
 )
 
 

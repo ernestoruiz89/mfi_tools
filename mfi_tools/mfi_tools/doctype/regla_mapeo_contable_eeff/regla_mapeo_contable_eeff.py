@@ -17,6 +17,8 @@ FIGURE_VALUE_PERIODS = (
     "Saldo Año Anterior Actual",
     "Saldo Cierre Anterior Comparativo",
     "Saldo Año Anterior Comparativo",
+    "YTD Actual",
+    "YTD Comparativo",
 )
 SECTION_CELL_PERIODS = (
     "Actual",
@@ -31,6 +33,8 @@ SECTION_CELL_PERIODS = (
     "Saldo Año Anterior Actual",
     "Saldo Cierre Anterior Comparativo",
     "Saldo Año Anterior Comparativo",
+    "YTD Actual",
+    "YTD Comparativo",
 )
 
 
