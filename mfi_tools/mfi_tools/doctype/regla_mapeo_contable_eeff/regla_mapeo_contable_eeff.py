@@ -129,7 +129,7 @@ class ReglaMapeoContableEEFF(Document):
         if self.destino_periodo_celda not in SECTION_CELL_PERIODS:
             self.destino_periodo_celda = "Actual"
         destino_tipo = cstr(getattr(self, "destino_tipo", "") or "").strip()
-        if destino_tipo not in ("Cifra Nota", "Linea Factsheet", "Linea Estado") or self.fuente_tipo != "Balanza":
+        if destino_tipo not in ("Cifra Nota", "Linea Factsheet", "Linea Estado") or self.fuente_tipo not in ("Balanza", "Dato Estadistico"):
             self.usar_periodos_especiales_cifra = 0
         if not self.usar_periodos_especiales_cifra:
             self.destino_periodo_cifra_actual = "Actual"
