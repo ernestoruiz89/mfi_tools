@@ -20,7 +20,13 @@ FORMULA_HELP_HTML = """
     <strong>Matemáticas:</strong><br>
     <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>
     <code>SI(condicion, valor_si, valor_no)</code><br>
-    Operadores: <code>+ - * / ()</code>
+    Operadores: <code>+ - * / ()</code><br>
+    <br>
+    <strong>Variables y Múltiples Líneas:</strong><br>
+    Puedes usar <code>VAR nombre = valor</code> para guardar variables intermedias. Ej:<br>
+    <code>VAR SC = BAL("101*") + BAL("102*")</code><br>
+    <code>VAR USD = SC / 36.62</code><br>
+    <code>USD</code><br>
 </div>
 """
 
@@ -32,6 +38,8 @@ def has_data_functions(expression):
     if not expression:
         return False
     expr = cstr(expression).upper()
+    if "VAR " in expr:
+        return True
     for func in DATA_FUNCTIONS:
         if f"{func}(" in expr:
             return True
@@ -189,8 +197,34 @@ def evaluate_formula(expression, context, period_context="actual"):
     }
 
     try:
-        result = eval(expr, {"__builtins__": None}, safe_funcs)
-        return flt(result)
+        lines = [line.strip() for line in expr.splitlines() if line.strip()]
+        if not lines:
+            return 0.0
+            
+        local_vars = {}
+        result = 0.0
+        
+        for line in lines:
+            if line.startswith("VAR "):
+                parts = line[4:].split("=", 1)
+                if len(parts) == 2:
+                    var_name = parts[0].strip()
+                    var_expr = parts[1].strip()
+                    
+                    if var_name in safe_funcs:
+                        frappe.throw(_("No puedes usar '{0}' como nombre de variable porque es una función reservada.").format(var_name))
+                        
+                    val = eval(var_expr, {"__builtins__": None}, {**safe_funcs, **local_vars})
+                    local_vars[var_name] = flt(val)
+                    result = local_vars[var_name]
+                else:
+                    val = eval(line, {"__builtins__": None}, {**safe_funcs, **local_vars})
+                    result = flt(val)
+            else:
+                val = eval(line, {"__builtins__": None}, {**safe_funcs, **local_vars})
+                result = flt(val)
+                
+        return result
     except ZeroDivisionError:
         return 0.0
     except Exception as e:
