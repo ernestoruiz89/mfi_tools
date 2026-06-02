@@ -24,6 +24,8 @@ class Factsheet(Document):
             
         if not self.company and self.paquete_eeff:
             self.company = frappe.db.get_value("Paquete EEFF", self.paquete_eeff, "company")
+            
+        self.ancho_tabla_impresion = self.get_print_table_width()
         self._normalizar_lineas()
         self._calcular_formulas()
 
