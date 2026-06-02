@@ -11,11 +11,11 @@ FORMULA_HELP_HTML = """
     <code>BAL("101*", "movimiento_del_mes")</code>: Movimiento<br>
     <code>EST("EMPLEADOS")</code>: Dato estadístico actual<br>
     <code>EST_COMP("EMPLEADOS")</code>: Dato estadístico comparativo<br>
-    <code>YTD("101*")</code>: YTD (Ene-Mes Actual)<br>
-    <code>YTD_ANT("101*")</code>: YTD Año Anterior<br>
-    <code>ANUAL_ANT("101*")</code>: Suma Año Anterior (12 meses)<br>
-    <code>CIERRE_ANT("101*")</code>: Saldo Cierre Año Anterior<br>
-    <code>MES_ANIO_ANT("101*")</code>: Saldo Mismo Mes Año Anterior<br>
+    <code>YTD("101*")</code>: YTD Balanza | <code>YTD_EST("COD")</code>: YTD Estadístico<br>
+    <code>YTD_ANT("101*")</code>: YTD Año Anterior | <code>YTD_ANT_EST("COD")</code>: YTD Estadístico<br>
+    <code>ANUAL_ANT("101*")</code>: Suma Año Anterior | <code>ANUAL_ANT_EST("COD")</code>: Estadístico<br>
+    <code>CIERRE_ANT("101*")</code>: Saldo Cierre Año Anterior | <code>CIERRE_ANT_EST("COD")</code>: Estadístico<br>
+    <code>MES_ANIO_ANT("101*")</code>: Mismo Mes Año Anterior | <code>MES_ANIO_ANT_EST("COD")</code>: Estadístico<br>
     <br>
     <strong>Matemáticas:</strong><br>
     <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>
@@ -26,7 +26,8 @@ FORMULA_HELP_HTML = """
 
 DATA_FUNCTIONS = {"BAL", "BAL_ACT", "BAL_COMP", "BAL_BASE_ACT", "BAL_BASE_COMP",
                   "EST", "EST_ACT", "EST_COMP",
-                  "YTD", "YTD_ANT", "ANUAL_ANT", "CIERRE_ANT", "MES_AÑO_ANT", "MES_ANIO_ANT"}
+                  "YTD", "YTD_ANT", "ANUAL_ANT", "CIERRE_ANT", "MES_AÑO_ANT", "MES_ANIO_ANT",
+                  "YTD_EST", "YTD_ANT_EST", "ANUAL_ANT_EST", "CIERRE_ANT_EST", "MES_AÑO_ANT_EST", "MES_ANIO_ANT_EST"}
 
 def has_data_functions(expression):
     if not expression:
@@ -119,71 +120,45 @@ def evaluate_formula(expression, context, period_context="actual"):
     def func_est_act(code): return _get_stat_value(code, context.actual_stats)
     def func_est_comp(code): return _get_stat_value(code, context.comparative_stats)
     
-    def _is_stat_ytd(pattern, hist_stat):
-        if not hist_stat: return False
-        for month_data in hist_stat.values():
-            if pattern in month_data: return True
-        return False
-
-    def func_ytd(pattern):
-        if period_context == "comparativo":
-            hist_bal = context.historical_data.get("ytd_comparativo_balances")
-            hist_stat = context.historical_data.get("ytd_comparativo_stats")
-        else:
-            hist_bal = context.historical_data.get("ytd_actual_balances")
-            hist_stat = context.historical_data.get("ytd_actual_stats")
-            
-        if _is_stat_ytd(pattern, hist_stat):
-            return _get_ytd_stat_value(pattern, hist_stat)
-        return _get_ytd_balance_value(pattern, hist_bal, "movimiento_del_mes")
+    def func_ytd(pattern, field="movimiento_del_mes"):
+        hist_bal = context.historical_data.get("ytd_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("ytd_actual_balances")
+        return _get_ytd_balance_value(pattern, hist_bal, field)
         
-    def func_ytd_ant(pattern):
-        if period_context == "comparativo":
-            hist_bal = context.historical_data.get("ytd_anio_anterior_comparativo_balances")
-            hist_stat = context.historical_data.get("ytd_anio_anterior_comparativo_stats")
-        else:
-            hist_bal = context.historical_data.get("ytd_anio_anterior_actual_balances")
-            hist_stat = context.historical_data.get("ytd_anio_anterior_actual_stats")
-            
-        if _is_stat_ytd(pattern, hist_stat):
-            return _get_ytd_stat_value(pattern, hist_stat)
-        return _get_ytd_balance_value(pattern, hist_bal, "movimiento_del_mes")
+    def func_ytd_est(code):
+        hist_stat = context.historical_data.get("ytd_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("ytd_actual_stats")
+        return _get_ytd_stat_value(code, hist_stat)
+        
+    def func_ytd_ant(pattern, field="movimiento_del_mes"):
+        hist_bal = context.historical_data.get("ytd_anio_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("ytd_anio_anterior_actual_balances")
+        return _get_ytd_balance_value(pattern, hist_bal, field)
+        
+    def func_ytd_ant_est(code):
+        hist_stat = context.historical_data.get("ytd_anio_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("ytd_anio_anterior_actual_stats")
+        return _get_ytd_stat_value(code, hist_stat)
 
-    def func_anual_ant(pattern):
-        if period_context == "comparativo":
-            hist_bal = context.historical_data.get("suma_anio_completo_anterior_comparativo_balances")
-            hist_stat = context.historical_data.get("suma_anio_completo_anterior_comparativo_stats")
-        else:
-            hist_bal = context.historical_data.get("suma_anio_completo_anterior_actual_balances")
-            hist_stat = context.historical_data.get("suma_anio_completo_anterior_actual_stats")
-            
-        if _is_stat_ytd(pattern, hist_stat):
-            return _get_ytd_stat_value(pattern, hist_stat)
-        return _get_ytd_balance_value(pattern, hist_bal, "movimiento_del_mes")
+    def func_anual_ant(pattern, field="movimiento_del_mes"):
+        hist_bal = context.historical_data.get("suma_anio_completo_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_anterior_actual_balances")
+        return _get_ytd_balance_value(pattern, hist_bal, field)
+        
+    def func_anual_ant_est(code):
+        hist_stat = context.historical_data.get("suma_anio_completo_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_anterior_actual_stats")
+        return _get_ytd_stat_value(code, hist_stat)
 
     def func_cierre_ant(pattern, field="saldo"):
-        if period_context == "comparativo":
-            hist_bal = context.historical_data.get("cierre_anterior_comparativo_balances")
-            hist_stat = context.historical_data.get("cierre_anterior_comparativo_stats")
-        else:
-            hist_bal = context.historical_data.get("cierre_anterior_actual_balances")
-            hist_stat = context.historical_data.get("cierre_anterior_actual_stats")
-            
-        if hist_stat and pattern in hist_stat:
-            return _get_stat_value(pattern, hist_stat)
+        hist_bal = context.historical_data.get("cierre_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("cierre_anterior_actual_balances")
         return _get_balance_value(pattern, field, hist_bal)
 
+    def func_cierre_ant_est(code):
+        hist_stat = context.historical_data.get("cierre_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("cierre_anterior_actual_stats")
+        return _get_stat_value(code, hist_stat)
+
     def func_mes_anio_ant(pattern, field="saldo"):
-        if period_context == "comparativo":
-            hist_bal = context.historical_data.get("anio_anterior_comparativo_balances")
-            hist_stat = context.historical_data.get("anio_anterior_comparativo_stats")
-        else:
-            hist_bal = context.historical_data.get("anio_anterior_actual_balances")
-            hist_stat = context.historical_data.get("anio_anterior_actual_stats")
-            
-        if hist_stat and pattern in hist_stat:
-            return _get_stat_value(pattern, hist_stat)
+        hist_bal = context.historical_data.get("anio_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("anio_anterior_actual_balances")
         return _get_balance_value(pattern, field, hist_bal)
+
+    def func_mes_anio_ant_est(code):
+        hist_stat = context.historical_data.get("anio_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("anio_anterior_actual_stats")
+        return _get_stat_value(code, hist_stat)
 
     safe_funcs = {
         "BAL": func_bal,
@@ -200,6 +175,12 @@ def evaluate_formula(expression, context, period_context="actual"):
         "CIERRE_ANT": func_cierre_ant,
         "MES_AÑO_ANT": func_mes_anio_ant,
         "MES_ANIO_ANT": func_mes_anio_ant,
+        "YTD_EST": func_ytd_est,
+        "YTD_ANT_EST": func_ytd_ant_est,
+        "ANUAL_ANT_EST": func_anual_ant_est,
+        "CIERRE_ANT_EST": func_cierre_ant_est,
+        "MES_AÑO_ANT_EST": func_mes_anio_ant_est,
+        "MES_ANIO_ANT_EST": func_mes_anio_ant_est,
         "ABS": abs,
         "MAX": max,
         "MIN": min,
