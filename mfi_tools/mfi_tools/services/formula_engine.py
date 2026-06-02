@@ -11,11 +11,11 @@ FORMULA_HELP_HTML = """
     <code>BAL("101*", "movimiento_del_mes")</code>: Movimiento<br>
     <code>EST("EMPLEADOS")</code>: Dato estadístico actual<br>
     <code>EST_COMP("EMPLEADOS")</code>: Dato estadístico comparativo<br>
-    <code>YTD("101*")</code>: YTD Balanza | <code>YTD_EST("COD")</code>: YTD Estadístico<br>
-    <code>YTD_ANT("101*")</code>: YTD Año Anterior | <code>YTD_ANT_EST("COD")</code>: YTD Estadístico<br>
-    <code>ANUAL_ANT("101*")</code>: Suma Año Anterior | <code>ANUAL_ANT_EST("COD")</code>: Estadístico<br>
-    <code>CIERRE_ANT("101*")</code>: Saldo Cierre Año Anterior | <code>CIERRE_ANT_EST("COD")</code>: Estadístico<br>
-    <code>MES_ANIO_ANT("101*")</code>: Mismo Mes Año Anterior | <code>MES_ANIO_ANT_EST("COD")</code>: Estadístico<br>
+    <code>YTD("101*")</code>: YTD Balanza | <code>YTD("COD", "EST")</code>: YTD Estadístico<br>
+    <code>YTD_ANT("101*")</code>: YTD Año Anterior | <code>YTD_ANT("COD", "EST")</code>: YTD Estadístico<br>
+    <code>ANUAL_ANT("101*")</code>: Suma Año Anterior | <code>ANUAL_ANT("COD", "EST")</code>: Estadístico<br>
+    <code>CIERRE_ANT("101*")</code>: Saldo Cierre Año Anterior | <code>CIERRE_ANT("COD", "EST")</code>: Estadístico<br>
+    <code>MES_ANIO_ANT("101*")</code>: Mismo Mes Año Anterior | <code>MES_ANIO_ANT("COD", "EST")</code>: Estadístico<br>
     <br>
     <strong>Matemáticas:</strong><br>
     <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>
@@ -26,8 +26,7 @@ FORMULA_HELP_HTML = """
 
 DATA_FUNCTIONS = {"BAL", "BAL_ACT", "BAL_COMP", "BAL_BASE_ACT", "BAL_BASE_COMP",
                   "EST", "EST_ACT", "EST_COMP",
-                  "YTD", "YTD_ANT", "ANUAL_ANT", "CIERRE_ANT", "MES_AÑO_ANT", "MES_ANIO_ANT",
-                  "YTD_EST", "YTD_ANT_EST", "ANUAL_ANT_EST", "CIERRE_ANT_EST", "MES_AÑO_ANT_EST", "MES_ANIO_ANT_EST"}
+                  "YTD", "YTD_ANT", "ANUAL_ANT", "CIERRE_ANT", "MES_AÑO_ANT", "MES_ANIO_ANT"}
 
 def has_data_functions(expression):
     if not expression:
@@ -120,45 +119,52 @@ def evaluate_formula(expression, context, period_context="actual"):
     def func_est_act(code): return _get_stat_value(code, context.actual_stats)
     def func_est_comp(code): return _get_stat_value(code, context.comparative_stats)
     
-    def func_ytd(pattern, field="movimiento_del_mes"):
+    def _parse_args(arg1, arg2, default_field):
+        a1 = cstr(arg1).strip().upper()
+        if a1 == "EST": return "EST", None
+        if a1 == "BAL": return "BAL", cstr(arg2 or default_field).strip().lower()
+        if a1 in ("SALDO", "MOVIMIENTO_DEL_MES", "SALDO_ANTERIOR"): return "BAL", a1.lower()
+        return "BAL", default_field
+
+    def func_ytd(pattern, arg1="BAL", arg2=None):
+        src, field = _parse_args(arg1, arg2, "movimiento_del_mes")
+        if src == "EST":
+            hist_stat = context.historical_data.get("ytd_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("ytd_actual_stats")
+            return _get_ytd_stat_value(pattern, hist_stat)
         hist_bal = context.historical_data.get("ytd_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("ytd_actual_balances")
         return _get_ytd_balance_value(pattern, hist_bal, field)
         
-    def func_ytd_est(code):
-        hist_stat = context.historical_data.get("ytd_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("ytd_actual_stats")
-        return _get_ytd_stat_value(code, hist_stat)
-        
-    def func_ytd_ant(pattern, field="movimiento_del_mes"):
+    def func_ytd_ant(pattern, arg1="BAL", arg2=None):
+        src, field = _parse_args(arg1, arg2, "movimiento_del_mes")
+        if src == "EST":
+            hist_stat = context.historical_data.get("ytd_anio_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("ytd_anio_anterior_actual_stats")
+            return _get_ytd_stat_value(pattern, hist_stat)
         hist_bal = context.historical_data.get("ytd_anio_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("ytd_anio_anterior_actual_balances")
         return _get_ytd_balance_value(pattern, hist_bal, field)
-        
-    def func_ytd_ant_est(code):
-        hist_stat = context.historical_data.get("ytd_anio_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("ytd_anio_anterior_actual_stats")
-        return _get_ytd_stat_value(code, hist_stat)
 
-    def func_anual_ant(pattern, field="movimiento_del_mes"):
+    def func_anual_ant(pattern, arg1="BAL", arg2=None):
+        src, field = _parse_args(arg1, arg2, "movimiento_del_mes")
+        if src == "EST":
+            hist_stat = context.historical_data.get("suma_anio_completo_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_anterior_actual_stats")
+            return _get_ytd_stat_value(pattern, hist_stat)
         hist_bal = context.historical_data.get("suma_anio_completo_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_anterior_actual_balances")
         return _get_ytd_balance_value(pattern, hist_bal, field)
-        
-    def func_anual_ant_est(code):
-        hist_stat = context.historical_data.get("suma_anio_completo_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_anterior_actual_stats")
-        return _get_ytd_stat_value(code, hist_stat)
 
-    def func_cierre_ant(pattern, field="saldo"):
+    def func_cierre_ant(pattern, arg1="BAL", arg2=None):
+        src, field = _parse_args(arg1, arg2, "saldo")
+        if src == "EST":
+            hist_stat = context.historical_data.get("cierre_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("cierre_anterior_actual_stats")
+            return _get_stat_value(pattern, hist_stat)
         hist_bal = context.historical_data.get("cierre_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("cierre_anterior_actual_balances")
         return _get_balance_value(pattern, field, hist_bal)
 
-    def func_cierre_ant_est(code):
-        hist_stat = context.historical_data.get("cierre_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("cierre_anterior_actual_stats")
-        return _get_stat_value(code, hist_stat)
-
-    def func_mes_anio_ant(pattern, field="saldo"):
+    def func_mes_anio_ant(pattern, arg1="BAL", arg2=None):
+        src, field = _parse_args(arg1, arg2, "saldo")
+        if src == "EST":
+            hist_stat = context.historical_data.get("anio_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("anio_anterior_actual_stats")
+            return _get_stat_value(pattern, hist_stat)
         hist_bal = context.historical_data.get("anio_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("anio_anterior_actual_balances")
         return _get_balance_value(pattern, field, hist_bal)
-
-    def func_mes_anio_ant_est(code):
-        hist_stat = context.historical_data.get("anio_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("anio_anterior_actual_stats")
-        return _get_stat_value(code, hist_stat)
 
     safe_funcs = {
         "BAL": func_bal,
@@ -175,12 +181,6 @@ def evaluate_formula(expression, context, period_context="actual"):
         "CIERRE_ANT": func_cierre_ant,
         "MES_AÑO_ANT": func_mes_anio_ant,
         "MES_ANIO_ANT": func_mes_anio_ant,
-        "YTD_EST": func_ytd_est,
-        "YTD_ANT_EST": func_ytd_ant_est,
-        "ANUAL_ANT_EST": func_anual_ant_est,
-        "CIERRE_ANT_EST": func_cierre_ant_est,
-        "MES_AÑO_ANT_EST": func_mes_anio_ant_est,
-        "MES_ANIO_ANT_EST": func_mes_anio_ant_est,
         "ABS": abs,
         "MAX": max,
         "MIN": min,
