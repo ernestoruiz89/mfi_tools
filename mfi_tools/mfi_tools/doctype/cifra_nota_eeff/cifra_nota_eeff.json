@@ -52,7 +52,7 @@
         {"fieldname": "calculo_automatico", "fieldtype": "Check", "label": "Calculo Automatico", "default": 0},
         {
             "fieldname": "formula_cifras",
-            "fieldtype": "Small Text",
+            "fieldtype": "Code",
             "label": "Formula Cifras",
             "description": "<div style=\"font-size: 11px; line-height: 1.4; color: var(--text-muted);\">\n    <strong>Referencia de Funciones de Datos:</strong><br>\n    <code>BAL(\"101*\")</code>: Saldo actual cuentas 101<br>\n    <code>BAL_COMP(\"101*\")</code>: Saldo comparativo<br>\n    <code>BAL(\"101*\", \"movimiento_del_mes\")</code>: Movimiento<br>\n    <code>EST(\"EMPLEADOS\")</code>: Dato estadístico actual<br>\n    <code>EST_COMP(\"EMPLEADOS\")</code>: Dato estadístico comparativo<br>\n    <code>YTD(\"101*\")</code>: YTD (Ene-Mes Actual)<br>\n    <code>YTD_ANT(\"101*\")</code>: YTD Año Anterior<br>\n    <code>ANUAL_ANT(\"101*\")</code>: Suma Año Anterior (12 meses)<br>\n    <code>CIERRE_ANT(\"101*\")</code>: Saldo Cierre Año Anterior<br>\n    <code>MES_ANIO_ANT(\"101*\")</code>: Saldo Mismo Mes Año Anterior<br>\n    <br>\n    <strong>Matemáticas:</strong><br>\n    <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>\n    <code>SI(condicion, valor_si, valor_no)</code><br>\n    Operadores: <code>+ - * / ()</code><br>\n    <br>\n    <strong>Otras Cifras:</strong><br>\n    <code>ACTIVO_CORRIENTE, -PASIVO_CORRIENTE</code>\n</div>"
         },
