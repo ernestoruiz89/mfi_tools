@@ -14,6 +14,8 @@ FORMULA_HELP_HTML = """
     <code>YTD("101*")</code>: YTD (Ene-Mes Actual)<br>
     <code>YTD_ANT("101*")</code>: YTD Año Anterior<br>
     <code>ANUAL_ANT("101*")</code>: Suma Año Anterior (12 meses)<br>
+    <code>CIERRE_ANT("101*")</code>: Saldo Cierre Año Anterior<br>
+    <code>MES_ANIO_ANT("101*")</code>: Saldo Mismo Mes Año Anterior<br>
     <br>
     <strong>Matemáticas:</strong><br>
     <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>
@@ -24,7 +26,7 @@ FORMULA_HELP_HTML = """
 
 DATA_FUNCTIONS = {"BAL", "BAL_ACT", "BAL_COMP", "BAL_BASE_ACT", "BAL_BASE_COMP",
                   "EST", "EST_ACT", "EST_COMP",
-                  "YTD", "YTD_ANT", "ANUAL_ANT"}
+                  "YTD", "YTD_ANT", "ANUAL_ANT", "CIERRE_ANT", "MES_AÑO_ANT", "MES_ANIO_ANT"}
 
 def has_data_functions(expression):
     if not expression:
@@ -141,6 +143,30 @@ def evaluate_formula(expression, context, period_context="actual"):
                 return _get_ytd_stat_value(pattern, hist)
         return _get_ytd_balance_value(pattern, hist, "movimiento_del_mes")
 
+    def func_cierre_ant(pattern, field="saldo"):
+        if period_context == "comparativo":
+            hist_bal = context.historical_data.get("cierre_anterior_comparativo_balances")
+            hist_stat = context.historical_data.get("cierre_anterior_comparativo_stats")
+        else:
+            hist_bal = context.historical_data.get("cierre_anterior_actual_balances")
+            hist_stat = context.historical_data.get("cierre_anterior_actual_stats")
+            
+        if hist_stat and pattern in hist_stat:
+            return _get_stat_value(pattern, hist_stat)
+        return _get_balance_value(pattern, field, hist_bal)
+
+    def func_mes_anio_ant(pattern, field="saldo"):
+        if period_context == "comparativo":
+            hist_bal = context.historical_data.get("anio_anterior_comparativo_balances")
+            hist_stat = context.historical_data.get("anio_anterior_comparativo_stats")
+        else:
+            hist_bal = context.historical_data.get("anio_anterior_actual_balances")
+            hist_stat = context.historical_data.get("anio_anterior_actual_stats")
+            
+        if hist_stat and pattern in hist_stat:
+            return _get_stat_value(pattern, hist_stat)
+        return _get_balance_value(pattern, field, hist_bal)
+
     safe_funcs = {
         "BAL": func_bal,
         "BAL_ACT": func_bal_act,
@@ -153,6 +179,9 @@ def evaluate_formula(expression, context, period_context="actual"):
         "YTD": func_ytd,
         "YTD_ANT": func_ytd_ant,
         "ANUAL_ANT": func_anual_ant,
+        "CIERRE_ANT": func_cierre_ant,
+        "MES_AÑO_ANT": func_mes_anio_ant,
+        "MES_ANIO_ANT": func_mes_anio_ant,
         "ABS": abs,
         "MAX": max,
         "MIN": min,
