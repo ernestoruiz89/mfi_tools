@@ -356,11 +356,15 @@ class NotaEEFF(Document):
             if cint(row.es_manual):
                 value = flt(getattr(row, fieldname, 0))
             elif cint(row.calculo_automatico) and cstr(row.formula_cifras or "").strip():
-                value = 0.0
-                next_stack = set(stack)
-                next_stack.add(key)
-                for sign, ref_code in parse_formula(row.formula_cifras):
-                    value += sign * flt(get_value(ref_code, fieldname, next_stack))
+                from mfi_tools.mfi_tools.services.formula_engine import has_data_functions
+                if has_data_functions(row.formula_cifras):
+                    value = flt(getattr(row, fieldname, 0))
+                else:
+                    value = 0.0
+                    next_stack = set(stack)
+                    next_stack.add(key)
+                    for sign, ref_code in parse_formula(row.formula_cifras):
+                        value += sign * flt(get_value(ref_code, fieldname, next_stack))
                 setattr(row, fieldname, value)
                 row.origen_dato = "Formula"
             else:

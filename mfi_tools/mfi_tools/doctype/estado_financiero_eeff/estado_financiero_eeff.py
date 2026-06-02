@@ -300,24 +300,28 @@ class EstadoFinancieroEEFF(Document):
             if cint(row.es_manual):
                 value = flt(getattr(row, fieldname, 0))
             elif cint(row.calculo_automatico) and cstr(row.formula_lineas or "").strip():
-                value = 0.0
-                next_stack = set(stack)
-                next_stack.add(key)
-                mode = cstr(getattr(row, "modo_formula", "") or "Vertical").strip()
-                if mode == "Multicolumna":
-                    for sign, ref_code, prefix in parse_multicol_formula(row.formula_lineas):
-                        if prefix == "SELF":
-                            ref_field = fieldname
-                        elif prefix == "BASE":
-                            ref_field = FORMULA_BASE_FIELD_BY_TARGET.get(fieldname, "monto_base_actual")
-                        else:
-                            ref_field = FORMULA_FIELD_MAP.get(prefix)
-                        if not ref_field:
-                            frappe.throw(_("Formula invalida con prefijo no soportado: {0}.").format(prefix), title=_("Formula Invalida"))
-                        value += sign * flt(get_value(ref_code, ref_field, next_stack))
+                from mfi_tools.mfi_tools.services.formula_engine import has_data_functions
+                if has_data_functions(row.formula_lineas):
+                    value = flt(getattr(row, fieldname, 0))
                 else:
-                    for sign, ref_code in parse_vertical_formula(row.formula_lineas):
-                        value += sign * flt(get_value(ref_code, fieldname, next_stack))
+                    value = 0.0
+                    next_stack = set(stack)
+                    next_stack.add(key)
+                    mode = cstr(getattr(row, "modo_formula", "") or "Vertical").strip()
+                    if mode == "Multicolumna":
+                        for sign, ref_code, prefix in parse_multicol_formula(row.formula_lineas):
+                            if prefix == "SELF":
+                                ref_field = fieldname
+                            elif prefix == "BASE":
+                                ref_field = FORMULA_BASE_FIELD_BY_TARGET.get(fieldname, "monto_base_actual")
+                            else:
+                                ref_field = FORMULA_FIELD_MAP.get(prefix)
+                            if not ref_field:
+                                frappe.throw(_("Formula invalida con prefijo no soportado: {0}.").format(prefix), title=_("Formula Invalida"))
+                            value += sign * flt(get_value(ref_code, ref_field, next_stack))
+                    else:
+                        for sign, ref_code in parse_vertical_formula(row.formula_lineas):
+                            value += sign * flt(get_value(ref_code, fieldname, next_stack))
                 setattr(row, fieldname, value)
                 row.origen_dato = "Formula"
             else:

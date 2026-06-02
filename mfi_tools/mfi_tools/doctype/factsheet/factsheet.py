@@ -120,6 +120,12 @@ class Factsheet(Document):
                 cache[code] = 0.0
                 return 0.0
 
+            from mfi_tools.mfi_tools.services.formula_engine import has_data_functions
+            if has_data_functions(formula_str):
+                val = flt(getattr(row, fieldname, 0))
+                cache[code] = val
+                return val
+
             next_stack = set(stack)
             next_stack.add(code)
 

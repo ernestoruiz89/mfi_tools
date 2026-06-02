@@ -405,6 +405,11 @@ class SeccionNotaEEFF(Document):
             column_formula = cstr(getattr(column_def, "formula_columnas", "") or "").strip().upper() if column_def else ""
             row_formula = cstr(getattr(row_def, "formula_filas", "") or "").strip().upper() if row_def else ""
 
+            if getattr(cell, "origen_dato", "") == "Formula" and getattr(cell, "formula_celda", ""):
+                val = None if getattr(cell, "valor_numero", None) in (None, "") else flt(getattr(cell, "valor_numero", 0) or 0)
+                cache[key] = val
+                return val
+
             if column_def and cint(getattr(column_def, "calculo_automatico", 0) or 0) and column_formula:
                 total = 0.0
                 for sign, ref_code in parse_formula_tokens(column_formula):
