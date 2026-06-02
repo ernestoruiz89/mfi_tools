@@ -2,6 +2,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, cstr, flt
 from mfi_tools.mfi_tools.utils.nota_eeff import find_note_name
+from mfi_tools.mfi_tools.services.formula_engine import FormulaContext, has_data_functions, evaluate_formula
 
 BALANCE_FIELDS = ("codigo_cuenta", "descripcion_cuenta")
 BALANCE_VALUE_FIELDS = ("saldo", "saldo_anterior", "movimiento_del_mes")
@@ -1157,6 +1158,55 @@ def aplicar_mapeo_paquete(paquete_name):
             line.monto_actual = flt(line.monto_actual or 0) + selected_actual_amount
             line.monto_comparativo = flt(line.monto_comparativo or 0) + selected_comparative_amount
             touched_factsheets.add(fact_doc.name)
+
+    # --- Evaluate Data Formulas ---
+    formula_ctx = FormulaContext(
+        actual_balances=balances,
+        comparative_balances=comparative_balances,
+        base_actual_balances=base_actual_balances,
+        base_comparative_balances=base_comparative_balances,
+        actual_stats=actual_stats,
+        comparative_stats=comparative_stats,
+        historical_data=historical_data
+    )
+
+    for name in touched_states:
+        doc = state_docs.get(name)
+        if doc:
+            for row in doc.lineas or []:
+                if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_lineas", "")):
+                    expr = row.formula_lineas
+                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
+                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+                    row.monto_base_actual = evaluate_formula(expr, formula_ctx, "actual")
+                    row.monto_base_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+
+    for name in touched_notes:
+        doc = note_docs.get(name)
+        if doc:
+            for row in doc.cifras_nota or []:
+                if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_cifras", "")):
+                    expr = row.formula_cifras
+                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
+                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+
+    for name in touched_sections:
+        doc = section_docs.get(name)
+        if doc:
+            for row in doc.celdas_tabulares or []:
+                if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_celda", "")):
+                    expr = row.formula_celda
+                    # Sections mix actual/comp within cells, so evaluate as actual context always
+                    row.valor_numero = evaluate_formula(expr, formula_ctx, "actual")
+
+    for name in touched_factsheets:
+        doc = factsheet_docs.get(name)
+        if doc:
+            for row in doc.lineas or []:
+                if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula", "")):
+                    expr = row.formula
+                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
+                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
 
     for name in touched_states:
         doc = state_docs.get(name)
