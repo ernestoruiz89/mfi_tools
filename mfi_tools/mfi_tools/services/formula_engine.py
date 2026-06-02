@@ -119,29 +119,47 @@ def evaluate_formula(expression, context, period_context="actual"):
     def func_est_act(code): return _get_stat_value(code, context.actual_stats)
     def func_est_comp(code): return _get_stat_value(code, context.comparative_stats)
     
+    def _is_stat_ytd(pattern, hist_stat):
+        if not hist_stat: return False
+        for month_data in hist_stat.values():
+            if pattern in month_data: return True
+        return False
+
     def func_ytd(pattern):
-        hist = context.historical_data.get("ytd_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("ytd_actual_balances")
-        if not hist: # Might be stats
-            hist = context.historical_data.get("ytd_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("ytd_actual_stats")
-            if hist:
-                return _get_ytd_stat_value(pattern, hist)
-        return _get_ytd_balance_value(pattern, hist, "movimiento_del_mes")
+        if period_context == "comparativo":
+            hist_bal = context.historical_data.get("ytd_comparativo_balances")
+            hist_stat = context.historical_data.get("ytd_comparativo_stats")
+        else:
+            hist_bal = context.historical_data.get("ytd_actual_balances")
+            hist_stat = context.historical_data.get("ytd_actual_stats")
+            
+        if _is_stat_ytd(pattern, hist_stat):
+            return _get_ytd_stat_value(pattern, hist_stat)
+        return _get_ytd_balance_value(pattern, hist_bal, "movimiento_del_mes")
         
     def func_ytd_ant(pattern):
-        hist = context.historical_data.get("ytd_anio_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("ytd_anio_anterior_actual_balances")
-        if not hist:
-            hist = context.historical_data.get("ytd_anio_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("ytd_anio_anterior_actual_stats")
-            if hist:
-                return _get_ytd_stat_value(pattern, hist)
-        return _get_ytd_balance_value(pattern, hist, "movimiento_del_mes")
+        if period_context == "comparativo":
+            hist_bal = context.historical_data.get("ytd_anio_anterior_comparativo_balances")
+            hist_stat = context.historical_data.get("ytd_anio_anterior_comparativo_stats")
+        else:
+            hist_bal = context.historical_data.get("ytd_anio_anterior_actual_balances")
+            hist_stat = context.historical_data.get("ytd_anio_anterior_actual_stats")
+            
+        if _is_stat_ytd(pattern, hist_stat):
+            return _get_ytd_stat_value(pattern, hist_stat)
+        return _get_ytd_balance_value(pattern, hist_bal, "movimiento_del_mes")
 
     def func_anual_ant(pattern):
-        hist = context.historical_data.get("suma_anio_completo_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_anterior_actual_balances")
-        if not hist:
-            hist = context.historical_data.get("suma_anio_completo_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_anterior_actual_stats")
-            if hist:
-                return _get_ytd_stat_value(pattern, hist)
-        return _get_ytd_balance_value(pattern, hist, "movimiento_del_mes")
+        if period_context == "comparativo":
+            hist_bal = context.historical_data.get("suma_anio_completo_anterior_comparativo_balances")
+            hist_stat = context.historical_data.get("suma_anio_completo_anterior_comparativo_stats")
+        else:
+            hist_bal = context.historical_data.get("suma_anio_completo_anterior_actual_balances")
+            hist_stat = context.historical_data.get("suma_anio_completo_anterior_actual_stats")
+            
+        if _is_stat_ytd(pattern, hist_stat):
+            return _get_ytd_stat_value(pattern, hist_stat)
+        return _get_ytd_balance_value(pattern, hist_bal, "movimiento_del_mes")
 
     def func_cierre_ant(pattern, field="saldo"):
         if period_context == "comparativo":
