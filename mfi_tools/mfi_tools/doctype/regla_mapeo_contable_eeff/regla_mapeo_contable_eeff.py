@@ -17,8 +17,14 @@ FIGURE_VALUE_PERIODS = (
     "Saldo Año Anterior Actual",
     "Saldo Cierre Anterior Comparativo",
     "Saldo Año Anterior Comparativo",
+    "Promedio Movil 12 Meses (Actual)",
+    "Promedio Movil 12 Meses (Comparativo)",
     "YTD Actual",
     "YTD Comparativo",
+    "YTD Año Anterior Actual",
+    "YTD Año Anterior Comparativo",
+    "Suma Año Completo Anterior Actual",
+    "Suma Año Completo Anterior Comparativo",
 )
 SECTION_CELL_PERIODS = (
     "Actual",
@@ -33,8 +39,14 @@ SECTION_CELL_PERIODS = (
     "Saldo Año Anterior Actual",
     "Saldo Cierre Anterior Comparativo",
     "Saldo Año Anterior Comparativo",
+    "Promedio Movil 12 Meses (Actual)",
+    "Promedio Movil 12 Meses (Comparativo)",
     "YTD Actual",
     "YTD Comparativo",
+    "YTD Año Anterior Actual",
+    "YTD Año Anterior Comparativo",
+    "Suma Año Completo Anterior Actual",
+    "Suma Año Completo Anterior Comparativo",
 )
 
 
