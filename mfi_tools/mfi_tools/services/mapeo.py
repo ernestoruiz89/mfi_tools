@@ -1237,8 +1237,7 @@ def aplicar_mapeo_paquete(paquete_name):
         WHERE parent.paquete_eeff = %s AND child.origen_dato = 'Formula'
     """, (package.name,)))
 
-    # Only recalculate factsheets that have formulas (to resolve cross-references)
-    # Skip those already saved above if they don't have formulas
+    # Factsheets with formulas that were NOT already processed by the mapping rules loop
     fs_to_recalc = fs_with_formulas - touched_factsheets
     if fs_to_recalc:
         for fs_name in frappe.get_all("Factsheet",
@@ -1246,7 +1245,14 @@ def aplicar_mapeo_paquete(paquete_name):
                 pluck="name",
                 order_by="numero_factsheet asc, codigo_factsheet asc",
                 limit_page_length=200):
-            frappe.get_doc("Factsheet", fs_name).save(ignore_permissions=True)
+            fs_doc = frappe.get_doc("Factsheet", fs_name)
+            # Evaluate data-function formulas (EST, BAL, YTD, etc.) via formula engine
+            for row in fs_doc.lineas or []:
+                if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula", "")):
+                    expr = row.formula
+                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
+                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+            fs_doc.save(ignore_permissions=True)
 
     # Re-save touched factsheets that also have formulas (to pick up cross-references
     # that may have changed after other factsheets were saved above)
@@ -1257,7 +1263,15 @@ def aplicar_mapeo_paquete(paquete_name):
                 pluck="name",
                 order_by="numero_factsheet asc, codigo_factsheet asc",
                 limit_page_length=200):
-            frappe.get_doc("Factsheet", fs_name).save(ignore_permissions=True)
+            fs_doc = frappe.get_doc("Factsheet", fs_name)
+            # Re-evaluate data-function formulas after cross-references are updated
+            for row in fs_doc.lineas or []:
+                if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula", "")):
+                    expr = row.formula
+                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
+                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+            fs_doc.save(ignore_permissions=True)
+
 
     frappe.db.set_value(
         "Paquete EEFF",
