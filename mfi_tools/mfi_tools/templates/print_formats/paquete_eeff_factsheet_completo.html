@@ -296,7 +296,7 @@
                   {% endif %}
                   <tr class="{{ row_class }}">
                     <td>
-                      <span class="cpc-desc" style="{% if row.negrita %}font-weight: 700;{% endif %}{% if row.subrayado %}text-decoration: underline;{% endif %}{% if row.cursiva %}font-style: italic;{% endif %}">
+                      <span class="cpc-desc" style="margin-left: {{ ((row.nivel or 1) - 1) * 16 }}px; {% if row.negrita %}font-weight: 700;{% endif %}{% if row.subrayado %}text-decoration: underline;{% endif %}{% if row.cursiva %}font-style: italic;{% endif %}">
                         {% if not row.es_linea_blanco %}{{ row.descripcion or row.codigo_linea or "-" }}{% endif %}
                       </span>
                       {% if row.comentario and not fs_doc.no_imprimir_comentarios and not row.no_mostrar_comentario %}<div class="cpc-note-comment">{{ row.comentario }}</div>{% endif %}

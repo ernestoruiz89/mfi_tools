@@ -33,14 +33,18 @@ class Factsheet(Document):
         seen = set()
         for idx, row in enumerate(self.lineas or [], start=1):
             row.codigo_linea = cstr(row.codigo_linea or f"LINEA_{idx}").strip().upper()
+            row.nivel = max(cint(getattr(row, "nivel", 1) or 1), 1)
             
             if "." in row.codigo_linea or " " in row.codigo_linea:
                 frappe.throw(_("El codigo de linea {0} no puede contener puntos ni espacios").format(row.codigo_linea))
                 
             row.origen_dato = cstr(row.origen_dato or "Manual").strip() or "Manual"
-            if row.origen_dato == "Manual":                row.formula = ""
-            elif row.origen_dato == "Mapeo":                row.formula = ""
-            elif row.origen_dato == "Formula":                row.formula = cstr(row.formula or "").strip().upper()
+            if row.origen_dato == "Manual":
+                row.formula = ""
+            elif row.origen_dato == "Mapeo":
+                row.formula = ""
+            elif row.origen_dato == "Formula":
+                row.formula = cstr(row.formula or "").strip().upper()
             
             row.formato_presentacion = cstr(row.formato_presentacion or "Numero").strip()
             

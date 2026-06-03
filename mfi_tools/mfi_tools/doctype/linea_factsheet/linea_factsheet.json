@@ -8,6 +8,7 @@
  "field_order": [
   "codigo_linea",
   "descripcion",
+  "nivel",
   "comentario",
   "no_mostrar_comentario",
   "origen_dato",
@@ -41,6 +42,13 @@
    "fieldname": "descripcion",
    "fieldtype": "Data",
    "label": "Descripcion",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "nivel",
+   "fieldtype": "Int",
+   "label": "Nivel",
+   "default": "1",
    "in_list_view": 1
   },
   {
