@@ -352,6 +352,11 @@ class PaqueteEEFF(Document):
 def ejecutar_mapeo(paquete_name):
     if not frappe.db.exists("Paquete EEFF", paquete_name):
         frappe.throw(_("El paquete indicado no existe."), title=_("Paquete Invalido"))
+    
+    # Asegurarnos que el paquete este guardado para que sincronice los datos estadisticos mas recientes
+    doc = frappe.get_doc("Paquete EEFF", paquete_name)
+    doc.save(ignore_permissions=True)
+    
     return aplicar_mapeo_paquete(paquete_name)
 
 
