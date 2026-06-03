@@ -1,37 +1,85 @@
 {
-    "actions": [],
-    "creation": "2026-03-13 00:00:00.000000",
-    "doctype": "DocType",
-    "editable_grid": 1,
-    "engine": "InnoDB",
-    "field_order": [
-        "codigo_tabla",
-        "codigo_columna",
-        "etiqueta",
-        "tipo_dato",
-        "alineacion",
-        "grupo_columna",
-        "redondear_entero",
-        "calculo_automatico",
-        "formula_columnas",
-        "es_total"
-    ],
-    "fields": [
-        {"fieldname": "codigo_tabla", "fieldtype": "Data", "label": "Codigo Tabla", "reqd": 1, "in_list_view": 1},
-        {"fieldname": "codigo_columna", "fieldtype": "Data", "label": "Codigo Columna", "reqd": 1, "in_list_view": 1},
-        {"fieldname": "etiqueta", "fieldtype": "Data", "label": "Etiqueta", "reqd": 1, "in_list_view": 1},
-        {"fieldname": "tipo_dato", "fieldtype": "Select", "label": "Tipo Dato", "options": "Numero\nMoneda\nPorcentaje\nTexto", "default": "Numero", "in_list_view": 1},
-        {"fieldname": "alineacion", "fieldtype": "Select", "label": "Alineacion", "options": "Left\nCenter\nRight", "default": "Right"},
-        {"fieldname": "grupo_columna", "fieldtype": "Data", "label": "Grupo Columna"},
-        {"fieldname": "redondear_entero", "fieldtype": "Check", "label": "Redondear Entero", "default": 0},
-        {"fieldname": "calculo_automatico", "fieldtype": "Check", "label": "Calculo Automatico", "default": 0},
-        {"fieldname": "formula_columnas", "fieldtype": "Small Text", "label": "Formula Columnas"},
-        {"fieldname": "es_total", "fieldtype": "Check", "label": "Es Total", "default": 0}
-    ],
-    "istable": 1,
-    "module": "MFI Tools",
-    "name": "Columna Seccion Nota EEFF",
-    "permissions": [],
-    "sort_field": "modified",
-    "sort_order": "DESC"
+ "actions": [],
+ "creation": "2026-03-13 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "codigo_tabla",
+  "codigo_columna",
+  "etiqueta",
+  "tipo_dato",
+  "alineacion",
+  "grupo_columna",
+  "redondear_entero",
+  "calculo_automatico",
+  "formula_columnas",
+  "es_total"
+ ],
+ "fields": [
+  {
+   "fieldname": "codigo_tabla",
+   "fieldtype": "Data",
+   "label": "Codigo Tabla",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "codigo_columna",
+   "fieldtype": "Data",
+   "label": "Codigo Columna",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "etiqueta",
+   "fieldtype": "Data",
+   "label": "Etiqueta",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tipo_dato",
+   "fieldtype": "Select",
+   "label": "Tipo Dato",
+   "options": "Numero\nMoneda\nPorcentaje\nTexto",
+   "default": "Numero",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "alineacion",
+   "fieldtype": "Select",
+   "label": "Alineacion",
+   "options": "Left\nCenter\nRight",
+   "default": "Right"
+  },
+  {
+   "fieldname": "grupo_columna",
+   "fieldtype": "Data",
+   "label": "Grupo Columna"
+  },
+  {
+   "fieldname": "redondear_entero",
+   "fieldtype": "Check",
+   "label": "Redondear Entero",
+   "default": 0
+  },
+  {
+   "fieldname": "formula_columnas",
+   "fieldtype": "Small Text",
+   "label": "Formula Columnas"
+  },
+  {
+   "fieldname": "es_total",
+   "fieldtype": "Check",
+   "label": "Es Total",
+   "default": 0
+  }
+ ],
+ "istable": 1,
+ "module": "MFI Tools",
+ "name": "Columna Seccion Nota EEFF",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
 }

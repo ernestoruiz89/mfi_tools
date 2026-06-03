@@ -38,15 +38,9 @@ class Factsheet(Document):
                 frappe.throw(_("El codigo de linea {0} no puede contener puntos ni espacios").format(row.codigo_linea))
                 
             row.origen_dato = cstr(row.origen_dato or "Manual").strip() or "Manual"
-            if row.origen_dato == "Manual":
-                row.es_manual = 1
-                row.formula = ""
-            elif row.origen_dato == "Mapeo":
-                row.es_manual = 0
-                row.formula = ""
-            elif row.origen_dato == "Formula":
-                row.es_manual = 0
-                row.formula = cstr(row.formula or "").strip().upper()
+            if row.origen_dato == "Manual":                row.formula = ""
+            elif row.origen_dato == "Mapeo":                row.formula = ""
+            elif row.origen_dato == "Formula":                row.formula = cstr(row.formula or "").strip().upper()
             
             row.formato_presentacion = cstr(row.formato_presentacion or "Numero").strip()
             

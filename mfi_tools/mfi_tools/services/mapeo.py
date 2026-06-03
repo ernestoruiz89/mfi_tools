@@ -691,7 +691,7 @@ def _reset_package_targets(package_name):
             child.origen_dato = CASE WHEN child.origen_dato = 'Formula' THEN 'Formula' ELSE 'Manual' END
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_titulo, 0) = 0
-          AND IFNULL(child.es_manual, 0) = 0
+          AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
     """, (package_name,))
     # Titulo lines -> zero (NOT NULL constraint on Currency fields)
     frappe.db.sql("""
@@ -715,7 +715,7 @@ def _reset_package_targets(package_name):
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_linea_blanco, 0) = 0
           AND IFNULL(child.es_titulo, 0) = 0
-          AND IFNULL(child.es_manual, 0) = 0
+          AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
     """, (package_name,))
     # Titulo or blank lines -> zero (NOT NULL constraint on Currency fields)
     frappe.db.sql("""
@@ -736,7 +736,7 @@ def _reset_package_targets(package_name):
             child.origen_dato = CASE WHEN child.origen_dato = 'Formula' THEN 'Formula' ELSE 'Manual' END, 
             child.ultima_regla_mapeo = NULL
         WHERE parent.paquete_eeff = %s
-          AND IFNULL(child.es_manual, 0) = 0
+          AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
     """, (package_name,))
 
     # --- Factsheet (Linea Factsheet) ---
@@ -996,7 +996,7 @@ def aplicar_mapeo_paquete(paquete_name):
                 line.origen_dato = "Manual"
                 touched_states.add(state_doc.name)
                 continue
-            if cint(getattr(line, "es_manual", 0)):
+            if getattr(line, "origen_dato", "Manual") == "Manual":
                 continue
 
             selected_actual_amount, selected_comparative_amount = _select_figure_amounts(
@@ -1053,7 +1053,7 @@ def aplicar_mapeo_paquete(paquete_name):
                 figure.origen_dato = "Manual"
                 touched_notes.add(note_doc.name)
                 continue
-            if cint(getattr(figure, "es_manual", 0)):
+            if getattr(figure, "origen_dato", "Manual") == "Manual":
                 continue
             figure.monto_actual = flt(figure.monto_actual or 0) + selected_actual_amount
             figure.monto_comparativo = flt(figure.monto_comparativo or 0) + selected_comparative_amount
@@ -1121,7 +1121,7 @@ def aplicar_mapeo_paquete(paquete_name):
                     },
                 )
                 cell = section_doc.celdas_tabulares[-1]
-            if cint(getattr(cell, "es_manual", 0)):
+            if getattr(cell, "origen_dato", "Manual") == "Manual":
                 continue
             cell.valor_numero = flt(getattr(cell, "valor_numero", 0) or 0) + selected_amount
             cell.origen_dato = source_type

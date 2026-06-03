@@ -300,12 +300,8 @@ def _serialize_figures(note_doc, figure_rules):
                 else flt(getattr(row, "monto_comparativo", 0) or 0),
                 "display_actual": note_doc.format_figure_value(row, "monto_actual"),
                 "display_comparativo": note_doc.format_figure_value(row, "monto_comparativo"),
-                "origen_dato": cstr(getattr(row, "origen_dato", "") or "").strip() or "Manual",
-                "es_manual": cint(getattr(row, "es_manual", 0) or 0),
-                "es_titulo": cint(getattr(row, "es_titulo", 0) or 0),
-                "es_linea_blanco": cint(getattr(row, "es_linea_blanco", 0) or 0),
-                "calculo_automatico": cint(getattr(row, "calculo_automatico", 0) or 0),
-                "formula_cifras": cstr(getattr(row, "formula_cifras", "") or "").strip(),
+                "origen_dato": cstr(getattr(row, "origen_dato", "") or "").strip() or "Manual",                "es_titulo": cint(getattr(row, "es_titulo", 0) or 0),
+                "es_linea_blanco": cint(getattr(row, "es_linea_blanco", 0) or 0),                "formula_cifras": cstr(getattr(row, "formula_cifras", "") or "").strip(),
                 "rules_count": len(rules),
                 "rules": rules,
             }
@@ -347,9 +343,7 @@ def _build_section_tables(section_doc, cell_rules):
                         "valor_texto": cstr(getattr(cell_doc, "valor_texto", "") or "").strip() if cell_doc else "",
                         "formato_numero": cstr(cell.get("formato_numero") or "").strip(),
                         "origen_dato": cstr(getattr(cell_doc, "origen_dato", "") or "").strip() if cell_doc else "",
-                        "ultima_regla_mapeo": cstr(getattr(cell_doc, "ultima_regla_mapeo", "") or "").strip() if cell_doc else "",
-                        "es_manual": cint(getattr(cell_doc, "es_manual", 0) or 0) if cell_doc else 0,
-                        "rules_count": len(rules),
+                        "ultima_regla_mapeo": cstr(getattr(cell_doc, "ultima_regla_mapeo", "") or "").strip() if cell_doc else "",                        "rules_count": len(rules),
                         "rules": rules,
                     }
                 )

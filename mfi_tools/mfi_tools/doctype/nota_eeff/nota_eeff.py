@@ -240,8 +240,6 @@ class NotaEEFF(Document):
             row.formato_numero = self.get_figure_number_format(row)
             row.valor_texto_actual = cstr(getattr(row, "valor_texto_actual", "") or "").strip()
             row.valor_texto_comparativo = cstr(getattr(row, "valor_texto_comparativo", "") or "").strip()
-            row.es_manual = cint(row.es_manual or 0)
-            row.calculo_automatico = cint(row.calculo_automatico or 0)
             row.no_imprimir = cint(row.no_imprimir or 0)
             row.negrita = cint(row.negrita or 0)
             row.subrayado = cint(row.subrayado or 0)
@@ -254,12 +252,9 @@ class NotaEEFF(Document):
                 row.monto_actual = None if row.monto_actual in ("", None) else flt(row.monto_actual)
                 row.monto_comparativo = None if row.monto_comparativo in ("", None) else flt(row.monto_comparativo)
 
-            if row.formato_numero == "Texto":
-                row.es_manual = 1
-                row.calculo_automatico = 0
-                row.formula_cifras = ""
-            elif row.formula_cifras and not row.calculo_automatico:
-                row.calculo_automatico = 1
+            if row.formato_numero == "Texto":                row.formula_cifras = ""
+            elif row.formula_cifras and row.origen_dato != 'Formula':
+                row.origen_dato = 'Formula'
 
             if row.es_linea_blanco:
                 row.concepto = ""
@@ -269,8 +264,6 @@ class NotaEEFF(Document):
                 row.es_subtotal = 0
                 row.negrita = 0
                 row.subrayado = 0
-                row.calculo_automatico = 0
-                row.es_manual = 0
                 row.formula_cifras = ""
                 row.origen_dato = "Manual"
                 _clear_blank_figure_amounts(row)
@@ -279,7 +272,6 @@ class NotaEEFF(Document):
             elif row.es_titulo:
                 row.es_total = 0
                 row.es_subtotal = 0
-                row.calculo_automatico = 0
                 row.formula_cifras = ""
                 row.origen_dato = "Manual"
                 _clear_title_figure_amounts(row)
@@ -353,9 +345,9 @@ class NotaEEFF(Document):
             if key in stack:
                 frappe.throw(_("Se detecto una referencia circular en formulas de cifras."), title=_("Formula Invalida"))
 
-            if cint(row.es_manual):
+            if row.origen_dato == 'Manual':
                 value = flt(getattr(row, fieldname, 0))
-            elif cint(row.calculo_automatico) and cstr(row.formula_cifras or "").strip():
+            elif row.origen_dato == "Formula" and cstr(row.formula_cifras or "").strip():
                 from mfi_tools.mfi_tools.services.formula_engine import has_data_functions
                 if has_data_functions(row.formula_cifras):
                     value = flt(getattr(row, fieldname, 0))
@@ -382,7 +374,7 @@ class NotaEEFF(Document):
                 continue
             if self.is_text_figure(row):
                 continue
-            if cint(row.calculo_automatico) and cstr(row.formula_cifras or "").strip():
+            if row.origen_dato == "Formula" and cstr(row.formula_cifras or "").strip():
                 code = cstr(row.codigo_cifra or "").strip().upper()
                 if not code:
                     continue

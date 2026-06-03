@@ -159,7 +159,7 @@ class SeccionNotaEEFF(Document):
             row.alineacion = cstr(getattr(row, "alineacion", "Right") or "Right").strip()
             row.grupo_columna = cstr(getattr(row, "grupo_columna", "") or "").strip()
             row.redondear_entero = cint(getattr(row, "redondear_entero", 0) or 0)
-            row.calculo_automatico = cint(getattr(row, "calculo_automatico", 0) or 0)
+            
             row.formula_columnas = cstr(getattr(row, "formula_columnas", "") or "").strip().upper()
             row.es_total = cint(getattr(row, "es_total", 0) or 0)
 
@@ -167,9 +167,8 @@ class SeccionNotaEEFF(Document):
                 row.tipo_dato = "Numero"
             if row.alineacion not in TABLE_ALIGNMENTS:
                 row.alineacion = "Right" if row.tipo_dato != "Texto" else "Left"
-            if row.formula_columnas and not row.calculo_automatico:
-                row.calculo_automatico = 1
-            if row.calculo_automatico and row.tipo_dato == "Texto":
+
+            if False:
                 frappe.throw(
                     _("La columna {0} no puede calcularse automaticamente porque su tipo es Texto.").format(row.codigo_columna),
                     title=_("Columna Invalida"),
@@ -191,7 +190,7 @@ class SeccionNotaEEFF(Document):
             row.descripcion = cstr(getattr(row, "descripcion", "") or row.codigo_fila or f"Fila {idx}").strip()
             row.nivel = max(cint(getattr(row, "nivel", 1) or 1), 1)
             row.tipo_fila = cstr(getattr(row, "tipo_fila", "Detalle") or "Detalle").strip()
-            row.calculo_automatico = cint(getattr(row, "calculo_automatico", 0) or 0)
+            
             row.formula_filas = cstr(getattr(row, "formula_filas", "") or "").strip().upper()
             row.negrita = cint(getattr(row, "negrita", 0) or 0)
             row.subrayado = cint(getattr(row, "subrayado", 0) or 0)
@@ -199,11 +198,9 @@ class SeccionNotaEEFF(Document):
             if row.tipo_fila not in TABLE_ROW_TYPES:
                 row.tipo_fila = "Detalle"
             if row.tipo_fila == "Titulo":
-                row.calculo_automatico = 0
                 row.formula_filas = ""
                 row.negrita = 1
-            elif row.formula_filas and not row.calculo_automatico:
-                row.calculo_automatico = 1
+
             elif row.tipo_fila in ("Subtotal", "Total") and not row.negrita:
                 row.negrita = 1
 
@@ -225,7 +222,7 @@ class SeccionNotaEEFF(Document):
             row.valor_texto = cstr(getattr(row, "valor_texto", "") or "").strip()
             row.formato_numero = cstr(getattr(row, "formato_numero", "") or "").strip()
             row.redondear_entero = cint(getattr(row, "redondear_entero", 0) or 0)
-            row.es_manual = cint(getattr(row, "es_manual", 0) or 0)
+            
             row.origen_dato = cstr(getattr(row, "origen_dato", "Manual") or "Manual").strip() or "Manual"
             row.ultima_regla_mapeo = cstr(getattr(row, "ultima_regla_mapeo", "") or "").strip()
             row.comentario = cstr(getattr(row, "comentario", "") or "").strip()
@@ -307,9 +304,7 @@ class SeccionNotaEEFF(Document):
                             "valor_numero": None,
                             "valor_texto": "",
                             "formato_numero": cstr(column.tipo_dato or "Numero"),
-                            "redondear_entero": cint(column.redondear_entero or 0),
-                            "es_manual": 0,
-                            "origen_dato": "Manual",
+                            "redondear_entero": cint(column.redondear_entero or 0),                            "origen_dato": "Manual",
                         },
                     )
                     cell_map[signature] = self.celdas_tabulares[-1]
@@ -369,9 +364,7 @@ class SeccionNotaEEFF(Document):
                     "valor_numero": None,
                     "valor_texto": "",
                     "formato_numero": cstr(getattr(column_map.get((table_code, column_code)), "tipo_dato", "Numero") or "Numero"),
-                    "redondear_entero": cint(getattr(column_map.get((table_code, column_code)), "redondear_entero", 0) or 0),
-                    "es_manual": 0,
-                    "origen_dato": "Manual",
+                    "redondear_entero": cint(getattr(column_map.get((table_code, column_code)), "redondear_entero", 0) or 0),                    "origen_dato": "Manual",
                 },
             )
             cell_map[key] = self.celdas_tabulares[-1]
@@ -410,7 +403,7 @@ class SeccionNotaEEFF(Document):
                 cache[key] = val
                 return val
 
-            if column_def and cint(getattr(column_def, "calculo_automatico", 0) or 0) and column_formula:
+            if column_def and column_formula:
                 total = 0.0
                 for sign, ref_code in parse_formula_tokens(column_formula):
                     total += sign * flt(resolve_cell(table_code, row_code, ref_code, next_stack) or 0)
@@ -418,12 +411,11 @@ class SeccionNotaEEFF(Document):
                 cell.valor_texto = ""
                 cell.formato_numero = cstr(cell.formato_numero or column_def.tipo_dato or "Numero")
                 cell.redondear_entero = cint(getattr(cell, "redondear_entero", 0) or getattr(column_def, "redondear_entero", 0) or 0)
-                cell.es_manual = 0
                 cell.origen_dato = "Formula"
                 cache[key] = total
                 return total
 
-            if row_def and cint(getattr(row_def, "calculo_automatico", 0) or 0) and row_formula:
+            if row_def and row_formula:
                 total = 0.0
                 for sign, ref_code in parse_formula_tokens(row_formula):
                     total += sign * flt(resolve_cell(table_code, ref_code, column_code, next_stack) or 0)
@@ -432,7 +424,6 @@ class SeccionNotaEEFF(Document):
                 if column_def and not cstr(cell.formato_numero or "").strip():
                     cell.formato_numero = cstr(column_def.tipo_dato or "Numero")
                     cell.redondear_entero = cint(getattr(cell, "redondear_entero", 0) or getattr(column_def, "redondear_entero", 0) or 0)
-                cell.es_manual = 0
                 cell.origen_dato = "Formula"
                 cache[key] = total
                 return total

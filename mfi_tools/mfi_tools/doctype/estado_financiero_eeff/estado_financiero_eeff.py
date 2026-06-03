@@ -171,8 +171,6 @@ class EstadoFinancieroEEFF(Document):
             if row.modo_formula not in ("Vertical", "Multicolumna"):
                 row.modo_formula = "Vertical"
             row.origen_dato = cstr(row.origen_dato or "Manual").strip() or "Manual"
-            row.es_manual = cint(row.es_manual or 0)
-            row.calculo_automatico = cint(row.calculo_automatico or 0)
             row.no_imprimir = cint(row.no_imprimir or 0)
             row.negrita = cint(row.negrita or 0)
             row.subrayado = cint(row.subrayado or 0)
@@ -183,8 +181,8 @@ class EstadoFinancieroEEFF(Document):
             row.es_total = cint(row.es_total or 0)
             row.es_subtotal = cint(row.es_subtotal or 0)
 
-            if row.formula_lineas and not row.calculo_automatico:
-                row.calculo_automatico = 1
+            if row.formula_lineas and row.origen_dato != 'Formula':
+                row.origen_dato = 'Formula'
 
             if row.es_linea_blanco:
                 row.descripcion = ""
@@ -194,8 +192,6 @@ class EstadoFinancieroEEFF(Document):
                 row.es_subtotal = 0
                 row.negrita = 0
                 row.subrayado = 0
-                row.calculo_automatico = 0
-                row.es_manual = 0
                 row.formula_lineas = ""
                 row.modo_formula = "Vertical"
                 row.origen_dato = "Manual"
@@ -297,9 +293,9 @@ class EstadoFinancieroEEFF(Document):
                 cache[key] = 0.0
                 return 0.0
 
-            if cint(row.es_manual):
+            if row.origen_dato == 'Manual':
                 value = flt(getattr(row, fieldname, 0))
-            elif cint(row.calculo_automatico) and cstr(row.formula_lineas or "").strip():
+            elif row.origen_dato == "Formula" and cstr(row.formula_lineas or "").strip():
                 from mfi_tools.mfi_tools.services.formula_engine import has_data_functions
                 if has_data_functions(row.formula_lineas):
                     value = flt(getattr(row, fieldname, 0))
@@ -337,7 +333,7 @@ class EstadoFinancieroEEFF(Document):
             if cint(getattr(row, "es_titulo", 0)):
                 _clear_title_amounts(row)
                 continue
-            if cint(row.calculo_automatico) and cstr(row.formula_lineas or "").strip():
+            if row.origen_dato == "Formula" and cstr(row.formula_lineas or "").strip():
                 code = cstr(row.codigo_linea or "").strip().upper()
                 if not code:
                     continue

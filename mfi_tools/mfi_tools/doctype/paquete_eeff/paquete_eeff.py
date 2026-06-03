@@ -172,14 +172,11 @@ class PaqueteEEFF(Document):
             row.categoria = cstr(row.categoria or "").strip()
             row.unidad_medida = cstr(row.unidad_medida or "").strip()
             row.formula_datos = _normalize_formula_expression(row.formula_datos)
-            row.es_manual = cint(row.es_manual if row.es_manual is not None else 1)
-            row.calculo_automatico = cint(row.calculo_automatico or 0)
             row.no_imprimir = cint(row.no_imprimir or 0)
             row.origen_dato = cstr(row.origen_dato or "Manual").strip() or "Manual"
 
-            if row.formula_datos and not row.calculo_automatico:
-                row.calculo_automatico = 1
-                row.es_manual = 0
+            if row.formula_datos and row.origen_dato != "Formula":
+                row.origen_dato = "Formula"
 
             if row.codigo_dato in seen:
                 frappe.throw(
@@ -210,10 +207,7 @@ class PaqueteEEFF(Document):
                         "descripcion": cstr(getattr(row, "descripcion", "") or code).strip(),
                         "categoria": cstr(getattr(row, "categoria", "") or "").strip(),
                         "unidad_medida": cstr(getattr(row, "unidad_medida", "") or "").strip(),
-                        "orden": cint(getattr(row, "orden", idx) or idx),
-                        "es_manual": cint(getattr(row, "es_manual", 1) if getattr(row, "es_manual", None) is not None else 1),
-                        "calculo_automatico": cint(getattr(row, "calculo_automatico", 0) or 0),
-                        "formula_datos": cstr(getattr(row, "formula_datos", "") or "").strip(),
+                        "orden": cint(getattr(row, "orden", idx) or idx),                        "formula_datos": cstr(getattr(row, "formula_datos", "") or "").strip(),
                         "no_imprimir": cint(getattr(row, "no_imprimir", 0) or 0),
                         "valor_actual": 0,
                         "origen_dato": cstr(getattr(row, "origen_dato", "Manual") or "Manual").strip() or "Manual",
@@ -271,9 +265,9 @@ class PaqueteEEFF(Document):
             if key in stack:
                 frappe.throw(_("Se detecto una referencia circular en formulas de datos estadisticos."), title=_("Formula Invalida"))
 
-            if cint(row.es_manual):
+            if getattr(row, 'origen_dato', 'Manual') == 'Manual':
                 value = flt(getattr(row, fieldname, 0))
-            elif cint(row.calculo_automatico) and cstr(row.formula_datos or "").strip():
+            elif getattr(row, "origen_dato", "Manual") == "Formula" and cstr(row.formula_datos or "").strip():
                 value = 0.0
                 next_stack = set(stack)
                 next_stack.add(key)
@@ -288,7 +282,7 @@ class PaqueteEEFF(Document):
             return value
 
         for row in rows:
-            if cint(row.calculo_automatico) and cstr(row.formula_datos or "").strip():
+            if getattr(row, "origen_dato", "Manual") == "Formula" and cstr(row.formula_datos or "").strip():
                 code = cstr(row.codigo_dato or "").strip().upper()
                 if not code:
                     continue

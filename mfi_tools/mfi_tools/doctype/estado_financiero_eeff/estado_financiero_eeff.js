@@ -74,7 +74,7 @@ function syncBlankLine(cdt, cdn) {
     frappe.model.set_value(cdt, cdn, "es_subtotal", 0);
     frappe.model.set_value(cdt, cdn, "negrita", 0);
     frappe.model.set_value(cdt, cdn, "subrayado", 0);
-    frappe.model.set_value(cdt, cdn, "calculo_automatico", 0);
+    
     frappe.model.set_value(cdt, cdn, "modo_formula", "Vertical");
     frappe.model.set_value(cdt, cdn, "formula_lineas", "");
 }

@@ -269,7 +269,7 @@ def get_autocomplete_options(company):
         options["estados"].append({"code": est.codigo_estado, "label": est.titulo})
         doc = frappe.get_doc("Estado Financiero EEFF", est.name)
         for linea in doc.get("lineas", []):
-            if not linea.es_titulo and not linea.calculo_automatico:
+            if not linea.es_titulo and getattr(linea, "origen_dato", "Manual") != "Formula":
                 options["lineas_estado"].append({"code": linea.codigo_linea, "label": linea.descripcion, "estado": est.codigo_estado})
     
     notas = frappe.get_all("Nota EEFF", filters={"paquete_eeff": package_name}, fields=["name", "numero_nota", "titulo"])

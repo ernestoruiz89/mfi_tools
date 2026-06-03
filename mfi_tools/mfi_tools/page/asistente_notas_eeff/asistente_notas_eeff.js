@@ -342,8 +342,8 @@ class AsistenteNotasEEFF {
                                     <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="monto_comparativo" value="${this.escape(this.get_figure_input_value(row, "monto_comparativo"))}" ${this.figure_disables_values(row) ? "disabled" : ""}></td>
                                     <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="es_titulo" type="checkbox" ${this.checked(row.es_titulo)}></td>
                                     <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="es_linea_blanco" type="checkbox" ${this.checked(row.es_linea_blanco)}></td>
-                                    <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="es_manual" type="checkbox" ${this.checked(row.es_manual)}></td>
-                                    <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="calculo_automatico" type="checkbox" ${this.checked(row.calculo_automatico)}></td>
+                                    <td></td>
+                                    
                                     <td><textarea class="cfe-figure-field" data-index="${index}" data-fieldname="formula_cifras" ${this.figure_disables_formula(row) ? "disabled" : ""}>${this.escape(row.formula_cifras || "")}</textarea></td>
                                     <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="es_total" type="checkbox" ${this.checked(row.es_total)}></td>
                                     <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="es_subtotal" type="checkbox" ${this.checked(row.es_subtotal)}></td>
@@ -420,7 +420,7 @@ class AsistenteNotasEEFF {
                                     <td><select class="cfe-column-field" data-index="${index}" data-fieldname="tipo_dato">${this.select_options(["Numero", "Moneda", "Porcentaje", "Texto"], row.tipo_dato || "Numero")}</select></td>
                                     <td><select class="cfe-column-field" data-index="${index}" data-fieldname="alineacion">${this.select_options(["Left", "Center", "Right"], row.alineacion || "Right")}</select></td>
                                     <td><input class="cfe-column-field" data-index="${index}" data-fieldname="redondear_entero" type="checkbox" ${this.checked(row.redondear_entero)}></td>
-                                    <td><input class="cfe-column-field" data-index="${index}" data-fieldname="calculo_automatico" type="checkbox" ${this.checked(row.calculo_automatico)}></td>
+                                    
                                     <td><textarea class="cfe-column-field" data-index="${index}" data-fieldname="formula_columnas">${this.escape(row.formula_columnas || "")}</textarea></td>
                                     <td><span class="cfe-link-delete cfe-delete-column" data-index="${index}">${__("Eliminar")}</span></td>
                                 </tr>
@@ -452,7 +452,7 @@ class AsistenteNotasEEFF {
                                     <td><input class="cfe-row-field" data-index="${index}" data-fieldname="descripcion" value="${this.escape(row.descripcion || "")}"></td>
                                     <td><input class="cfe-row-field" data-index="${index}" data-fieldname="nivel" type="number" min="1" value="${this.escape(row.nivel || 1)}"></td>
                                     <td><select class="cfe-row-field" data-index="${index}" data-fieldname="tipo_fila">${this.select_options(["Detalle", "Subtotal", "Total", "Titulo"], row.tipo_fila || "Detalle")}</select></td>
-                                    <td><input class="cfe-row-field" data-index="${index}" data-fieldname="calculo_automatico" type="checkbox" ${this.checked(row.calculo_automatico)}></td>
+                                    
                                     <td><textarea class="cfe-row-field" data-index="${index}" data-fieldname="formula_filas">${this.escape(row.formula_filas || "")}</textarea></td>
                                     <td><input class="cfe-row-field" data-index="${index}" data-fieldname="negrita" type="checkbox" ${this.checked(row.negrita)}></td>
                                     <td><input class="cfe-row-field" data-index="${index}" data-fieldname="subrayado" type="checkbox" ${this.checked(row.subrayado)}></td>
@@ -648,8 +648,8 @@ class AsistenteNotasEEFF {
                 if (!String(row.valor_texto_comparativo || "").trim() && row.monto_comparativo !== null && row.monto_comparativo !== undefined && row.monto_comparativo !== "") {
                     row.valor_texto_comparativo = String(row.monto_comparativo);
                 }
-                row.es_manual = 1;
-                row.calculo_automatico = 0;
+                
+                
                 row.formula_cifras = "";
             }
             this.sync_figure_presentation_fields(row);
@@ -683,9 +683,9 @@ class AsistenteNotasEEFF {
             codigo_cifra: `CIFRA_${String(next).padStart(2, "0")}`,
             concepto: __("Concepto {0}", [next]),
             nivel: 1,
-            es_manual: 1,
+            
             origen_dato: "Manual",
-            calculo_automatico: 0,
+            
             formula_cifras: "",
             no_imprimir: 0,
             negrita: 0,
@@ -727,8 +727,8 @@ class AsistenteNotasEEFF {
         row.es_subtotal = 0;
         row.negrita = 0;
         row.subrayado = 0;
-        row.calculo_automatico = 0;
-        row.es_manual = 0;
+        
+        
         row.formula_cifras = "";
         this.clear_figure_amounts(row);
     }
@@ -738,7 +738,7 @@ class AsistenteNotasEEFF {
         row.es_linea_blanco = 0;
         row.es_total = 0;
         row.es_subtotal = 0;
-        row.calculo_automatico = 0;
+        
         row.formula_cifras = "";
         this.clear_figure_amounts(row);
     }
@@ -844,7 +844,7 @@ class AsistenteNotasEEFF {
             alineacion: "Right",
             grupo_columna: "",
             redondear_entero: 0,
-            calculo_automatico: 0,
+            
             formula_columnas: "",
             es_total: 0,
         });
@@ -889,7 +889,7 @@ class AsistenteNotasEEFF {
             descripcion: __("Fila {0}", [next]),
             nivel: 1,
             tipo_fila: "Detalle",
-            calculo_automatico: 0,
+            
             formula_filas: "",
             negrita: 0,
             subrayado: 0,
@@ -941,22 +941,22 @@ class AsistenteNotasEEFF {
         const defaultFormat = column?.tipo_dato || "Numero";
         if (!cell && raw === "") return;
         if (!cell) {
-            cell = { codigo_tabla: tableCode, codigo_fila: rowCode, codigo_columna: columnCode, valor_numero: null, valor_texto: "", formato_numero: defaultFormat, redondear_entero: column?.redondear_entero || 0, es_manual: 0, origen_dato: "Manual", comentario: "" };
+            cell = { codigo_tabla: tableCode, codigo_fila: rowCode, codigo_columna: columnCode, valor_numero: null, valor_texto: "", formato_numero: defaultFormat, redondear_entero: column?.redondear_entero || 0,  origen_dato: "Manual", comentario: "" };
             section.celdas_tabulares = section.celdas_tabulares || [];
             section.celdas_tabulares.push(cell);
         }
         if (raw === "") {
             cell.valor_numero = null;
             cell.valor_texto = "";
-            cell.es_manual = 0;
+            
         } else if ((cell.formato_numero || defaultFormat) === "Texto") {
             cell.valor_texto = raw;
             cell.valor_numero = null;
-            cell.es_manual = 1;
+            
         } else {
             cell.valor_numero = this.asFloat(raw);
             cell.valor_texto = "";
-            cell.es_manual = 1;
+            
         }
         if (this.section_cell_is_default(cell, column)) {
             section.celdas_tabulares = (section.celdas_tabulares || []).filter((item) => item !== cell);
@@ -974,7 +974,7 @@ class AsistenteNotasEEFF {
         const column = this.get_section_columns(section).find((item) => item.codigo_tabla === tableCode && item.codigo_columna === columnCode);
         let cell = this.find_section_cell(section, tableCode, rowCode, columnCode);
         if (!cell) {
-            cell = { codigo_tabla: tableCode, codigo_fila: rowCode, codigo_columna: columnCode, valor_numero: null, valor_texto: "", formato_numero: column?.tipo_dato || "Numero", redondear_entero: column?.redondear_entero || 0, es_manual: 0, origen_dato: "Manual", comentario: "" };
+            cell = { codigo_tabla: tableCode, codigo_fila: rowCode, codigo_columna: columnCode, valor_numero: null, valor_texto: "", formato_numero: column?.tipo_dato || "Numero", redondear_entero: column?.redondear_entero || 0,  origen_dato: "Manual", comentario: "" };
             section.celdas_tabulares = section.celdas_tabulares || [];
             section.celdas_tabulares.push(cell);
         }
@@ -982,10 +982,10 @@ class AsistenteNotasEEFF {
             cell.redondear_entero = cell.redondear_entero ? 0 : 1;
         } else {
             cell.formato_numero = action;
-            if (action === "Texto" && cell.valor_numero !== null && cell.valor_numero !== undefined && cell.es_manual) {
+            if (action === "Texto" && cell.valor_numero !== null && cell.valor_numero !== undefined && cell.origen_dato === "Manual") {
                 cell.valor_texto = String(cell.valor_numero);
                 cell.valor_numero = null;
-            } else if (action !== "Texto" && cell.valor_texto && cell.es_manual) {
+            } else if (action !== "Texto" && cell.valor_texto && cell.origen_dato === "Manual") {
                 cell.valor_numero = this.asFloat(cell.valor_texto);
                 cell.valor_texto = "";
             }
@@ -1016,12 +1016,12 @@ class AsistenteNotasEEFF {
             }
             stack.add(key);
 
-            const result = { value: "", is_manual: this.truthy(cell?.es_manual), is_computed: false, format: cell?.formato_numero || col?.tipo_dato || "Numero", round: cell?.redondear_entero ?? col?.redondear_entero ?? 0 };
-            const isManual = this.truthy(cell?.es_manual);
-            if (!isManual && row && this.truthy(row.calculo_automatico) && row.formula_filas) {
+            const result = { value: "", is_manual: cell?.origen_dato === "Manual", is_computed: false, format: cell?.formato_numero || col?.tipo_dato || "Numero", round: cell?.redondear_entero ?? col?.redondear_entero ?? 0 };
+            const isManual = cell?.origen_dato === "Manual";
+            if (!isManual && row && true && row.formula_filas) {
                 result.value = this.evaluate_formula(row.formula_filas, (refCode, sign) => sign * this.asFloat(resolve(tableCode, refCode, columnCode, stack).value));
                 result.is_computed = true;
-            } else if (!isManual && col && this.truthy(col.calculo_automatico) && col.formula_columnas) {
+            } else if (!isManual && col && true && col.formula_columnas) {
                 result.value = this.evaluate_formula(col.formula_columnas, (refCode, sign) => sign * this.asFloat(resolve(tableCode, rowCode, refCode, stack).value));
                 result.is_computed = true;
             } else if (cell) {
@@ -1154,19 +1154,19 @@ class AsistenteNotasEEFF {
         section.filas_tabulares = [];
         section.celdas_tabulares = [];
         valueHeaders.forEach((header, index) => {
-            section.columnas_tabulares.push({ codigo_tabla: "TABLA_01", codigo_columna: this.build_csv_column_code(header, index + 1), etiqueta: header || __("Columna {0}", [index + 1]), tipo_dato: "Moneda", alineacion: "Right", grupo_columna: "", redondear_entero: 0, calculo_automatico: 0, formula_columnas: "", es_total: 0 });
+            section.columnas_tabulares.push({ codigo_tabla: "TABLA_01", codigo_columna: this.build_csv_column_code(header, index + 1), etiqueta: header || __("Columna {0}", [index + 1]), tipo_dato: "Moneda", alineacion: "Right", grupo_columna: "", redondear_entero: 0,  formula_columnas: "", es_total: 0 });
         });
         dataRows.forEach((dataRow, rowIndex) => {
             const description = String(dataRow[0] || "").trim();
             if (!description) return;
             const rowType = description.toLowerCase().startsWith("total") ? "Total" : description.toLowerCase().startsWith("subtotal") ? "Subtotal" : "Detalle";
             const rowCode = this.build_csv_row_code(description, rowIndex + 1);
-            section.filas_tabulares.push({ codigo_tabla: "TABLA_01", codigo_fila: rowCode, descripcion: description, nivel: 1, tipo_fila: rowType, calculo_automatico: 0, formula_filas: "", negrita: rowType !== "Detalle" ? 1 : 0, subrayado: rowType === "Total" ? 1 : 0 });
+            section.filas_tabulares.push({ codigo_tabla: "TABLA_01", codigo_fila: rowCode, descripcion: description, nivel: 1, tipo_fila: rowType,  formula_filas: "", negrita: rowType !== "Detalle" ? 1 : 0, subrayado: rowType === "Total" ? 1 : 0 });
             valueHeaders.forEach((header, colIndex) => {
                 const rawValue = dataRow[colIndex + 1];
                 if (rawValue === undefined || rawValue === null || String(rawValue).trim() === "") return;
                 const numericValue = this.parse_csv_numeric_value(rawValue);
-                section.celdas_tabulares.push({ codigo_tabla: "TABLA_01", codigo_fila: rowCode, codigo_columna: this.build_csv_column_code(header, colIndex + 1), valor_numero: numericValue, valor_texto: numericValue === null ? String(rawValue).trim() : "", formato_numero: numericValue === null ? "Texto" : "Moneda", redondear_entero: 0, es_manual: 1, origen_dato: "Manual", ultima_regla_mapeo: "", comentario: "" });
+                section.celdas_tabulares.push({ codigo_tabla: "TABLA_01", codigo_fila: rowCode, codigo_columna: this.build_csv_column_code(header, colIndex + 1), valor_numero: numericValue, valor_texto: numericValue === null ? String(rawValue).trim() : "", formato_numero: numericValue === null ? "Texto" : "Moneda", redondear_entero: 0,  origen_dato: "Manual", ultima_regla_mapeo: "", comentario: "" });
             });
         });
     }
@@ -1343,7 +1343,7 @@ class AsistenteNotasEEFF {
     section_cell_is_default(cell, column) {
         const defaultFormat = column?.tipo_dato || "Numero";
         const defaultRound = column?.redondear_entero || 0;
-        return !this.truthy(cell.es_manual)
+        return cell.origen_dato !== "Manual"
             && !String(cell.valor_texto || "").trim()
             && (cell.valor_numero === null || cell.valor_numero === undefined || cell.valor_numero === "")
             && String(cell.formato_numero || defaultFormat) === String(defaultFormat)

@@ -414,8 +414,8 @@ class HelperMapeoNotasEEFF {
                         </thead>
                         <tbody>
                             ${figures.length ? figures.map((row) => {
-                                const isMappable = !this.asInt(row.es_titulo) && !this.asInt(row.es_linea_blanco) && !this.asInt(row.es_manual);
-                                const isFormula = this.asInt(row.calculo_automatico) || String(row.origen_dato || "").trim().toLowerCase() === "formula";
+                                const isMappable = !this.asInt(row.es_titulo) && !this.asInt(row.es_linea_blanco) && row.origen_dato !== "Manual";
+                                const isFormula = String(row.origen_dato || "").trim().toLowerCase() === "formula";
                                 const firstRule = Array.isArray(row.rules) && row.rules.length ? row.rules[0] : null;
                                 return `
                                     <tr>
@@ -513,11 +513,11 @@ class HelperMapeoNotasEEFF {
                                     <div class="cfnm-muted">${this.escape(row.tipo_fila || "Detalle")}</div>
                                 </td>
                                 ${(row.celdas || []).map((cell) => {
-                                    const isMappable = !this.asInt(cell.es_manual) && row.tipo_fila !== "Titulo";
+                                    const isMappable = cell.origen_dato !== "Manual" && row.tipo_fila !== "Titulo";
                                     const firstRule = Array.isArray(cell.rules) && cell.rules.length ? cell.rules[0] : null;
                                     return `
                                         <td>
-                                            <div class="cfnm-cell ${this.asInt(cell.rules_count) ? "mapped" : ""} ${this.asInt(cell.es_manual) ? "manual" : ""}">
+                                            <div class="cfnm-cell ${this.asInt(cell.rules_count) ? "mapped" : ""} ${cell.origen_dato === "Manual" ? "manual" : ""}">
                                                 <div class="cfnm-cell-value">${this.escape(cell.display_value || "-")}</div>
                                                 <div class="cfnm-cell-meta">
                                                     ${this.escape(cell.formato_numero || "Numero")} | ${this.escape(cell.origen_dato || "Manual")}
@@ -571,8 +571,8 @@ class HelperMapeoNotasEEFF {
         const flags = [];
         if (this.asInt(row.es_titulo)) flags.push(`<span class="cfnm-pill draft">${__("Titulo")}</span>`);
         if (this.asInt(row.es_linea_blanco)) flags.push(`<span class="cfnm-pill draft">${__("Blanco")}</span>`);
-        if (this.asInt(row.es_manual)) flags.push(`<span class="cfnm-pill manual">${__("Manual")}</span>`);
-        if (this.asInt(row.calculo_automatico)) flags.push(`<span class="cfnm-pill formula">${__("Formula")}</span>`);
+        if (row.origen_dato === "Manual") flags.push(`<span class="cfnm-pill manual">${__("Manual")}</span>`);
+        if (String(row.origen_dato || "").trim().toLowerCase() === "formula") flags.push(`<span class="cfnm-pill formula">${__("Formula")}</span>`);
         return flags.length ? `<div class="cfnm-pills" style="margin-top:8px;">${flags.join("")}</div>` : "";
     }
 

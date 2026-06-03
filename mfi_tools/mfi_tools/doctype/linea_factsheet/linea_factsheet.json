@@ -1,176 +1,169 @@
 {
-    "actions": [],
-    "creation": "2026-05-29 12:00:00.000000",
-    "modified": "2026-06-03 06:00:00.000000",
-    "doctype": "DocType",
-    "editable_grid": 1,
-    "engine": "InnoDB",
-    "field_order": [
-        "codigo_linea",
-        "descripcion",
-        "comentario",
-        "no_mostrar_comentario",
-        "origen_dato",
-        "formula",
-        "es_manual",
-        "formato_presentacion",
-        "redondear_entero",
-        "presentacion_section",
-        "no_imprimir",
-        "negrita",
-        "presentacion_column",
-        "subrayado",
-        "es_titulo",
-        "es_linea_blanco",
-        "es_total",
-        "es_subtotal",
-        "cursiva",
-        "valores_section",
-        "monto_actual",
-        "monto_comparativo"
-    ],
-    "fields": [
-        {
-            "fieldname": "codigo_linea",
-            "fieldtype": "Data",
-            "label": "Codigo Linea",
-            "reqd": 1,
-            "in_list_view": 1
-        },
-        {
-            "fieldname": "descripcion",
-            "fieldtype": "Data",
-            "label": "Descripcion",
-            "in_list_view": 1
-        },
-        {
-            "fieldname": "comentario",
-            "fieldtype": "Small Text",
-            "label": "Comentario"
-        },
-        {
-            "fieldname": "no_mostrar_comentario",
-            "fieldtype": "Check",
-            "label": "No mostrar Comentario",
-            "default": 0
-        },
-        {
-            "fieldname": "origen_dato",
-            "fieldtype": "Select",
-            "label": "Origen Dato",
-            "options": "Manual\nMapeo\nFormula",
-            "default": "Manual",
-            "in_list_view": 1
-        },
-        {
-            "fieldname": "formula",
-            "fieldtype": "Code",
-            "options": "SQL",
-            "label": "Formula",
-            "depends_on": "eval:doc.origen_dato=='Formula'",
-            "description": "<div style=\"font-size: 11px; line-height: 1.5; color: var(--text-muted);\">\n    <strong>&#9654; Balanza</strong><br>\n    <code>BAL(\"101*\")</code> &rarr; Saldo cuentas 101 (contextual: actual o comparativo)<br>\n    <code>BAL(\"101*\", \"SALDO_ANTERIOR\")</code> &rarr; Saldo anterior<br>\n    <code>BAL(\"101*\", \"MOVIMIENTO_DEL_MES\")</code> &rarr; Movimiento del mes<br>\n    <code>BAL_ACT(\"101*\")</code> &rarr; Siempre balanza actual<br>\n    <code>BAL_COMP(\"101*\")</code> &rarr; Siempre balanza comparativa<br>\n    <code>BAL_BASE_ACT(\"101*\")</code> / <code>BAL_BASE_COMP(\"101*\")</code> &rarr; Balanzas base<br>\n    <br>\n    <strong>&#9654; Estadísticos</strong><br>\n    <code>EST(\"NO_EMP\")</code> &rarr; Dato estadístico (contextual: actual o comparativo)<br>\n    <code>EST_ACT(\"NO_EMP\")</code> &rarr; Siempre estadístico actual<br>\n    <code>EST_COMP(\"NO_EMP\")</code> &rarr; Siempre estadístico comparativo<br>\n    <br>\n    <strong>&#9654; Históricas (por defecto usan Balanza)</strong><br>\n    <code>YTD(\"101*\")</code> &rarr; YTD Balanza (Ene a mes actual, movimiento_del_mes)<br>\n    <code>YTD(\"NO_EMP\", \"EST\")</code> &rarr; YTD Estadístico<br>\n    <code>YTD_ANT(\"101*\")</code> &rarr; YTD Año Anterior Balanza<br>\n    <code>YTD_ANT(\"NO_EMP\", \"EST\")</code> &rarr; YTD Año Anterior Estadístico<br>\n    <code>ANUAL_ANT(\"101*\")</code> &rarr; Suma 12 meses año anterior Balanza<br>\n    <code>ANUAL_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Suma 12 meses año anterior Estadístico<br>\n    <code>CIERRE_ANT(\"101*\")</code> &rarr; Saldo cierre dic. año anterior Balanza<br>\n    <code>CIERRE_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Cierre año anterior Estadístico<br>\n    <code>MES_ANIO_ANT(\"101*\")</code> &rarr; Mismo mes año anterior Balanza<br>\n    <code>MES_ANIO_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Mismo mes año anterior Estadístico<br>\n    <br>\n    <strong>&#9654; Matemáticas</strong><br>\n    <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>\n    <code>SI(condicion, valor_si, valor_no)</code><br>\n    Operadores: <code>+ - * / ** ()</code><br>\n    <br>\n    <strong>&#9654; Variables</strong><br>\n    <code>VAR SC = BAL(\"1401*\") + BAL(\"1402*\")</code><br>\n    <code>VAR TC = EST(\"TIPO_CAMBIO\")</code><br>\n    <code>VAR SC_USD = SC / TC</code><br>\n    <code>SC_USD</code> &larr; última línea = resultado<br>\n    <br>\n    <strong>&#9654; Otras Referencias:</strong><br>\n    Ej: <code>(CARTERA / EMPLEADOS) * 100</code><br>\n    Variables: <code>MES_ACTUAL</code>, <code>ANIO_ACTUAL</code><br>\n    Otros Factsheets: <code>FS_CODE.LINE_CODE</code>\n</div>"
-        },
-        {
-            "fieldname": "es_manual",
-            "fieldtype": "Check",
-            "label": "Es Manual",
-            "default": 0,
-            "hidden": 1
-        },
-        {
-            "fieldname": "formato_presentacion",
-            "fieldtype": "Select",
-            "label": "Formato Presentacion",
-            "options": "Numero\nMoneda\nPorcentaje",
-            "default": "Numero"
-        },
-        {
-            "fieldname": "redondear_entero",
-            "fieldtype": "Check",
-            "label": "Redondear Entero",
-            "default": 0
-        },
-        {
-            "fieldname": "presentacion_section",
-            "fieldtype": "Section Break",
-            "label": "Presentacion"
-        },
-        {
-            "fieldname": "no_imprimir",
-            "fieldtype": "Check",
-            "label": "No Imprimir",
-            "default": 0
-        },
-        {
-            "fieldname": "negrita",
-            "fieldtype": "Check",
-            "label": "Negrita",
-            "default": 0
-        },
-        {
-            "fieldname": "presentacion_column",
-            "fieldtype": "Column Break"
-        },
-        {
-            "fieldname": "subrayado",
-            "fieldtype": "Check",
-            "label": "Subrayado",
-            "default": 0
-        },
-        {
-            "fieldname": "es_titulo",
-            "fieldtype": "Check",
-            "label": "Es Titulo",
-            "default": 0
-        },
-        {
-            "fieldname": "es_linea_blanco",
-            "fieldtype": "Check",
-            "label": "Es Linea en Blanco",
-            "default": 0
-        },
-        {
-            "fieldname": "es_total",
-            "fieldtype": "Check",
-            "label": "Es Total",
-            "default": 0
-        },
-        {
-            "fieldname": "es_subtotal",
-            "fieldtype": "Check",
-            "label": "Es Subtotal",
-            "default": 0
-        },
-        {
-            "fieldname": "cursiva",
-            "fieldtype": "Check",
-            "label": "Cursiva",
-            "default": 0
-        },
-        {
-            "fieldname": "valores_section",
-            "fieldtype": "Section Break",
-            "label": "Valores"
-        },
-        {
-            "fieldname": "monto_actual",
-            "fieldtype": "Float",
-            "label": "Monto Actual",
-            "in_list_view": 1,
-            "read_only_depends_on": "eval:doc.origen_dato=='Mapeo' || doc.origen_dato=='Formula'"
-        },
-        {
-            "fieldname": "monto_comparativo",
-            "fieldtype": "Float",
-            "label": "Monto Comparativo",
-            "in_list_view": 1,
-            "read_only_depends_on": "eval:doc.origen_dato=='Mapeo' || doc.origen_dato=='Formula'"
-        }
-    ],
-    "istable": 1,
-    "module": "MFI Tools",
-    "name": "Linea Factsheet",
-    "permissions": [],
-    "sort_field": "modified",
-    "sort_order": "DESC"
+ "actions": [],
+ "creation": "2026-05-29 12:00:00.000000",
+ "modified": "2026-06-03 06:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "codigo_linea",
+  "descripcion",
+  "comentario",
+  "no_mostrar_comentario",
+  "origen_dato",
+  "formula",
+  "es_manual",
+  "formato_presentacion",
+  "redondear_entero",
+  "presentacion_section",
+  "no_imprimir",
+  "negrita",
+  "presentacion_column",
+  "subrayado",
+  "es_titulo",
+  "es_linea_blanco",
+  "es_total",
+  "es_subtotal",
+  "cursiva",
+  "valores_section",
+  "monto_actual",
+  "monto_comparativo"
+ ],
+ "fields": [
+  {
+   "fieldname": "codigo_linea",
+   "fieldtype": "Data",
+   "label": "Codigo Linea",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "descripcion",
+   "fieldtype": "Data",
+   "label": "Descripcion",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "comentario",
+   "fieldtype": "Small Text",
+   "label": "Comentario"
+  },
+  {
+   "fieldname": "no_mostrar_comentario",
+   "fieldtype": "Check",
+   "label": "No mostrar Comentario",
+   "default": 0
+  },
+  {
+   "fieldname": "origen_dato",
+   "fieldtype": "Select",
+   "label": "Origen Dato",
+   "options": "Manual\nMapeo\nFormula",
+   "default": "Manual",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "formula",
+   "fieldtype": "Code",
+   "options": "SQL",
+   "label": "Formula",
+   "depends_on": "eval:doc.origen_dato=='Formula'",
+   "description": "<div style=\"font-size: 11px; line-height: 1.5; color: var(--text-muted);\">\n    <strong>&#9654; Balanza</strong><br>\n    <code>BAL(\"101*\")</code> &rarr; Saldo cuentas 101 (contextual: actual o comparativo)<br>\n    <code>BAL(\"101*\", \"SALDO_ANTERIOR\")</code> &rarr; Saldo anterior<br>\n    <code>BAL(\"101*\", \"MOVIMIENTO_DEL_MES\")</code> &rarr; Movimiento del mes<br>\n    <code>BAL_ACT(\"101*\")</code> &rarr; Siempre balanza actual<br>\n    <code>BAL_COMP(\"101*\")</code> &rarr; Siempre balanza comparativa<br>\n    <code>BAL_BASE_ACT(\"101*\")</code> / <code>BAL_BASE_COMP(\"101*\")</code> &rarr; Balanzas base<br>\n    <br>\n    <strong>&#9654; Estadísticos</strong><br>\n    <code>EST(\"NO_EMP\")</code> &rarr; Dato estadístico (contextual: actual o comparativo)<br>\n    <code>EST_ACT(\"NO_EMP\")</code> &rarr; Siempre estadístico actual<br>\n    <code>EST_COMP(\"NO_EMP\")</code> &rarr; Siempre estadístico comparativo<br>\n    <br>\n    <strong>&#9654; Históricas (por defecto usan Balanza)</strong><br>\n    <code>YTD(\"101*\")</code> &rarr; YTD Balanza (Ene a mes actual, movimiento_del_mes)<br>\n    <code>YTD(\"NO_EMP\", \"EST\")</code> &rarr; YTD Estadístico<br>\n    <code>YTD_ANT(\"101*\")</code> &rarr; YTD Año Anterior Balanza<br>\n    <code>YTD_ANT(\"NO_EMP\", \"EST\")</code> &rarr; YTD Año Anterior Estadístico<br>\n    <code>ANUAL_ANT(\"101*\")</code> &rarr; Suma 12 meses año anterior Balanza<br>\n    <code>ANUAL_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Suma 12 meses año anterior Estadístico<br>\n    <code>CIERRE_ANT(\"101*\")</code> &rarr; Saldo cierre dic. año anterior Balanza<br>\n    <code>CIERRE_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Cierre año anterior Estadístico<br>\n    <code>MES_ANIO_ANT(\"101*\")</code> &rarr; Mismo mes año anterior Balanza<br>\n    <code>MES_ANIO_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Mismo mes año anterior Estadístico<br>\n    <br>\n    <strong>&#9654; Matemáticas</strong><br>\n    <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>\n    <code>SI(condicion, valor_si, valor_no)</code><br>\n    Operadores: <code>+ - * / ** ()</code><br>\n    <br>\n    <strong>&#9654; Variables</strong><br>\n    <code>VAR SC = BAL(\"1401*\") + BAL(\"1402*\")</code><br>\n    <code>VAR TC = EST(\"TIPO_CAMBIO\")</code><br>\n    <code>VAR SC_USD = SC / TC</code><br>\n    <code>SC_USD</code> &larr; última línea = resultado<br>\n    <br>\n    <strong>&#9654; Otras Referencias:</strong><br>\n    Ej: <code>(CARTERA / EMPLEADOS) * 100</code><br>\n    Variables: <code>MES_ACTUAL</code>, <code>ANIO_ACTUAL</code><br>\n    Otros Factsheets: <code>FS_CODE.LINE_CODE</code>\n</div>"
+  },
+  {
+   "fieldname": "formato_presentacion",
+   "fieldtype": "Select",
+   "label": "Formato Presentacion",
+   "options": "Numero\nMoneda\nPorcentaje",
+   "default": "Numero"
+  },
+  {
+   "fieldname": "redondear_entero",
+   "fieldtype": "Check",
+   "label": "Redondear Entero",
+   "default": 0
+  },
+  {
+   "fieldname": "presentacion_section",
+   "fieldtype": "Section Break",
+   "label": "Presentacion"
+  },
+  {
+   "fieldname": "no_imprimir",
+   "fieldtype": "Check",
+   "label": "No Imprimir",
+   "default": 0
+  },
+  {
+   "fieldname": "negrita",
+   "fieldtype": "Check",
+   "label": "Negrita",
+   "default": 0
+  },
+  {
+   "fieldname": "presentacion_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subrayado",
+   "fieldtype": "Check",
+   "label": "Subrayado",
+   "default": 0
+  },
+  {
+   "fieldname": "es_titulo",
+   "fieldtype": "Check",
+   "label": "Es Titulo",
+   "default": 0
+  },
+  {
+   "fieldname": "es_linea_blanco",
+   "fieldtype": "Check",
+   "label": "Es Linea en Blanco",
+   "default": 0
+  },
+  {
+   "fieldname": "es_total",
+   "fieldtype": "Check",
+   "label": "Es Total",
+   "default": 0
+  },
+  {
+   "fieldname": "es_subtotal",
+   "fieldtype": "Check",
+   "label": "Es Subtotal",
+   "default": 0
+  },
+  {
+   "fieldname": "cursiva",
+   "fieldtype": "Check",
+   "label": "Cursiva",
+   "default": 0
+  },
+  {
+   "fieldname": "valores_section",
+   "fieldtype": "Section Break",
+   "label": "Valores"
+  },
+  {
+   "fieldname": "monto_actual",
+   "fieldtype": "Float",
+   "label": "Monto Actual",
+   "in_list_view": 1,
+   "read_only_depends_on": "eval:doc.origen_dato=='Mapeo' || doc.origen_dato=='Formula'"
+  },
+  {
+   "fieldname": "monto_comparativo",
+   "fieldtype": "Float",
+   "label": "Monto Comparativo",
+   "in_list_view": 1,
+   "read_only_depends_on": "eval:doc.origen_dato=='Mapeo' || doc.origen_dato=='Formula'"
+  }
+ ],
+ "istable": 1,
+ "module": "MFI Tools",
+ "name": "Linea Factsheet",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
 }
