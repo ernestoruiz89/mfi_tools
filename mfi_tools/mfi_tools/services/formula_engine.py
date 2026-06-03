@@ -4,31 +4,45 @@ from frappe import _
 from frappe.utils import flt, cstr
 
 FORMULA_HELP_HTML = """
-<div style="font-size: 11px; line-height: 1.4; color: var(--text-muted);">
-    <strong>Referencia de Funciones de Datos:</strong><br>
-    <code>BAL("101*")</code>: Saldo actual cuentas 101<br>
-    <code>BAL_COMP("101*")</code>: Saldo comparativo<br>
-    <code>BAL("101*", "movimiento_del_mes")</code>: Movimiento<br>
-    <code>EST("EMPLEADOS")</code>: Dato estadístico actual<br>
-    <code>EST_COMP("EMPLEADOS")</code>: Dato estadístico comparativo<br>
-    <code>YTD("101*")</code>: YTD Balanza | <code>YTD("COD", "EST")</code>: YTD Estadístico<br>
-    <code>YTD_ANT("101*")</code>: YTD Año Anterior | <code>YTD_ANT("COD", "EST")</code>: YTD Estadístico<br>
-    <code>ANUAL_ANT("101*")</code>: Suma Año Anterior | <code>ANUAL_ANT("COD", "EST")</code>: Estadístico<br>
-    <code>CIERRE_ANT("101*")</code>: Saldo Cierre Año Anterior | <code>CIERRE_ANT("COD", "EST")</code>: Estadístico<br>
-    <code>MES_ANIO_ANT("101*")</code>: Mismo Mes Año Anterior | <code>MES_ANIO_ANT("COD", "EST")</code>: Estadístico<br>
+<div style="font-size: 11px; line-height: 1.5; color: var(--text-muted);">
+    <strong>&#9654; Balanza</strong><br>
+    <code>BAL("101*")</code> &rarr; Saldo cuentas 101 (contextual: actual o comparativo)<br>
+    <code>BAL("101*", "SALDO_ANTERIOR")</code> &rarr; Saldo anterior<br>
+    <code>BAL("101*", "MOVIMIENTO_DEL_MES")</code> &rarr; Movimiento del mes<br>
+    <code>BAL_ACT("101*")</code> &rarr; Siempre balanza actual<br>
+    <code>BAL_COMP("101*")</code> &rarr; Siempre balanza comparativa<br>
+    <code>BAL_BASE_ACT("101*")</code> / <code>BAL_BASE_COMP("101*")</code> &rarr; Balanzas base<br>
     <br>
-    <strong>Matemáticas:</strong><br>
+    <strong>&#9654; Estadísticos</strong><br>
+    <code>EST("NO_EMP")</code> &rarr; Dato estadístico (contextual: actual o comparativo)<br>
+    <code>EST_ACT("NO_EMP")</code> &rarr; Siempre estadístico actual<br>
+    <code>EST_COMP("NO_EMP")</code> &rarr; Siempre estadístico comparativo<br>
+    <br>
+    <strong>&#9654; Históricas (por defecto usan Balanza)</strong><br>
+    <code>YTD("101*")</code> &rarr; YTD Balanza (Ene a mes actual, movimiento_del_mes)<br>
+    <code>YTD("NO_EMP", "EST")</code> &rarr; YTD Estadístico<br>
+    <code>YTD_ANT("101*")</code> &rarr; YTD Año Anterior Balanza<br>
+    <code>YTD_ANT("NO_EMP", "EST")</code> &rarr; YTD Año Anterior Estadístico<br>
+    <code>ANUAL_ANT("101*")</code> &rarr; Suma 12 meses año anterior Balanza<br>
+    <code>ANUAL_ANT("NO_EMP", "EST")</code> &rarr; Suma 12 meses año anterior Estadístico<br>
+    <code>CIERRE_ANT("101*")</code> &rarr; Saldo cierre dic. año anterior Balanza<br>
+    <code>CIERRE_ANT("NO_EMP", "EST")</code> &rarr; Cierre año anterior Estadístico<br>
+    <code>MES_ANIO_ANT("101*")</code> &rarr; Mismo mes año anterior Balanza<br>
+    <code>MES_ANIO_ANT("NO_EMP", "EST")</code> &rarr; Mismo mes año anterior Estadístico<br>
+    <br>
+    <strong>&#9654; Matemáticas</strong><br>
     <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>
     <code>SI(condicion, valor_si, valor_no)</code><br>
-    Operadores: <code>+ - * / ()</code><br>
+    Operadores: <code>+ - * / ** ()</code><br>
     <br>
-    <strong>Variables y Múltiples Líneas:</strong><br>
-    Puedes usar <code>VAR nombre = valor</code> para guardar variables intermedias. Ej:<br>
-    <code>VAR SC = BAL("101*") + BAL("102*")</code><br>
-    <code>VAR USD = SC / 36.62</code><br>
-    <code>USD</code><br>
+    <strong>&#9654; Variables</strong><br>
+    <code>VAR SC = BAL("1401*") + BAL("1402*")</code><br>
+    <code>VAR TC = EST("TIPO_CAMBIO")</code><br>
+    <code>VAR SC_USD = SC / TC</code><br>
+    <code>SC_USD</code> &larr; última línea = resultado<br>
 </div>
 """
+
 
 DATA_FUNCTIONS = {"BAL", "BAL_ACT", "BAL_COMP", "BAL_BASE_ACT", "BAL_BASE_COMP",
                   "EST", "EST_ACT", "EST_COMP",
