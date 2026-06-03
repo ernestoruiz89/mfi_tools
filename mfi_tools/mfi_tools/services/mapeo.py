@@ -687,7 +687,8 @@ def _reset_package_targets(package_name):
         UPDATE `tabLinea Estado Financiero EEFF` child
         INNER JOIN `tabEstado Financiero EEFF` parent ON parent.name = child.parent
         SET child.monto_actual = 0, child.monto_comparativo = 0,
-            child.monto_base_actual = 0, child.monto_base_comparativo = 0
+            child.monto_base_actual = 0, child.monto_base_comparativo = 0,
+            child.origen_dato = CASE WHEN child.origen_dato = 'Formula' THEN 'Formula' ELSE 'Manual' END
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_titulo, 0) = 0
           AND IFNULL(child.es_manual, 0) = 0
@@ -697,7 +698,8 @@ def _reset_package_targets(package_name):
         UPDATE `tabLinea Estado Financiero EEFF` child
         INNER JOIN `tabEstado Financiero EEFF` parent ON parent.name = child.parent
         SET child.monto_actual = 0, child.monto_comparativo = 0,
-            child.monto_base_actual = 0, child.monto_base_comparativo = 0
+            child.monto_base_actual = 0, child.monto_base_comparativo = 0,
+            child.origen_dato = 'Manual'
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_titulo, 0) = 1
     """, (package_name,))
@@ -709,7 +711,7 @@ def _reset_package_targets(package_name):
         INNER JOIN `tabNota EEFF` parent ON parent.name = child.parent
         SET child.monto_actual = 0, child.monto_comparativo = 0,
             child.valor_texto_actual = '', child.valor_texto_comparativo = '',
-            child.origen_dato = 'Manual'
+            child.origen_dato = CASE WHEN child.origen_dato = 'Formula' THEN 'Formula' ELSE 'Manual' END
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_linea_blanco, 0) = 0
           AND IFNULL(child.es_titulo, 0) = 0
@@ -731,7 +733,8 @@ def _reset_package_targets(package_name):
         UPDATE `tabCelda Seccion Nota EEFF` child
         INNER JOIN `tabSeccion Nota EEFF` parent ON parent.name = child.parent
         SET child.valor_numero = 0, child.valor_texto = '',
-            child.origen_dato = 'Manual', child.ultima_regla_mapeo = NULL
+            child.origen_dato = CASE WHEN child.origen_dato = 'Formula' THEN 'Formula' ELSE 'Manual' END, 
+            child.ultima_regla_mapeo = NULL
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_manual, 0) = 0
     """, (package_name,))
@@ -1227,6 +1230,65 @@ def aplicar_mapeo_paquete(paquete_name):
         doc = factsheet_docs.get(name)
         if doc:
             doc.save(ignore_permissions=True)
+
+    # --- Recalculate untouched target docs with formulas ---
+    # Recalculate untouched Estados Financieros EEFF with formulas
+    states_with_formulas = set(frappe.db.sql_list("""
+        SELECT DISTINCT child.parent
+        FROM `tabLinea Estado Financiero EEFF` child
+        INNER JOIN `tabEstado Financiero EEFF` parent ON parent.name = child.parent
+        WHERE parent.paquete_eeff = %s AND child.origen_dato = 'Formula'
+    """, (package.name,)))
+    states_to_recalc = states_with_formulas - touched_states
+    if states_to_recalc:
+        for state_name in states_to_recalc:
+            state_doc = frappe.get_doc("Estado Financiero EEFF", state_name)
+            for row in state_doc.lineas or []:
+                if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_lineas", "")):
+                    expr = row.formula_lineas
+                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
+                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+                    row.monto_base_actual = evaluate_formula(expr, formula_ctx, "actual")
+                    row.monto_base_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+            state_doc.save(ignore_permissions=True)
+            touched_states.add(state_name)
+
+    # Recalculate untouched Notas EEFF with formulas
+    notes_with_formulas = set(frappe.db.sql_list("""
+        SELECT DISTINCT child.parent
+        FROM `tabCifra Nota EEFF` child
+        INNER JOIN `tabNota EEFF` parent ON parent.name = child.parent
+        WHERE parent.paquete_eeff = %s AND child.origen_dato = 'Formula'
+    """, (package.name,)))
+    notes_to_recalc = notes_with_formulas - touched_notes
+    if notes_to_recalc:
+        for note_name in notes_to_recalc:
+            note_doc = frappe.get_doc("Nota EEFF", note_name)
+            for row in note_doc.cifras_nota or []:
+                if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_cifras", "")):
+                    expr = row.formula_cifras
+                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
+                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+            note_doc.save(ignore_permissions=True)
+            touched_notes.add(note_name)
+
+    # Recalculate untouched Secciones Nota EEFF with formulas
+    sections_with_formulas = set(frappe.db.sql_list("""
+        SELECT DISTINCT child.parent
+        FROM `tabCelda Seccion Nota EEFF` child
+        INNER JOIN `tabSeccion Nota EEFF` parent ON parent.name = child.parent
+        WHERE parent.paquete_eeff = %s AND child.origen_dato = 'Formula'
+    """, (package.name,)))
+    sections_to_recalc = sections_with_formulas - touched_sections
+    if sections_to_recalc:
+        for section_name in sections_to_recalc:
+            section_doc = frappe.get_doc("Seccion Nota EEFF", section_name)
+            for row in section_doc.celdas_tabulares or []:
+                if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_celda", "")):
+                    expr = row.formula_celda
+                    row.valor_numero = evaluate_formula(expr, formula_ctx, "actual")
+            section_doc.save(ignore_permissions=True)
+            touched_sections.add(section_name)
 
     # --- Optimization 4: Only recalculate factsheets with formulas ---
     # Identify factsheets that have formula lines (cross-factsheet references)
