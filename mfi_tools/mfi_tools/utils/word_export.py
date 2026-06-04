@@ -171,12 +171,14 @@ def _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm
             section.page_width, section.page_height = section.page_height, section.page_width
 
     header = section.header
+    header.is_linked_to_previous = False
     header_para = header.paragraphs[0] if header.paragraphs else header.add_paragraph()
     header_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     header_para.text = ""
     _set_paragraph_runs_font(header_para, size=BODY_SIZE)
 
     footer = section.footer
+    footer.is_linked_to_previous = False
     _clear_header_footer(footer)
     footer_para = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
     footer_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
