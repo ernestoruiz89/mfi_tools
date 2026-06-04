@@ -1014,7 +1014,7 @@ def aplicar_mapeo_paquete(paquete_name):
             line.monto_comparativo = flt(line.monto_comparativo or 0) + selected_comparative_amount
             line.monto_base_actual = flt(line.monto_base_actual or 0) + base_actual_amount
             line.monto_base_comparativo = flt(line.monto_base_comparativo or 0) + base_comparative_amount
-            line.origen_dato = source_type
+            line.origen_dato = "Mapeo"
             touched_states.add(state_doc.name)
 
         elif destino == "Cifra Nota":
@@ -1057,7 +1057,7 @@ def aplicar_mapeo_paquete(paquete_name):
                 continue
             figure.monto_actual = flt(figure.monto_actual or 0) + selected_actual_amount
             figure.monto_comparativo = flt(figure.monto_comparativo or 0) + selected_comparative_amount
-            figure.origen_dato = source_type
+            figure.origen_dato = "Mapeo"
             touched_notes.add(note_doc.name)
 
         elif destino == "Celda Seccion Nota":
@@ -1124,7 +1124,7 @@ def aplicar_mapeo_paquete(paquete_name):
             if getattr(cell, "origen_dato", "Manual") == "Manual":
                 continue
             cell.valor_numero = flt(getattr(cell, "valor_numero", 0) or 0) + selected_amount
-            cell.origen_dato = source_type
+            cell.origen_dato = "Mapeo"
             cell.ultima_regla_mapeo = rule.name
             touched_sections.add(section_doc.name)
 
