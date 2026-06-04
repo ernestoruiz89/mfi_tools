@@ -106,7 +106,9 @@ def _build_package_document(package):
     _configure_section(content_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE)
     _set_section_footer_page_number(content_section, start=1)
     _add_estados_section(document, package)
-    document.add_page_break()
+    notas_section = document.add_section(WD_SECTION_START.NEW_PAGE)
+    _configure_section(notas_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE)
+    _set_section_footer_page_number(notas_section)
     _add_notas_section(document, package)
 
     return document
@@ -305,70 +307,73 @@ def _add_estados_section(document, package):
         if index == 0:
             document.add_paragraph("")
 
-        table = document.add_table(rows=1, cols=5)
-        _set_word_table_alignment(table, estado_doc.get_print_table_alignment())
-        headers = ["", "Nota", labels["actual"], "", labels["comparativo"]]
-        for header_index, title in enumerate(headers):
-            table.rows[0].cells[header_index].text = title
-
-        total_rows = []
-        subtotal_rows = []
-        rendered_rows = []
-
-        lineas = list(estado_doc.lineas or [])
-        for linea in lineas:
-            if cint(getattr(linea, "no_imprimir", 0)):
-                continue
-            line_index = len(table.rows)
-            row = table.add_row().cells
-            row[0].text = "" if cint(getattr(linea, "es_linea_blanco", 0)) else (("    " * max((cint(linea.nivel or 1) - 1), 0)) + (cstr(linea.descripcion or "-")))
-            if cint(getattr(linea, "es_linea_blanco", 0)):
-                row[1].text = ""
-                row[2].text = ""
-                row[3].text = ""
-                row[4].text = ""
-            elif cint(getattr(linea, "es_titulo", 0)):
-                row[1].text = cstr(getattr(linea, "nota", "") or "")
-                row[2].text = ""
-                row[3].text = ""
-                row[4].text = ""
-            elif is_text_estado_line(linea):
-                row[1].text = cstr(getattr(linea, "nota", "") or "")
-                row[2].text = format_estado_line_value(linea, "monto_actual")
-                row[3].text = ""
-                row[4].text = ""
-            else:
-                row[1].text = cstr(getattr(linea, "nota", "") or "")
-                actual_value = format_estado_line_value(linea, "monto_actual")
-                comparative_value = format_estado_line_value(linea, "monto_comparativo")
-                if _is_estado_currency_line(linea):
-                    actual_value = _apply_currency_symbol(actual_value, currency_symbol)
-                    comparative_value = _apply_currency_symbol(comparative_value, currency_symbol)
-                row[2].text = actual_value
-                row[3].text = ""
-                row[4].text = comparative_value
-            rendered_rows.append((line_index, linea))
-            if cint(getattr(linea, "es_total", 0)):
-                total_rows.append(line_index)
-            elif cint(getattr(linea, "es_subtotal", 0)):
-                subtotal_rows.append(line_index)
-
-        _set_table_column_widths(table, _get_estado_table_widths_cm(section, estado_doc))
-        _style_financial_table(
-            table,
-            total_rows=total_rows,
-            subtotal_rows=subtotal_rows,
-            font_size=estado_font_size,
-            note_col_index=1,
-            numeric_col_indexes=(2, 4),
-            gap_col_index=3,
-            align_numeric_headers=True,
-        )
-        for line_index, linea in rendered_rows:
-            _apply_estado_line_format(table.rows[line_index], linea, font_size=estado_font_size)
-            if cint(getattr(linea, "es_linea_blanco", 0)):
-                _set_row_min_height(table.rows[line_index], 340)
-
+        if getattr(estado_doc, "estructura_estado", "Simple") == "Compleja":
+            _render_estado_complex_tables(document, estado_doc, package, currency_symbol, section, estado_font_size)
+        else:
+            table = document.add_table(rows=1, cols=5)
+            _set_word_table_alignment(table, estado_doc.get_print_table_alignment())
+            headers = ["", "Nota", labels["actual"], "", labels["comparativo"]]
+            for header_index, title in enumerate(headers):
+                table.rows[0].cells[header_index].text = title
+    
+            total_rows = []
+            subtotal_rows = []
+            rendered_rows = []
+    
+            lineas = list(estado_doc.lineas or [])
+            for linea in lineas:
+                if cint(getattr(linea, "no_imprimir", 0)):
+                    continue
+                line_index = len(table.rows)
+                row = table.add_row().cells
+                row[0].text = "" if cint(getattr(linea, "es_linea_blanco", 0)) else (("    " * max((cint(linea.nivel or 1) - 1), 0)) + (cstr(linea.descripcion or "-")))
+                if cint(getattr(linea, "es_linea_blanco", 0)):
+                    row[1].text = ""
+                    row[2].text = ""
+                    row[3].text = ""
+                    row[4].text = ""
+                elif cint(getattr(linea, "es_titulo", 0)):
+                    row[1].text = cstr(getattr(linea, "nota", "") or "")
+                    row[2].text = ""
+                    row[3].text = ""
+                    row[4].text = ""
+                elif is_text_estado_line(linea):
+                    row[1].text = cstr(getattr(linea, "nota", "") or "")
+                    row[2].text = format_estado_line_value(linea, "monto_actual")
+                    row[3].text = ""
+                    row[4].text = ""
+                else:
+                    row[1].text = cstr(getattr(linea, "nota", "") or "")
+                    actual_value = format_estado_line_value(linea, "monto_actual")
+                    comparative_value = format_estado_line_value(linea, "monto_comparativo")
+                    if _is_estado_currency_line(linea):
+                        actual_value = _apply_currency_symbol(actual_value, currency_symbol)
+                        comparative_value = _apply_currency_symbol(comparative_value, currency_symbol)
+                    row[2].text = actual_value
+                    row[3].text = ""
+                    row[4].text = comparative_value
+                rendered_rows.append((line_index, linea))
+                if cint(getattr(linea, "es_total", 0)):
+                    total_rows.append(line_index)
+                elif cint(getattr(linea, "es_subtotal", 0)):
+                    subtotal_rows.append(line_index)
+    
+            _set_table_column_widths(table, _get_estado_table_widths_cm(section, estado_doc))
+            _style_financial_table(
+                table,
+                total_rows=total_rows,
+                subtotal_rows=subtotal_rows,
+                font_size=estado_font_size,
+                note_col_index=1,
+                numeric_col_indexes=(2, 4),
+                gap_col_index=3,
+                align_numeric_headers=True,
+            )
+            for line_index, linea in rendered_rows:
+                _apply_estado_line_format(table.rows[line_index], linea, font_size=estado_font_size)
+                if cint(getattr(linea, "es_linea_blanco", 0)):
+                    _set_row_min_height(table.rows[line_index], 340)
+    
         if _package_has_signatures(package):
             _add_package_signatures_block(document, package)
 
