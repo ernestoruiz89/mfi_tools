@@ -406,7 +406,7 @@ limit_page_length=100
                 </tr>
                 <tr>
                   {% for col in tabla.columnas %}
-                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}{% if col.ajustar_texto %} style="white-space: normal;"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %} style="text-align: {{ col.alineacion_etiqueta | lower | default('center') }};{% if col.ajustar_texto %} white-space: normal;{% endif %}">{{ col.etiqueta or col.codigo_columna }}</th>
                   {% if not loop.last %}
                   <th class="cpc-gap"></th>
                   {% endif %}
@@ -416,7 +416,7 @@ limit_page_length=100
                 <tr>
                   <th>Concepto</th>
                   {% for col in tabla.columnas %}
-                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}{% if col.ajustar_texto %} style="white-space: normal;"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %} style="text-align: {{ col.alineacion_etiqueta | lower | default('center') }};{% if col.ajustar_texto %} white-space: normal;{% endif %}">{{ col.etiqueta or col.codigo_columna }}</th>
                   {% if not loop.last %}
                   <th class="cpc-gap"></th>
                   {% endif %}
@@ -727,7 +727,7 @@ limit_page_length=100
                 </tr>
                 <tr>
                   {% for col in tabla.columnas %}
-                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}{% if col.ajustar_texto %} style="white-space: normal;"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %} style="text-align: {{ col.alineacion_etiqueta | lower | default('center') }};{% if col.ajustar_texto %} white-space: normal;{% endif %}">{{ col.etiqueta or col.codigo_columna }}</th>
                   {% if not loop.last %}
                   <th class="cpc-gap"></th>
                   {% endif %}
@@ -737,7 +737,7 @@ limit_page_length=100
                 <tr>
                   <th>Concepto</th>
                   {% for col in tabla.columnas %}
-                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}{% if col.ajustar_texto %} style="white-space: normal;"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %} style="text-align: {{ col.alineacion_etiqueta | lower | default('center') }};{% if col.ajustar_texto %} white-space: normal;{% endif %}">{{ col.etiqueta or col.codigo_columna }}</th>
                   {% if not loop.last %}
                   <th class="cpc-gap"></th>
                   {% endif %}

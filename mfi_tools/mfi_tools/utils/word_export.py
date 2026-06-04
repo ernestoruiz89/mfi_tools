@@ -634,12 +634,18 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
                     else:
                         cursor += group_width
                 for col_index, col in enumerate(table_meta["columnas"]):
-                    bottom_header[data_col_indexes[col_index]].text = cstr(col["etiqueta"] or col["codigo_columna"] or "-")
+                    cell = bottom_header[data_col_indexes[col_index]]
+                    cell.text = cstr(col["etiqueta"] or col["codigo_columna"] or "-")
+                    align_val = col.get("alineacion_etiqueta", "Center")
+                    cell.paragraphs[0].alignment = 0 if align_val == "Left" else (2 if align_val == "Right" else 1)
             else:
                 header = table.rows[0].cells
                 header[0].text = "Concepto"
                 for col_index, col in enumerate(table_meta["columnas"]):
-                    header[data_col_indexes[col_index]].text = cstr(col["etiqueta"] or col["codigo_columna"] or "-")
+                    cell = header[data_col_indexes[col_index]]
+                    cell.text = cstr(col["etiqueta"] or col["codigo_columna"] or "-")
+                    align_val = col.get("alineacion_etiqueta", "Center")
+                    cell.paragraphs[0].alignment = 0 if align_val == "Left" else (2 if align_val == "Right" else 1)
 
             rendered_rows = []
             total_rows = []

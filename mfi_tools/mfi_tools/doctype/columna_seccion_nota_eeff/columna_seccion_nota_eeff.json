@@ -9,6 +9,7 @@
         "codigo_columna",
         "etiqueta",
         "ajustar_texto",
+        "alineacion_etiqueta",
         "tipo_dato",
         "alineacion",
         "grupo_columna",
@@ -47,6 +48,14 @@
             "description": "Permite que el titulo de la columna ocupe multiples lineas (wrap) en lugar de ocultarse."
         },
         {
+            "fieldname": "alineacion_etiqueta",
+            "fieldtype": "Select",
+            "label": "Alineacion de etiqueta",
+            "options": "Left\nCenter\nRight",
+            "default": "Center",
+            "in_list_view": 1
+        },
+        {
             "fieldname": "tipo_dato",
             "fieldtype": "Select",
             "label": "Tipo Dato",
@@ -57,7 +66,7 @@
         {
             "fieldname": "alineacion",
             "fieldtype": "Select",
-            "label": "Alineacion",
+            "label": "Alineacion de datos",
             "options": "Left\nCenter\nRight",
             "default": "Right"
         },
