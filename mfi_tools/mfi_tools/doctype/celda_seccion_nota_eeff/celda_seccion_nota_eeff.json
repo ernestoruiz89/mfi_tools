@@ -68,7 +68,7 @@
    "fieldname": "origen_dato",
    "fieldtype": "Select",
    "label": "Origen Dato",
-   "options": "Manual\nBalanza\nFormula",
+   "options": "Manual\nMapeo\nFormula",
    "default": "Manual"
   },
   {
