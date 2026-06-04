@@ -1808,3 +1808,129 @@ def _sanitize_filename(value):
     return filename or REPORT_TITLE
 
 
+
+def _render_estado_complex_tables(document, estado_doc, package, currency_symbol, section, note_font_size):
+    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor = _docx_imports()
+    note_alignment = estado_doc.get_print_table_alignment() if hasattr(estado_doc, "get_print_table_alignment") else "Centro"
+    
+    tables = estado_doc.get_render_tables() if hasattr(estado_doc, "get_render_tables") else []
+    
+    section_table_started = False
+    for table_meta in tables:
+        if not table_meta.get("columnas") or not table_meta.get("filas"):
+            continue
+        if not section_table_started:
+            table_spacer = document.add_paragraph(" ")
+            _set_paragraph_runs_font(table_spacer, size=note_font_size)
+            section_table_started = True
+
+        compact = len(table_meta["columnas"]) > 5
+        if compact:
+            landscape_section = document.add_section(WD_SECTION_START.NEW_PAGE)
+            _configure_section(landscape_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=True, document_title=REPORT_TITLE)
+            _set_section_footer_page_number(landscape_section)
+            
+        data_col_indexes = [1 + (idx * 2) for idx in range(len(table_meta["columnas"]))]
+        gap_col_indexes = [2 + (idx * 2) for idx in range(max(len(table_meta["columnas"]) - 1, 0))]
+        header_rows = 2 if table_meta["tiene_grupos"] else 1
+        table = document.add_table(rows=header_rows, cols=(len(table_meta["columnas"]) * 2))
+        _set_word_table_alignment(table, note_alignment)
+        _set_table_column_widths(
+            table,
+            _get_complex_table_widths_cm(
+                document.sections[-1],
+                len(table_meta["columnas"]),
+                gap_width_cm=0.1,
+                compact=compact,
+            ),
+        )
+        if table_meta["tiene_grupos"]:
+            top_header = table.rows[0].cells
+            bottom_header = table.rows[1].cells
+            top_header[0].merge(bottom_header[0]).text = "Concepto"
+            cursor = 1
+            for group_index, group in enumerate(table_meta["grupos_columnas"]):
+                group_width = max((cint(group.get("span", 0) or 0) * 2) - 1, 1)
+                target_cell = top_header[cursor]
+                if group_width > 1:
+                    target_cell = target_cell.merge(top_header[cursor + group_width - 1])
+                target_cell.text = cstr(group["label"] or "")
+                if group_index < (len(table_meta["grupos_columnas"]) - 1):
+                    top_header[cursor + group_width].text = ""
+                    cursor += group_width + 1
+                else:
+                    cursor += group_width
+            for col_index, col in enumerate(table_meta["columnas"]):
+                cell = bottom_header[data_col_indexes[col_index]]
+                cell.text = cstr(col["etiqueta"] or col["codigo_columna"] or "-")
+                align_val = col.get("alineacion_etiqueta", "Center")
+                cell.paragraphs[0].alignment = 0 if align_val == "Left" else (2 if align_val == "Right" else 1)
+        else:
+            header = table.rows[0].cells
+            header[0].text = "Concepto"
+            for col_index, col in enumerate(table_meta["columnas"]):
+                cell = header[data_col_indexes[col_index]]
+                cell.text = cstr(col["etiqueta"] or col["codigo_columna"] or "-")
+                align_val = col.get("alineacion_etiqueta", "Center")
+                cell.paragraphs[0].alignment = 0 if align_val == "Left" else (2 if align_val == "Right" else 1)
+
+        rendered_rows = []
+        total_rows = []
+        subtotal_rows = []
+        for fila in table_meta["filas"]:
+            row = table.add_row().cells
+            row[0].text = f"{'   ' * max(cint(fila.get('nivel', 1)) - 1, 0)}{cstr(fila.get('descripcion') or fila.get('codigo_fila') or '-')}"
+            for data_cell_index, cell_meta in enumerate(fila["celdas"]):
+                value_text = cstr(cell_meta.get("texto") or "")
+                if cell_meta.get("es_moneda") and value_text and value_text != "-":
+                    value_text = _apply_currency_symbol(value_text, currency_symbol)
+                row[data_col_indexes[data_cell_index]].text = value_text
+            row_index = len(table.rows) - 1
+            rendered_rows.append((row_index, fila))
+            if fila["es_total"]:
+                total_rows.append(row_index)
+            elif fila["es_subtotal"]:
+                subtotal_rows.append(row_index)
+
+        _style_note_table(
+            table,
+            compact=compact,
+            total_rows=total_rows,
+            subtotal_rows=subtotal_rows,
+            header_rows=header_rows,
+            font_size=min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
+            numeric_col_indexes=tuple(data_col_indexes),
+            gap_col_indexes=tuple(gap_col_indexes),
+        )
+        for row_index, fila in rendered_rows:
+            desc_paragraph = table.rows[row_index].cells[0].paragraphs[0]
+            _set_paragraph_runs_font(
+                desc_paragraph,
+                size=min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
+                bold=bool(
+                    cint(fila.get("negrita", 0))
+                    or fila["es_total"]
+                    or fila["es_subtotal"]
+                    or fila["es_titulo"]
+                ),
+            )
+            if cint(fila.get("subrayado", 0)):
+                for run in desc_paragraph.runs:
+                    run.underline = True
+            for data_cell_index, cell_meta in enumerate(fila["celdas"]):
+                paragraph = table.rows[row_index].cells[data_col_indexes[data_cell_index]].paragraphs[0]
+                if cell_meta["alineacion"] == "Left":
+                    paragraph.alignment = 0
+                elif cell_meta["alineacion"] == "Center":
+                    paragraph.alignment = 1
+                else:
+                    paragraph.alignment = 2
+        _force_table_font_size(
+            table,
+            min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
+        )
+
+        if compact:
+            portrait_section = document.add_section(WD_SECTION_START.NEW_PAGE)
+            _configure_section(portrait_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE)
+            _set_section_footer_page_number(portrait_section)
