@@ -378,6 +378,70 @@ limit_page_length=100
       {% if estado_header.periodo %}<p class="cpc-subtitle">{{ estado_header.periodo }}</p>{% endif %}
       {% if estado_header.subtitulo %}<p class="cpc-subtitle">{{ estado_header.subtitulo }}</p>{% endif %}
 
+      {% if estado_doc.estructura_estado == "Compleja" %}
+        {% set tablas = estado_doc.get_render_tables() %}
+        {% for tabla in tablas %}
+          {% if tabla.columnas and tabla.filas %}
+          {% set compact_table = (tabla.columnas | length) > 5 %}
+          <div style="margin-top: 10px;">
+            <table class="cpc-table cpc-align-{{ estado_doc.get_print_table_alignment_css() }}" style="--cpc-table-width: {{ estado_doc.get_print_table_width() }}; --cpc-table-font-size: {{ 10 if compact_table else estado_doc.get_print_font_size() }}pt;">
+              <thead>
+                {% if tabla.tiene_grupos %}
+                <tr>
+                  <th rowspan="2">Concepto</th>
+                  {% for grupo in tabla.grupos_columnas %}
+                  <th colspan="{{ (grupo.span * 2) - 1 }}">{{ grupo.label or "" }}</th>
+                  {% if not loop.last %}
+                  <th class="cpc-gap" rowspan="2"></th>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                <tr>
+                  {% for col in tabla.columnas %}
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  {% if not loop.last %}
+                  <th class="cpc-gap"></th>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                {% else %}
+                <tr>
+                  <th>Concepto</th>
+                  {% for col in tabla.columnas %}
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  {% if not loop.last %}
+                  <th class="cpc-gap"></th>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                {% endif %}
+              </thead>
+              <tbody>
+                {% for fila in tabla.filas %}
+                {% set row_class = "" %}
+                {% if fila.es_total %}
+                {% set row_class = "cpc-row-total" %}
+                {% elif fila.es_subtotal %}
+                {% set row_class = "cpc-row-subtotal" %}
+                {% endif %}
+                <tr class="{{ row_class }}">
+                  <td style="padding-left: {{ ((fila.nivel or 1) - 1) * 18 }}px;{% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}font-weight:700;{% endif %}{% if fila.subrayado %}text-decoration: underline;{% endif %}">
+                    <div class="cpc-complex-desc">{{ fila.descripcion or fila.codigo_fila or "-" }}</div>
+                  </td>
+                  {% for celda in fila.celdas %}
+                  <td{% if celda.alineacion == "Right" %} class="num"{% elif celda.alineacion == "Center" %} style="text-align:center;"{% endif %}>{% if celda.es_moneda and celda.texto and celda.texto != "-" %}{{ currency_symbol }} {{ celda.texto }}{% else %}{{ celda.texto or "" }}{% endif %}</td>
+                  {% if not loop.last %}
+                  <td class="cpc-gap"></td>
+                  {% endif %}
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+          {% endfor %}
+      {% else %}
       <table class="cpc-table cpc-align-{{ estado_doc.get_print_table_alignment_css() }}" style="--cpc-table-font-size: {{ estado_doc.get_print_font_size() }}pt; --cpc-table-width: {{ estado_doc.get_print_table_width() }};">
         <colgroup>
           <col class="cpc-col-desc">
@@ -466,6 +530,7 @@ limit_page_length=100
           {% endfor %}
         </tbody>
       </table>
+      {% endif %}
 
       {% if doc.elaborado_por or doc.revisado_por or doc.autorizado_por %}
       <div class="cpc-signatures-wrapper">

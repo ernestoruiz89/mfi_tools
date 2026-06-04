@@ -662,3 +662,7 @@ class EstadoFinancieroEEFF(Document):
         self.total_filas = len(self.filas_tabulares or [])
         self.total_celdas = len(self.celdas_tabulares or [])
 
+    def get_render_tables(self):
+        from mfi_tools.mfi_tools.utils.nota_tablas import build_complex_section_tables
+        return build_complex_section_tables(self)
+
