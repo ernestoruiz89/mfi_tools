@@ -164,7 +164,11 @@ def _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm
     section.footer_distance = Cm(1.2)
     section.orientation = WD_ORIENTATION.LANDSCAPE if landscape else WD_ORIENTATION.PORTRAIT
     if landscape:
-        section.page_width, section.page_height = section.page_height, section.page_width
+        if section.page_width < section.page_height:
+            section.page_width, section.page_height = section.page_height, section.page_width
+    else:
+        if section.page_width > section.page_height:
+            section.page_width, section.page_height = section.page_height, section.page_width
 
     header = section.header
     header_para = header.paragraphs[0] if header.paragraphs else header.add_paragraph()
