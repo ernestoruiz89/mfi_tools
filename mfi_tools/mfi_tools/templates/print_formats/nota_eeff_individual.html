@@ -364,7 +364,7 @@
                 </tr>
                 <tr>
                   {% for col in tabla.columnas %}
-                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}{% if col.ajustar_texto %} style="white-space: normal;"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
                   {% if not loop.last %}
                   <th class="cni-gap"></th>
                   {% endif %}
@@ -374,7 +374,7 @@
                 <tr>
                   <th>Concepto</th>
                   {% for col in tabla.columnas %}
-                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
+                  <th{% if col.alineacion == "Right" %} class="num"{% endif %}{% if col.ajustar_texto %} style="white-space: normal;"{% endif %}>{{ col.etiqueta or col.codigo_columna }}</th>
                   {% if not loop.last %}
                   <th class="cni-gap"></th>
                   {% endif %}

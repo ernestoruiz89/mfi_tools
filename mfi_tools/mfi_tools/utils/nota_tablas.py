@@ -101,6 +101,7 @@ def build_complex_section_tables(section_doc):
                 "grupo_columna": cstr(getattr(row, "grupo_columna", "") or "").strip(),
                 "es_total": cint(getattr(row, "es_total", 0) or 0),
                 "redondear_entero": cint(getattr(row, "redondear_entero", 0) or 0),
+                "ajustar_texto": cint(getattr(row, "ajustar_texto", 0) or 0),
                 "idx": cint(getattr(row, "idx", idx) or idx),
             }
         )
@@ -199,6 +200,7 @@ def _derive_columns_from_cells(cells_by_key, table_code):
                 "grupo_columna": "",
                 "es_total": 0,
                 "redondear_entero": 0,
+                "ajustar_texto": 0,
                 "idx": len(columns) + 1,
             }
         )
