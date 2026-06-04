@@ -40,12 +40,15 @@ function runPackageMappingFromEstado(frm) {
 }
 
 function enableLineasBulkEdit(frm) {
-    const grid = frm.get_field("lineas")?.grid;
-    if (!grid) return;
+    const gridNames = ["lineas", "columnas_tabulares", "filas_tabulares", "celdas_tabulares"];
+    for (const gridName of gridNames) {
+        const grid = frm.get_field(gridName)?.grid;
+        if (!grid) continue;
 
-    grid.df.allow_bulk_edit = 1;
-    if (typeof grid.setup_allow_bulk_edit === "function") {
-        grid.setup_allow_bulk_edit();
+        grid.df.allow_bulk_edit = 1;
+        if (typeof grid.setup_allow_bulk_edit === "function") {
+            grid.setup_allow_bulk_edit();
+        }
     }
 }
 

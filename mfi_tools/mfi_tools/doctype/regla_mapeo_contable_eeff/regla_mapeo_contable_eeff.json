@@ -40,30 +40,150 @@
         "cuentas"
     ],
     "fields": [
-        {"fieldname": "tab_general", "fieldtype": "Tab Break", "label": "General"},
-        {"fieldname": "sec_general", "fieldtype": "Section Break", "label": "General"},
-        {"fieldname": "nombre_regla", "fieldtype": "Data", "label": "Nombre Regla", "read_only": 1, "in_list_view": 1, "no_copy": 1},
-        {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "reqd": 1, "in_list_view": 1},
-        {"fieldname": "col_general_right", "fieldtype": "Column Break"},
-        {"fieldname": "activo", "fieldtype": "Check", "label": "Activo", "default": 1, "in_list_view": 1},
-        {"fieldname": "orden", "fieldtype": "Int", "label": "Orden", "default": 0},
-        {"fieldname": "fuente_tipo", "fieldtype": "Select", "label": "Fuente Tipo", "options": "Balanza\nDato Estadistico", "default": "Balanza", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
-        {"fieldname": "sec_observaciones", "fieldtype": "Section Break", "label": "Observaciones"},
-        {"fieldname": "observaciones", "fieldtype": "Small Text", "label": "Observaciones"},
-        {"fieldname": "tab_destino", "fieldtype": "Tab Break", "label": "Destino"},
-        {"fieldname": "sec_destino_base", "fieldtype": "Section Break", "label": "Destino Base"},
-        {"fieldname": "destino_tipo", "fieldtype": "Select", "label": "Destino Tipo", "options": "Linea Estado\nCifra Nota\nCelda Seccion Nota\nLinea Factsheet", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
-        {"fieldname": "destino_codigo_estado", "fieldtype": "Data", "label": "Destino Codigo Estado", "depends_on": "eval:doc.destino_tipo==='Linea Estado'"},
-        {"fieldname": "destino_codigo_factsheet", "fieldtype": "Data", "label": "Destino Codigo Factsheet", "depends_on": "eval:doc.destino_tipo==='Linea Factsheet'"},
-        {"fieldname": "col_destino_base_right", "fieldtype": "Column Break"},
-        {"fieldname": "destino_codigo_linea", "fieldtype": "Data", "label": "Destino Codigo Linea", "depends_on": "eval:in_list(['Linea Estado', 'Linea Factsheet'], doc.destino_tipo)"},
-        {"fieldname": "sec_destino_nota", "fieldtype": "Section Break", "label": "Destino Nota", "depends_on": "eval:in_list(['Cifra Nota', 'Celda Seccion Nota'], doc.destino_tipo)"},
-        {"fieldname": "destino_numero_nota", "fieldtype": "Data", "label": "Destino Numero Nota", "depends_on": "eval:in_list(['Cifra Nota', 'Celda Seccion Nota'], doc.destino_tipo)"},
-        {"fieldname": "col_destino_nota_right", "fieldtype": "Column Break"},
-        {"fieldname": "destino_codigo_seccion", "fieldtype": "Data", "label": "Destino Codigo Seccion", "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"},
-        {"fieldname": "destino_codigo_tabla", "fieldtype": "Data", "label": "Destino Codigo Tabla", "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"},
-        {"fieldname": "destino_codigo_cifra", "fieldtype": "Data", "label": "Destino Codigo Cifra", "depends_on": "eval:doc.destino_tipo==='Cifra Nota'"},
-        {"fieldname": "sec_periodos", "fieldtype": "Section Break", "label": "Periodos y Valores", "depends_on": "eval:in_list(['Cifra Nota', 'Linea Factsheet', 'Linea Estado', 'Celda Seccion Nota'], doc.destino_tipo)"},
+        {
+            "fieldname": "tab_general",
+            "fieldtype": "Tab Break",
+            "label": "General"
+        },
+        {
+            "fieldname": "sec_general",
+            "fieldtype": "Section Break",
+            "label": "General"
+        },
+        {
+            "fieldname": "nombre_regla",
+            "fieldtype": "Data",
+            "label": "Nombre Regla",
+            "read_only": 1,
+            "in_list_view": 1,
+            "no_copy": 1
+        },
+        {
+            "fieldname": "company",
+            "fieldtype": "Link",
+            "label": "Company",
+            "options": "Company",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "col_general_right",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "activo",
+            "fieldtype": "Check",
+            "label": "Activo",
+            "default": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "orden",
+            "fieldtype": "Int",
+            "label": "Orden",
+            "default": 0
+        },
+        {
+            "fieldname": "fuente_tipo",
+            "fieldtype": "Select",
+            "label": "Fuente Tipo",
+            "options": "Balanza\nDato Estadistico",
+            "default": "Balanza",
+            "reqd": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1
+        },
+        {
+            "fieldname": "sec_observaciones",
+            "fieldtype": "Section Break",
+            "label": "Observaciones"
+        },
+        {
+            "fieldname": "observaciones",
+            "fieldtype": "Small Text",
+            "label": "Observaciones"
+        },
+        {
+            "fieldname": "tab_destino",
+            "fieldtype": "Tab Break",
+            "label": "Destino"
+        },
+        {
+            "fieldname": "sec_destino_base",
+            "fieldtype": "Section Break",
+            "label": "Destino Base"
+        },
+        {
+            "fieldname": "destino_tipo",
+            "fieldtype": "Select",
+            "label": "Destino Tipo",
+            "options": "Linea Estado\nCifra Nota\nCelda Seccion Nota\nLinea Factsheet\nCelda Estado",
+            "reqd": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1
+        },
+        {
+            "fieldname": "destino_codigo_estado",
+            "fieldtype": "Data",
+            "label": "Destino Codigo Estado",
+            "depends_on": "eval:in_list(['Linea Estado', 'Celda Estado'], doc.destino_tipo)"
+        },
+        {
+            "fieldname": "destino_codigo_factsheet",
+            "fieldtype": "Data",
+            "label": "Destino Codigo Factsheet",
+            "depends_on": "eval:doc.destino_tipo==='Linea Factsheet'"
+        },
+        {
+            "fieldname": "col_destino_base_right",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "destino_codigo_linea",
+            "fieldtype": "Data",
+            "label": "Destino Codigo Linea",
+            "depends_on": "eval:in_list(['Linea Estado', 'Linea Factsheet'], doc.destino_tipo)"
+        },
+        {
+            "fieldname": "sec_destino_nota",
+            "fieldtype": "Section Break",
+            "label": "Destino Nota",
+            "depends_on": "eval:in_list(['Cifra Nota', 'Celda Seccion Nota'], doc.destino_tipo)"
+        },
+        {
+            "fieldname": "destino_numero_nota",
+            "fieldtype": "Data",
+            "label": "Destino Numero Nota",
+            "depends_on": "eval:in_list(['Cifra Nota', 'Celda Seccion Nota'], doc.destino_tipo)"
+        },
+        {
+            "fieldname": "col_destino_nota_right",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "destino_codigo_seccion",
+            "fieldtype": "Data",
+            "label": "Destino Codigo Seccion",
+            "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"
+        },
+        {
+            "fieldname": "destino_codigo_tabla",
+            "fieldtype": "Data",
+            "label": "Destino Codigo Tabla",
+            "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"
+        },
+        {
+            "fieldname": "destino_codigo_cifra",
+            "fieldtype": "Data",
+            "label": "Destino Codigo Cifra",
+            "depends_on": "eval:doc.destino_tipo==='Cifra Nota'"
+        },
+        {
+            "fieldname": "sec_periodos",
+            "fieldtype": "Section Break",
+            "label": "Periodos y Valores",
+            "depends_on": "eval:in_list(['Cifra Nota', 'Linea Factsheet', 'Linea Estado', 'Celda Seccion Nota', 'Celda Estado'], doc.destino_tipo)"
+        },
         {
             "fieldname": "usar_periodos_especiales_cifra",
             "fieldtype": "Check",
@@ -76,7 +196,7 @@
             "fieldname": "destino_periodo_cifra_actual",
             "fieldtype": "Select",
             "label": "Periodo Valor Cifra Actual",
-            "options": "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo Año Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo Año Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)\nYTD Actual\nYTD Comparativo\nYTD Año Anterior Actual\nYTD Año Anterior Comparativo\nSuma Año Completo Anterior Actual\nSuma Año Completo Anterior Comparativo",
+            "options": "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo A\u00f1o Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo A\u00f1o Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)\nYTD Actual\nYTD Comparativo\nYTD A\u00f1o Anterior Actual\nYTD A\u00f1o Anterior Comparativo\nSuma A\u00f1o Completo Anterior Actual\nSuma A\u00f1o Completo Anterior Comparativo",
             "default": "Actual",
             "depends_on": "eval:in_list(['Cifra Nota', 'Linea Factsheet', 'Linea Estado'], doc.destino_tipo) && doc.usar_periodos_especiales_cifra==1"
         },
@@ -84,32 +204,70 @@
             "fieldname": "destino_periodo_cifra_comparativo",
             "fieldtype": "Select",
             "label": "Periodo Valor Cifra Comparativo",
-            "options": "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo Año Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo Año Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)\nYTD Actual\nYTD Comparativo\nYTD Año Anterior Actual\nYTD Año Anterior Comparativo\nSuma Año Completo Anterior Actual\nSuma Año Completo Anterior Comparativo",
+            "options": "Actual\nComparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo A\u00f1o Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo A\u00f1o Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)\nYTD Actual\nYTD Comparativo\nYTD A\u00f1o Anterior Actual\nYTD A\u00f1o Anterior Comparativo\nSuma A\u00f1o Completo Anterior Actual\nSuma A\u00f1o Completo Anterior Comparativo",
             "default": "Comparativo",
             "depends_on": "eval:in_list(['Cifra Nota', 'Linea Factsheet', 'Linea Estado'], doc.destino_tipo) && doc.usar_periodos_especiales_cifra==1"
         },
-        {"fieldname": "sec_celdas", "fieldtype": "Section Break", "label": "Configuracion Celda", "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"},
-        {"fieldname": "destino_seccion_id", "fieldtype": "Data", "label": "Destino Seccion ID", "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"},
-        {"fieldname": "destino_codigo_fila", "fieldtype": "Data", "label": "Destino Codigo Fila", "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"},
-        {"fieldname": "destino_codigo_columna", "fieldtype": "Data", "label": "Destino Codigo Columna", "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"},
+        {
+            "fieldname": "sec_celdas",
+            "fieldtype": "Section Break",
+            "label": "Configuracion Celda",
+            "depends_on": "eval:in_list(['Celda Seccion Nota', 'Celda Estado'], doc.destino_tipo)"
+        },
+        {
+            "fieldname": "destino_seccion_id",
+            "fieldtype": "Data",
+            "label": "Destino Seccion ID",
+            "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'"
+        },
+        {
+            "fieldname": "destino_codigo_fila",
+            "fieldtype": "Data",
+            "label": "Destino Codigo Fila",
+            "depends_on": "eval:in_list(['Celda Seccion Nota', 'Celda Estado'], doc.destino_tipo)"
+        },
+        {
+            "fieldname": "destino_codigo_columna",
+            "fieldtype": "Data",
+            "label": "Destino Codigo Columna",
+            "depends_on": "eval:in_list(['Celda Seccion Nota', 'Celda Estado'], doc.destino_tipo)"
+        },
         {
             "fieldname": "destino_periodo_celda",
             "fieldtype": "Select",
             "label": "Periodo Valor Celda",
-            "options": "Actual\nComparativo\nBase Actual\nBase Comparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo Año Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo Año Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)\nYTD Actual\nYTD Comparativo\nYTD Año Anterior Actual\nYTD Año Anterior Comparativo\nSuma Año Completo Anterior Actual\nSuma Año Completo Anterior Comparativo",
+            "options": "Actual\nComparativo\nBase Actual\nBase Comparativo\nSaldo Anterior Actual\nMovimiento Mes Actual\nSaldo Anterior Comparativo\nMovimiento Mes Comparativo\nSaldo Cierre Anterior Actual\nSaldo A\u00f1o Anterior Actual\nSaldo Cierre Anterior Comparativo\nSaldo A\u00f1o Anterior Comparativo\nPromedio Movil 12 Meses (Actual)\nPromedio Movil 12 Meses (Comparativo)\nYTD Actual\nYTD Comparativo\nYTD A\u00f1o Anterior Actual\nYTD A\u00f1o Anterior Comparativo\nSuma A\u00f1o Completo Anterior Actual\nSuma A\u00f1o Completo Anterior Comparativo",
             "default": "Actual",
-            "depends_on": "eval:doc.destino_tipo==='Celda Seccion Nota'",
+            "depends_on": "eval:in_list(['Celda Seccion Nota', 'Celda Estado'], doc.destino_tipo)",
             "description": "Define que monto se escribe en la celda destino de una tabla compleja."
         },
-        {"fieldname": "tab_cuentas", "fieldtype": "Tab Break", "label": "Cuentas"},
-        {"fieldname": "cuentas", "fieldtype": "Table", "label": "Cuentas", "options": "Cuenta Regla Mapeo EEFF"}
+        {
+            "fieldname": "tab_cuentas",
+            "fieldtype": "Tab Break",
+            "label": "Cuentas"
+        },
+        {
+            "fieldname": "cuentas",
+            "fieldtype": "Table",
+            "label": "Cuentas",
+            "options": "Cuenta Regla Mapeo EEFF"
+        }
     ],
     "module": "MFI Tools",
     "name": "Regla Mapeo Contable EEFF",
     "naming_rule": "By fieldname",
     "autoname": "field:nombre_regla",
     "permissions": [
-        {"role": "System Manager", "create": 1, "read": 1, "write": 1, "delete": 1, "report": 1, "export": 1, "print": 1}
+        {
+            "role": "System Manager",
+            "create": 1,
+            "read": 1,
+            "write": 1,
+            "delete": 1,
+            "report": 1,
+            "export": 1,
+            "print": 1
+        }
     ],
     "sort_field": "modified",
     "sort_order": "DESC",

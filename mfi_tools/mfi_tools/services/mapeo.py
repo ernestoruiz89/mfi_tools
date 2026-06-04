@@ -482,7 +482,7 @@ def _resolve_rule_targets(rule_doc, package_name):
     destino = cstr(rule_doc.destino_tipo or "").strip()
     targets = {}
 
-    if destino == "Linea Estado":
+    if destino in ("Linea Estado", "Celda Estado"):
         codigo_estado = _normalize(getattr(rule_doc, "destino_codigo_estado", ""))
         if not codigo_estado:
             return False, _("La regla {0} no tiene codigo de estado destino.").format(rule_doc.name), targets
@@ -611,7 +611,7 @@ def _resolve_rule_targets_cached(rule_doc, lookup_maps):
     destino = cstr(rule_doc.destino_tipo or "").strip()
     targets = {}
 
-    if destino == "Linea Estado":
+    if destino in ("Linea Estado", "Celda Estado"):
         codigo_estado = _normalize(getattr(rule_doc, "destino_codigo_estado", ""))
         if not codigo_estado:
             return False, _("La regla {0} no tiene codigo de estado destino.").format(rule_doc.name), targets
@@ -730,6 +730,16 @@ def _reset_package_targets(package_name):
     frappe.db.sql("""
         UPDATE `tabCelda Seccion Nota EEFF` child
         INNER JOIN `tabSeccion Nota EEFF` parent ON parent.name = child.parent
+        SET child.valor_numero = 0, child.valor_texto = '',
+            child.ultima_regla_mapeo = NULL
+        WHERE parent.paquete_eeff = %s
+          AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
+    """, (package_name,))
+
+    # --- Estado Financiero EEFF (Celda Tabular) ---
+    frappe.db.sql("""
+        UPDATE `tabCelda Seccion Nota EEFF` child
+        INNER JOIN `tabEstado Financiero EEFF` parent ON parent.name = child.parent
         SET child.valor_numero = 0, child.valor_texto = '',
             child.ultima_regla_mapeo = NULL
         WHERE parent.paquete_eeff = %s
@@ -970,7 +980,7 @@ def aplicar_mapeo_paquete(paquete_name):
         source_type = cstr(getattr(rule, "fuente_tipo", "Balanza") or "Balanza").strip()
 
         destino = cstr(rule.destino_tipo or "").strip()
-        if destino == "Linea Estado":
+        if destino in ("Linea Estado", "Celda Estado"):
             if not resolved.get("estado_name"):
                 alertas.append(_("La regla {0} apunta a un estado inexistente.").format(rule.name))
                 continue
@@ -1056,6 +1066,74 @@ def aplicar_mapeo_paquete(paquete_name):
             figure.monto_comparativo = flt(figure.monto_comparativo or 0) + selected_comparative_amount
             figure.origen_dato = "Mapeo"
             touched_notes.add(note_doc.name)
+
+        elif destino == "Celda Estado":
+            if not resolved.get("estado_name"):
+                alertas.append(_("La regla {0} apunta a un estado inexistente.").format(rule.name))
+                continue
+            state_doc = get_state_doc(resolved["estado_name"])
+            selected_amount = _select_section_cell_amount(
+                rule,
+                amount,
+                comparative_amount,
+                base_actual_amount,
+                base_comparative_amount,
+                balances,
+                comparative_balances,
+                actual_stats,
+                comparative_stats,
+                historical_data=historical_data,
+            )
+            table_code = _normalize(rule.destino_codigo_tabla or "TABLA_01")
+            row_code = _normalize(rule.destino_codigo_fila)
+            column_code = _normalize(rule.destino_codigo_columna)
+            if row_code and not _find_section_row_definition(state_doc, table_code, row_code):
+                state_doc.append(
+                    "filas_tabulares",
+                    {
+                        "codigo_tabla": table_code,
+                        "codigo_fila": row_code,
+                        "descripcion": rule.destino_codigo_fila,
+                        "orden": len(state_doc.filas_tabulares or []) + 1,
+                        "nivel": 1,
+                        "tipo_fila": "Detalle",
+                    },
+                )
+            if column_code and not _find_section_column_definition(state_doc, table_code, column_code):
+                state_doc.append(
+                    "columnas_tabulares",
+                    {
+                        "codigo_tabla": table_code,
+                        "codigo_columna": column_code,
+                        "etiqueta": rule.destino_codigo_columna,
+                        "orden": len(state_doc.columnas_tabulares or []) + 1,
+                        "tipo_dato": "Numero",
+                        "alineacion": "Right",
+                    },
+                )
+            cell = _find_section_cell(
+                state_doc,
+                table_code,
+                row_code,
+                column_code,
+            )
+            if not cell:
+                state_doc.append(
+                    "celdas_tabulares",
+                    {
+                        "codigo_tabla": table_code,
+                        "codigo_fila": row_code,
+                        "codigo_columna": column_code,
+                        "formato_numero": "Numero",
+                    },
+                )
+                cell = state_doc.celdas_tabulares[-1]
+            if getattr(cell, "origen_dato", "Manual") == "Manual":
+                continue
+            cell.valor_numero = flt(getattr(cell, "valor_numero", 0) or 0) + selected_amount
+            cell.origen_dato = "Mapeo"
+            cell.ultima_regla_mapeo = rule.name
+            touched_states.add(state_doc.name)
 
         elif destino == "Celda Seccion Nota":
             if not resolved.get("section_name"):
@@ -1235,7 +1313,12 @@ def aplicar_mapeo_paquete(paquete_name):
         FROM `tabLinea Estado Financiero EEFF` child
         INNER JOIN `tabEstado Financiero EEFF` parent ON parent.name = child.parent
         WHERE parent.paquete_eeff = %s AND child.origen_dato = 'Formula'
-    """, (package.name,)))
+        UNION
+        SELECT DISTINCT child.parent
+        FROM `tabCelda Seccion Nota EEFF` child
+        INNER JOIN `tabEstado Financiero EEFF` parent ON parent.name = child.parent
+        WHERE parent.paquete_eeff = %s AND child.origen_dato = 'Formula'
+    """, (package.name, package.name)))
     states_to_recalc = states_with_formulas - touched_states
     if states_to_recalc:
         for state_name in states_to_recalc:
@@ -1247,6 +1330,10 @@ def aplicar_mapeo_paquete(paquete_name):
                     row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
                     row.monto_base_actual = evaluate_formula(expr, formula_ctx, "actual")
                     row.monto_base_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+            for row in state_doc.celdas_tabulares or []:
+                if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_celda", "")):
+                    expr = row.formula_celda
+                    row.valor_numero = evaluate_formula(expr, formula_ctx, "actual")
             state_doc.save(ignore_permissions=True)
             touched_states.add(state_name)
 

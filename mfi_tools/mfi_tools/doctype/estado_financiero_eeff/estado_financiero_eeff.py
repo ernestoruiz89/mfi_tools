@@ -13,6 +13,18 @@ from mfi_tools.mfi_tools.utils.estado_line_format import (
 )
 from mfi_tools.mfi_tools.utils.customer import get_customer_display
 
+from mfi_tools.mfi_tools.utils.nota_tablas import (
+    DEFAULT_COLUMN_CODE,
+    TABLE_ALIGNMENTS,
+    TABLE_COLUMN_TYPES,
+    TABLE_ROW_TYPES,
+    normalize_column_code,
+    normalize_row_code,
+    normalize_table_code,
+    parse_formula_tokens as parse_formula_tokens_tabular,
+)
+
+
 FORMULA_SPLIT_RE = re.compile(r"[\n,;]+")
 FORMULA_CODE_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 FORMULA_FIELD_MAP = {
@@ -56,13 +68,23 @@ class EstadoFinancieroEEFF(Document):
         self.name = self.nombre_del_estado
 
     def validate(self):
+        self.estructura_estado = cstr(getattr(self, "estructura_estado", "Simple") or "Simple").strip()
         self.codigo_estado = cstr(self.codigo_estado or "").strip().upper()
         self.subtitulo = cstr(getattr(self, "subtitulo", "") or "").strip()
         self.tamano_letra_impresion = self.get_print_font_size()
         self.ancho_tabla_impresion = self.get_print_table_width()
         self.alineacion_tabla_impresion = self.get_print_table_alignment()
-        self._normalizar_lineas()
-        self._calcular_lineas_formula()
+        if self.estructura_estado == "Compleja":
+            self._normalizar_columnas()
+            self._normalizar_filas()
+            self._normalizar_celdas()
+            self._asegurar_estructura_tabular()
+            self._validar_formulas_tabulares()
+            self._calcular_tablas()
+            self._sync_totals()
+        else:
+            self._normalizar_lineas()
+            self._calcular_lineas_formula()
 
     def format_line_value(self, row, fieldname):
         return format_estado_line_value(row, fieldname)

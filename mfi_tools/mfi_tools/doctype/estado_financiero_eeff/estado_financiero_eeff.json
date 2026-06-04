@@ -9,6 +9,7 @@
         "paquete_eeff",
         "identificacion_column",
         "tipo_estado",
+        "estructura_estado",
         "codigo_estado",
         "definicion_section",
         "titulo",
@@ -25,6 +26,15 @@
         "lineas_tab",
         "lineas_section",
         "lineas",
+        "estructura_tabular_tab",
+        "total_columnas",
+        "resumen_column",
+        "total_filas",
+        "total_celdas",
+        "estructura_tab",
+        "columnas_tabulares",
+        "filas_tabulares",
+        "celdas_tabulares",
         "notas_tab",
         "notas_section",
         "observaciones"
@@ -60,6 +70,14 @@
             "label": "Tipo Estado",
             "options": "Estado de Situacion Financiera\nEstado de Resultados\nEstado de Cambios en el Patrimonio\nEstado de Flujos de Efectivo\nOtro",
             "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "estructura_estado",
+            "fieldtype": "Select",
+            "label": "Estructura Estado",
+            "options": "Simple\nCompleja",
+            "default": "Simple",
             "in_list_view": 1
         },
         {
@@ -141,18 +159,75 @@
         {
             "fieldname": "lineas_tab",
             "fieldtype": "Tab Break",
-            "label": "Lineas"
+            "label": "Lineas",
+            "depends_on": "eval:doc.estructura_estado==\"Simple\""
         },
         {
             "fieldname": "lineas_section",
             "fieldtype": "Section Break",
-            "label": "Estructura del Estado"
+            "label": "Estructura del Estado",
+            "depends_on": "eval:doc.estructura_estado==\"Simple\""
         },
         {
             "fieldname": "lineas",
             "fieldtype": "Table",
             "label": "Lineas",
             "options": "Linea Estado Financiero EEFF",
+            "allow_bulk_edit": 1,
+            "depends_on": "eval:doc.estructura_estado==\"Simple\""
+        },
+        {
+            "fieldname": "estructura_tabular_tab",
+            "fieldtype": "Tab Break",
+            "label": "Estructura Tabular",
+            "depends_on": "eval:doc.estructura_estado==\"Compleja\""
+        },
+        {
+            "fieldname": "total_columnas",
+            "fieldtype": "Int",
+            "label": "Total Columnas",
+            "read_only": 1
+        },
+        {
+            "fieldname": "resumen_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "total_filas",
+            "fieldtype": "Int",
+            "label": "Total Filas",
+            "read_only": 1
+        },
+        {
+            "fieldname": "total_celdas",
+            "fieldtype": "Int",
+            "label": "Total Celdas",
+            "read_only": 1
+        },
+        {
+            "fieldname": "estructura_tab",
+            "fieldtype": "Section Break",
+            "label": "Definicion Estructura"
+        },
+        {
+            "fieldname": "columnas_tabulares",
+            "fieldtype": "Table",
+            "label": "Columnas Tabulares",
+            "options": "Columna Seccion Nota EEFF",
+            "allow_bulk_edit": 1
+        },
+        {
+            "fieldname": "filas_tabulares",
+            "fieldtype": "Table",
+            "label": "Filas Tabulares",
+            "options": "Fila Seccion Nota EEFF",
+            "allow_bulk_edit": 1
+        },
+        {
+            "fieldname": "celdas_tabulares",
+            "fieldtype": "Table",
+            "label": "Celdas Tabulares",
+            "options": "Celda Seccion Nota EEFF",
             "allow_bulk_edit": 1
         },
         {
