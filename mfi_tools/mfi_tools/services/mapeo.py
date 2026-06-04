@@ -687,8 +687,7 @@ def _reset_package_targets(package_name):
         UPDATE `tabLinea Estado Financiero EEFF` child
         INNER JOIN `tabEstado Financiero EEFF` parent ON parent.name = child.parent
         SET child.monto_actual = 0, child.monto_comparativo = 0,
-            child.monto_base_actual = 0, child.monto_base_comparativo = 0,
-            child.origen_dato = CASE WHEN child.origen_dato = 'Formula' THEN 'Formula' ELSE 'Manual' END
+            child.monto_base_actual = 0, child.monto_base_comparativo = 0
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_titulo, 0) = 0
           AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
@@ -710,8 +709,7 @@ def _reset_package_targets(package_name):
         UPDATE `tabCifra Nota EEFF` child
         INNER JOIN `tabNota EEFF` parent ON parent.name = child.parent
         SET child.monto_actual = 0, child.monto_comparativo = 0,
-            child.valor_texto_actual = '', child.valor_texto_comparativo = '',
-            child.origen_dato = CASE WHEN child.origen_dato = 'Formula' THEN 'Formula' ELSE 'Manual' END
+            child.valor_texto_actual = '', child.valor_texto_comparativo = ''
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_linea_blanco, 0) = 0
           AND IFNULL(child.es_titulo, 0) = 0
@@ -733,7 +731,6 @@ def _reset_package_targets(package_name):
         UPDATE `tabCelda Seccion Nota EEFF` child
         INNER JOIN `tabSeccion Nota EEFF` parent ON parent.name = child.parent
         SET child.valor_numero = 0, child.valor_texto = '',
-            child.origen_dato = CASE WHEN child.origen_dato = 'Formula' THEN 'Formula' ELSE 'Manual' END, 
             child.ultima_regla_mapeo = NULL
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
