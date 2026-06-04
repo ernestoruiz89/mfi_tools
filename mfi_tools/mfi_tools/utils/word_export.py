@@ -286,13 +286,18 @@ def _add_estados_section(document, package):
     Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor = _docx_imports()
 
     for index, estado in enumerate(estados):
+        estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name)
+        is_landscape = cstr(estado_doc.get("orientacion") or "Vertical") == "Horizontal"
+        
         if index == 0:
             section = document.sections[-1]
+            if is_landscape:
+                _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=True, document_title=REPORT_TITLE)
         else:
             section = document.add_section(WD_SECTION_START.NEW_PAGE)
-            _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE)
+            _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=is_landscape, document_title=REPORT_TITLE)
             _set_section_footer_page_number(section)
-        estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name)
+            
         header = estado_doc.get_print_header()
         _set_section_header_content(section, header)
         estado_font_size = estado_doc.get_print_font_size()

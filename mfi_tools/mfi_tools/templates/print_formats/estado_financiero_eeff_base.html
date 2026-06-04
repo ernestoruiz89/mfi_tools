@@ -299,6 +299,12 @@
   }
 </style>
 
+{% if doc.orientacion == "Horizontal" %}
+<style>
+  @page { size: landscape; }
+</style>
+{% endif %}
+
 {% set package = frappe.get_doc("Paquete EEFF", doc.paquete_eeff) %}
 {% set labels = package.get_column_labels() %}
 {% set currency_ctx = package.get_currency_context() %}

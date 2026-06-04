@@ -314,6 +314,13 @@
     font-size: 11pt;
     margin-top: 2px;
   }
+
+  @page landscape_page {
+    size: landscape;
+  }
+  .cpc-landscape-section {
+    page: landscape_page;
+  }
 </style>
 {% set estados = frappe.get_all(
 "Estado Financiero EEFF",
@@ -372,7 +379,8 @@ limit_page_length=100
     {% set estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name) %}
     {% set lineas = (estado_doc.lineas or []) %}
     {% set estado_header = estado_doc.get_print_header() %}
-    <div class="cpc-section">
+    {% set is_landscape_class = " cpc-landscape-section" if estado_doc.orientacion == "Horizontal" else "" %}
+    <div class="cpc-section{{ is_landscape_class }}">
       <h3>{{ estado_header.cliente or "-" }}</h3>
       <p class="cpc-subtitle">{{ estado_header.titulo or "-" }}</p>
       {% if estado_header.periodo %}<p class="cpc-subtitle">{{ estado_header.periodo }}</p>{% endif %}
