@@ -45,7 +45,7 @@ def build_paquete_eeff_word_content(package_name):
 
 
 def _build_package_document(package):
-    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor = _docx_imports()
+    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
 
     customer_display = get_customer_display(package.cliente)
 
@@ -118,7 +118,7 @@ def _docx_imports():
     try:
         from docx import Document
         from docx.enum.section import WD_ORIENTATION, WD_SECTION_START
-        from docx.enum.table import WD_TABLE_ALIGNMENT
+        from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
         from docx.enum.text import WD_ALIGN_PARAGRAPH
         from docx.oxml import OxmlElement
         from docx.oxml.ns import qn
@@ -131,7 +131,7 @@ def _docx_imports():
             ),
             title=_("Dependencia Faltante"),
         )
-    return Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor
+    return Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, WD_ALIGN_VERTICAL
 
 
 def _configure_document(document, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, Pt, document_title=REPORT_TITLE):
@@ -155,7 +155,7 @@ def _configure_document(document, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, 
 
 
 def _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE):
-    _Document, _Align, WD_ORIENTATION, _SectionStart, _TableAlign, _OxmlElement, _qn, _Cm, _Pt, _RGBColor = _docx_imports()
+    _Document, _Align, WD_ORIENTATION, _SectionStart, _TableAlign, _OxmlElement, _qn, _Cm, _Pt, _RGBColor, _WD_AV = _docx_imports()
     section.top_margin = Cm(2.2)
     section.bottom_margin = Cm(2.0)
     section.left_margin = Cm(2.3)
@@ -207,7 +207,7 @@ def _append_field(paragraph, instruction, placeholder, OxmlElement, qn):
 
 
 def _set_section_footer_page_number(section, start=None):
-    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor = _docx_imports()
+    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
     footer = section.footer
     footer.is_linked_to_previous = False
     _clear_header_footer(footer)
@@ -235,7 +235,7 @@ def _clear_header_footer(container):
 
 
 def _set_section_header_content(section, header_data):
-    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor = _docx_imports()
+    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
     header = section.header
     _clear_header_footer(header)
 
@@ -291,7 +291,7 @@ def _add_estados_section(document, package):
     labels = package.get_column_labels()
     currency_symbol = _get_package_currency_symbol(package)
 
-    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor = _docx_imports()
+    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
 
     for index, estado in enumerate(estados):
         estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name)
@@ -439,7 +439,7 @@ def _add_notas_section(document, package):
         for subnote_doc in subnotes:
             printable_notes.append((subnote_doc, []))
 
-    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor = _docx_imports()
+    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
 
     for note_index, (nota_doc, subnotes) in enumerate(printable_notes):
         is_landscape = cstr(getattr(nota_doc, "orientacion", "Vertical") or "Vertical") == "Horizontal"
@@ -577,7 +577,7 @@ def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignm
     _force_table_font_size(table, note_font_size)
 
 def _render_complex_note_content(document, nota_doc, labels, package, currency_symbol):
-    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor = _docx_imports()
+    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
     note_font_size = nota_doc.get_print_font_size() if hasattr(nota_doc, "get_print_font_size") else BODY_SIZE
     note_alignment = nota_doc.get_print_table_alignment() if hasattr(nota_doc, "get_print_table_alignment") else "Centro"
     sections = _get_complex_note_sections(nota_doc.name)
@@ -911,7 +911,7 @@ def _fill_label_value_cell(cell, label, value):
 
 
 def _set_paragraph_runs_font(paragraph, font_name=FONT_NAME, size=BODY_SIZE, bold=False):
-    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, Pt, RGBColor = _docx_imports()
+    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, Pt, RGBColor, _WD_AV = _docx_imports()
     if not paragraph.runs:
         paragraph.add_run("")
     paragraph_format = paragraph.paragraph_format
@@ -934,7 +934,7 @@ def _set_paragraph_runs_font(paragraph, font_name=FONT_NAME, size=BODY_SIZE, bol
 
 
 def _set_table_column_widths(table, widths_cm):
-    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, Cm, _Pt, _RGBColor = _docx_imports()
+    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, Cm, _Pt, _RGBColor, _WD_AV = _docx_imports()
     table.autofit = False
 
     tbl = table._tbl
@@ -980,7 +980,7 @@ def _set_table_column_widths(table, widths_cm):
 
 
 def _set_word_table_alignment(table, alignment):
-    _Document, _Align, _Orientation, _SectionStart, WD_TABLE_ALIGNMENT, _OxmlElement, _qn, _Cm, _Pt, _RGBColor = _docx_imports()
+    _Document, _Align, _Orientation, _SectionStart, WD_TABLE_ALIGNMENT, _OxmlElement, _qn, _Cm, _Pt, _RGBColor, _WD_AV = _docx_imports()
     if alignment == "Izquierda":
         table.alignment = WD_TABLE_ALIGNMENT.LEFT
     elif alignment == "Derecha":
@@ -1049,7 +1049,7 @@ def _parse_word_table_width_percent(value):
 
 
 def _style_table_no_borders(table):
-    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor = _docx_imports()
+    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor, _WD_AV = _docx_imports()
     tbl = table._tbl
     tblPr = tbl.tblPr
     borders = tblPr.first_child_found_in("w:tblBorders")
@@ -1065,7 +1065,7 @@ def _style_table_no_borders(table):
 
 
 def _style_cell_border(cell, top=None, bottom=None):
-    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor = _docx_imports()
+    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor, _WD_AV = _docx_imports()
     tcPr = cell._tc.get_or_add_tcPr()
     tcBorders = tcPr.first_child_found_in("w:tcBorders")
     if tcBorders is None:
@@ -1084,7 +1084,7 @@ def _style_cell_border(cell, top=None, bottom=None):
 
 
 def _set_cell_margins(cell, left=None, right=None):
-    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor = _docx_imports()
+    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor, _WD_AV = _docx_imports()
     tcPr = cell._tc.get_or_add_tcPr()
     tcMar = tcPr.first_child_found_in("w:tcMar")
     if tcMar is None:
@@ -1102,7 +1102,7 @@ def _set_cell_margins(cell, left=None, right=None):
 
 
 def _set_row_min_height(row, height_twips):
-    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor = _docx_imports()
+    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor, _WD_AV = _docx_imports()
     tr_pr = row._tr.get_or_add_trPr()
     tr_height = tr_pr.first_child_found_in("w:trHeight")
     if tr_height is None:
@@ -1135,8 +1135,10 @@ def _style_financial_table(
         gap_indexes = {cint(idx) for idx in (gap_col_indexes or [])}
     first_numeric_index = min(numeric_indexes) if numeric_indexes else None
     _style_table_no_borders(table)
+    _Document, _Align, _Orientation, _SectionStart, _TableAlign, _OxmlEl, _qn, _Cm, _Pt, _RGBColor, WD_ALIGN_VERTICAL = _docx_imports()
     for row_index, row in enumerate(table.rows):
         for cell_index, cell in enumerate(row.cells):
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
             if note_col_index is not None and cell_index == note_col_index:
                 _set_cell_margins(cell, left=80, right=80)
             elif first_numeric_index is not None and cell_index == first_numeric_index:
@@ -1304,7 +1306,7 @@ def _apply_run_background(run, color_hex):
     fill = cstr(color_hex or "").strip().upper()
     if not re.fullmatch(r"[0-9A-F]{6}", fill):
         return
-    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor = _docx_imports()
+    _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor, _WD_AV = _docx_imports()
     rpr = run._element.get_or_add_rPr()
     shd = rpr.find(qn("w:shd"))
     if shd is None:
@@ -1849,7 +1851,7 @@ def _sanitize_filename(value):
 
 
 def _render_estado_complex_tables(document, estado_doc, package, currency_symbol, section, note_font_size):
-    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor = _docx_imports()
+    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
     note_alignment = estado_doc.get_print_table_alignment() if hasattr(estado_doc, "get_print_table_alignment") else "Centro"
     
     tables = estado_doc.get_render_tables() if hasattr(estado_doc, "get_render_tables") else []
