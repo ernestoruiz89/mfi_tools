@@ -1,99 +1,99 @@
 {
- "actions": [],
- "creation": "2026-03-12 00:00:00.000000",
- "modified": "2026-06-03 06:00:00.000000",
- "doctype": "DocType",
- "editable_grid": 1,
- "engine": "InnoDB",
- "field_order": [
-  "codigo_tabla",
-  "codigo_fila",
-  "codigo_columna",
-  "valor_numero",
-  "valor_texto",
-  "formato_numero",
-  "redondear_entero",
-  "es_manual",
-  "origen_dato",
-  "formula_celda",
-  "ultima_regla_mapeo",
-  "comentario"
- ],
- "fields": [
-  {
-   "fieldname": "codigo_tabla",
-   "fieldtype": "Data",
-   "label": "Codigo Tabla",
-   "reqd": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "codigo_fila",
-   "fieldtype": "Data",
-   "label": "Codigo Fila",
-   "reqd": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "codigo_columna",
-   "fieldtype": "Data",
-   "label": "Codigo Columna",
-   "reqd": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "valor_numero",
-   "fieldtype": "Currency",
-   "label": "Valor Numero",
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "valor_texto",
-   "fieldtype": "Data",
-   "label": "Valor Texto"
-  },
-  {
-   "fieldname": "formato_numero",
-   "fieldtype": "Select",
-   "label": "Formato Numero",
-   "options": "Numero\nMoneda\nPorcentaje\nTexto"
-  },
-  {
-   "fieldname": "redondear_entero",
-   "fieldtype": "Check",
-   "label": "Redondear Entero",
-   "default": 0
-  },
-  {
-   "fieldname": "origen_dato",
-   "fieldtype": "Select",
-   "label": "Origen Dato",
-   "options": "Manual\nMapeo\nFormula",
-   "default": "Manual"
-  },
-  {
-   "fieldname": "formula_celda",
-   "fieldtype": "Code",
-   "options": "SQL",
-   "label": "Formula Celda",
-   "depends_on": "eval:doc.origen_dato=='Formula'",
-   "description": "<div style=\"font-size: 11px; line-height: 1.5; color: var(--text-muted);\">\n    <strong>&#9654; Balanza</strong><br>\n    <code>BAL(\"101*\")</code> &rarr; Saldo cuentas 101 (contextual: actual o comparativo)<br>\n    <code>BAL(\"101*\", \"SALDO_ANTERIOR\")</code> &rarr; Saldo anterior<br>\n    <code>BAL(\"101*\", \"MOVIMIENTO_DEL_MES\")</code> &rarr; Movimiento del mes<br>\n    <code>BAL_ACT(\"101*\")</code> &rarr; Siempre balanza actual<br>\n    <code>BAL_COMP(\"101*\")</code> &rarr; Siempre balanza comparativa<br>\n    <code>BAL_BASE_ACT(\"101*\")</code> / <code>BAL_BASE_COMP(\"101*\")</code> &rarr; Balanzas base<br>\n    <br>\n    <strong>&#9654; Estadísticos</strong><br>\n    <code>EST(\"NO_EMP\")</code> &rarr; Dato estadístico (contextual: actual o comparativo)<br>\n    <code>EST_ACT(\"NO_EMP\")</code> &rarr; Siempre estadístico actual<br>\n    <code>EST_COMP(\"NO_EMP\")</code> &rarr; Siempre estadístico comparativo<br>\n    <br>\n    <strong>&#9654; Históricas (por defecto usan Balanza)</strong><br>\n    <code>YTD(\"101*\")</code> &rarr; YTD Balanza (Ene a mes actual, movimiento_del_mes)<br>\n    <code>YTD(\"NO_EMP\", \"EST\")</code> &rarr; YTD Estadístico<br>\n    <code>YTD_ANT(\"101*\")</code> &rarr; YTD Año Anterior Balanza<br>\n    <code>YTD_ANT(\"NO_EMP\", \"EST\")</code> &rarr; YTD Año Anterior Estadístico<br>\n    <code>ANUAL_ANT(\"101*\")</code> &rarr; Suma 12 meses año anterior Balanza<br>\n    <code>ANUAL_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Suma 12 meses año anterior Estadístico<br>\n    <code>CIERRE_ANT(\"101*\")</code> &rarr; Saldo cierre dic. año anterior Balanza<br>\n    <code>CIERRE_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Cierre año anterior Estadístico<br>\n    <code>MES_ANIO_ANT(\"101*\")</code> &rarr; Mismo mes año anterior Balanza<br>\n    <code>MES_ANIO_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Mismo mes año anterior Estadístico<br>\n    <br>\n    <strong>&#9654; Matemáticas</strong><br>\n    <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>\n    <code>SI(condicion, valor_si, valor_no)</code><br>\n    Operadores: <code>+ - * / ** ()</code><br>\n    <br>\n    <strong>&#9654; Variables</strong><br>\n    <code>VAR SC = BAL(\"1401*\") + BAL(\"1402*\")</code><br>\n    <code>VAR TC = EST(\"TIPO_CAMBIO\")</code><br>\n    <code>VAR SC_USD = SC / TC</code><br>\n    <code>SC_USD</code> &larr; última línea = resultado\n</div>"
-  },
-  {
-   "fieldname": "ultima_regla_mapeo",
-   "fieldtype": "Data",
-   "label": "Ultima Regla Mapeo"
-  },
-  {
-   "fieldname": "comentario",
-   "fieldtype": "Small Text",
-   "label": "Comentario"
-  }
- ],
- "istable": 1,
- "module": "MFI Tools",
- "name": "Celda Seccion Nota EEFF",
- "permissions": [],
- "sort_field": "modified",
- "sort_order": "DESC"
+    "actions": [],
+    "creation": "2026-03-12 00:00:00.000000",
+    "modified": "2026-06-03 06:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "codigo_tabla",
+        "codigo_fila",
+        "codigo_columna",
+        "valor_numero",
+        "valor_texto",
+        "formato_numero",
+        "redondear_entero",
+        "es_manual",
+        "origen_dato",
+        "formula_celda",
+        "ultima_regla_mapeo",
+        "comentario"
+    ],
+    "fields": [
+        {
+            "fieldname": "codigo_tabla",
+            "fieldtype": "Data",
+            "label": "Codigo Tabla",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "codigo_fila",
+            "fieldtype": "Data",
+            "label": "Codigo Fila",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "codigo_columna",
+            "fieldtype": "Data",
+            "label": "Codigo Columna",
+            "reqd": 1,
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "valor_numero",
+            "fieldtype": "Currency",
+            "label": "Valor Numero",
+            "in_list_view": 1
+        },
+        {
+            "fieldname": "valor_texto",
+            "fieldtype": "Data",
+            "label": "Valor Texto"
+        },
+        {
+            "fieldname": "formato_numero",
+            "fieldtype": "Select",
+            "label": "Formato Numero",
+            "options": "Numero\nMoneda\nPorcentaje\nTexto"
+        },
+        {
+            "fieldname": "redondear_entero",
+            "fieldtype": "Check",
+            "label": "Redondear Entero",
+            "default": 0
+        },
+        {
+            "fieldname": "origen_dato",
+            "fieldtype": "Select",
+            "label": "Origen Dato",
+            "options": "Manual\nMapeo\nFormula",
+            "default": "Manual"
+        },
+        {
+            "fieldname": "formula_celda",
+            "fieldtype": "Code",
+            "options": "SQL",
+            "label": "Formula Celda",
+            "depends_on": "eval:doc.origen_dato=='Formula'",
+            "description": "<div style=\"font-size: 11px; line-height: 1.5; color: var(--text-muted);\">\n    <strong>&#9654; Balanza</strong><br>\n    <code>BAL(\"101*\")</code> &rarr; Saldo cuentas 101 (contextual: actual o comparativo)<br>\n    <code>BAL(\"101*\", \"SALDO_ANTERIOR\")</code> &rarr; Saldo anterior<br>\n    <code>BAL(\"101*\", \"MOVIMIENTO_DEL_MES\")</code> &rarr; Movimiento del mes<br>\n    <code>BAL_ACT(\"101*\")</code> &rarr; Siempre balanza actual<br>\n    <code>BAL_COMP(\"101*\")</code> &rarr; Siempre balanza comparativa<br>\n    <code>BAL_BASE_ACT(\"101*\")</code> / <code>BAL_BASE_COMP(\"101*\")</code> &rarr; Balanzas base<br>\n    <br>\n    <strong>&#9654; Estad\u00edsticos</strong><br>\n    <code>EST(\"NO_EMP\")</code> &rarr; Dato estad\u00edstico (contextual: actual o comparativo)<br>\n    <code>EST_ACT(\"NO_EMP\")</code> &rarr; Siempre estad\u00edstico actual<br>\n    <code>EST_COMP(\"NO_EMP\")</code> &rarr; Siempre estad\u00edstico comparativo<br>\n    <br>\n    <strong>&#9654; Hist\u00f3ricas (por defecto usan Balanza)</strong><br>\n    <code>YTD(\"101*\")</code> &rarr; YTD Balanza (Ene a mes actual, movimiento_del_mes)<br>\n    <code>YTD(\"NO_EMP\", \"EST\")</code> &rarr; YTD Estad\u00edstico<br>\n    <code>YTD_ANT(\"101*\")</code> &rarr; YTD A\u00f1o Anterior Balanza<br>\n    <code>YTD_ANT(\"NO_EMP\", \"EST\")</code> &rarr; YTD A\u00f1o Anterior Estad\u00edstico<br>\n    <code>ANUAL_ANT(\"101*\")</code> &rarr; Suma 12 meses a\u00f1o anterior Balanza<br>\n    <code>ANUAL_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Suma 12 meses a\u00f1o anterior Estad\u00edstico<br>\n    <code>CIERRE_ANT(\"101*\")</code> &rarr; Saldo cierre dic. a\u00f1o anterior Balanza<br>\n    <code>CIERRE_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Cierre a\u00f1o anterior Estad\u00edstico<br>\n    <code>MES_ANIO_ANT(\"101*\")</code> &rarr; Mismo mes a\u00f1o anterior Balanza<br>\n    <code>MES_ANIO_ANT(\"NO_EMP\", \"EST\")</code> &rarr; Mismo mes a\u00f1o anterior Estad\u00edstico<br>\n    <br>\n    <strong>&#9654; Matem\u00e1ticas</strong><br>\n    <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>\n    <code>SI(condicion, valor_si, valor_no)</code><br>\n    Operadores: <code>+ - * / ** ()</code><br>\n    <br>\n    <strong>&#9654; Variables</strong><br>\n    <code>VAR SC = BAL(\"1401*\") + BAL(\"1402*\")</code><br>\n    <code>VAR TC = EST(\"TIPO_CAMBIO\")</code><br>\n    <code>VAR SC_USD = SC / TC</code><br>\n    <code>SC_USD</code> &larr; \u00faltima l\u00ednea = resultado\n</div>"
+        },
+        {
+            "fieldname": "ultima_regla_mapeo",
+            "fieldtype": "Data",
+            "label": "Ultima Regla Mapeo"
+        },
+        {
+            "fieldname": "comentario",
+            "fieldtype": "Small Text",
+            "label": "Comentario"
+        }
+    ],
+    "istable": 1,
+    "module": "MFI Tools",
+    "name": "Celda Seccion Nota EEFF",
+    "permissions": [],
+    "sort_field": "modified",
+    "sort_order": "DESC"
 }

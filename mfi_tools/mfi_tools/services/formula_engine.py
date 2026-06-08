@@ -23,7 +23,9 @@ FORMULA_HELP_HTML = """
     <code>YTD("NO_EMP", "EST")</code> &rarr; YTD Estadístico<br>
     <code>YTD_ANT("101*")</code> &rarr; YTD Año Anterior Balanza<br>
     <code>YTD_ANT("NO_EMP", "EST")</code> &rarr; YTD Año Anterior Estadístico<br>
+    <code>ANUAL("101*")</code> &rarr; Suma 12 meses año actual Balanza<br>
     <code>ANUAL_ANT("101*")</code> &rarr; Suma 12 meses año anterior Balanza<br>
+    <code>ANUAL("NO_EMP", "EST")</code> &rarr; Suma 12 meses año actual Estadístico<br>
     <code>ANUAL_ANT("NO_EMP", "EST")</code> &rarr; Suma 12 meses año anterior Estadístico<br>
     <code>CIERRE_ANT("101*")</code> &rarr; Saldo cierre dic. año anterior Balanza<br>
     <code>CIERRE_ANT("NO_EMP", "EST")</code> &rarr; Cierre año anterior Estadístico<br>
@@ -46,7 +48,7 @@ FORMULA_HELP_HTML = """
 
 DATA_FUNCTIONS = {"BAL", "BAL_ACT", "BAL_COMP", "BAL_BASE_ACT", "BAL_BASE_COMP",
                   "EST", "EST_ACT", "EST_COMP",
-                  "YTD", "YTD_ANT", "ANUAL_ANT", "CIERRE_ANT", "MES_AÑO_ANT", "MES_ANIO_ANT"}
+                  "YTD", "YTD_ANT", "ANUAL", "ANUAL_ANT", "CIERRE_ANT", "MES_AÑO_ANT", "MES_ANIO_ANT"}
 
 def has_data_functions(expression):
     if not expression:
@@ -164,6 +166,14 @@ def evaluate_formula(expression, context, period_context="actual"):
         hist_bal = context.historical_data.get("ytd_anio_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("ytd_anio_anterior_actual_balances")
         return _get_ytd_balance_value(pattern, hist_bal, field)
 
+    def func_anual(pattern, arg1="BAL", arg2=None):
+        src, field = _parse_args(arg1, arg2, "movimiento_del_mes")
+        if src == "EST":
+            hist_stat = context.historical_data.get("suma_anio_completo_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_actual_stats")
+            return _get_ytd_stat_value(pattern, hist_stat)
+        hist_bal = context.historical_data.get("suma_anio_completo_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_actual_balances")
+        return _get_ytd_balance_value(pattern, hist_bal, field)
+
     def func_anual_ant(pattern, arg1="BAL", arg2=None):
         src, field = _parse_args(arg1, arg2, "movimiento_del_mes")
         if src == "EST":
@@ -199,6 +209,7 @@ def evaluate_formula(expression, context, period_context="actual"):
         "EST_COMP": func_est_comp,
         "YTD": func_ytd,
         "YTD_ANT": func_ytd_ant,
+        "ANUAL": func_anual,
         "ANUAL_ANT": func_anual_ant,
         "CIERRE_ANT": func_cierre_ant,
         "MES_AÑO_ANT": func_mes_anio_ant,
