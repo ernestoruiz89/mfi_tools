@@ -119,7 +119,7 @@ def build_complex_section_tables(section_doc):
                 "descripcion": cstr(getattr(row, "descripcion", "") or getattr(row, "codigo_fila", "") or f"Fila {idx}").strip(),
                 "nivel": max(cint(getattr(row, "nivel", 1) or 1), 1),
                 "tipo_fila": row_type if row_type in TABLE_ROW_TYPES else "Detalle",
-                "negrita": cint(getattr(row, "negrita", 0) or 0),
+                "negrita": 1 if row_type in ("Subtotal", "Total", "Titulo") else cint(getattr(row, "negrita", 0) or 0),
                 "subrayado": cint(getattr(row, "subrayado", 0) or 0),
                 "idx": cint(getattr(row, "idx", idx) or idx),
             }
