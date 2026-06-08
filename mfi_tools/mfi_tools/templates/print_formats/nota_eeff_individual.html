@@ -1,4 +1,4 @@
-{% if getattr(doc, "orientacion", "Vertical") == "Horizontal" %}
+{% if doc.get("orientacion", "Vertical") == "Horizontal" %}
 <style>
   @page {
     size: landscape;

@@ -590,7 +590,7 @@ limit_page_length=100
       {% set nota_font_size = nota_doc.get_print_font_size() %}
       {% set nota_table_width = nota_doc.get_print_table_width() %}
       {% set nota_table_align = nota_doc.get_print_table_alignment_css() %}
-    {% set is_landscape_class = " cpc-landscape-section" if getattr(nota_doc, "orientacion", "Vertical") == "Horizontal" else "" %}
+    {% set is_landscape_class = " cpc-landscape-section" if nota_doc.get("orientacion", "Vertical") == "Horizontal" else "" %}
     <div class="cpc-section cpc-note-block{{ is_landscape_class }}">
       <h3{% if nota_doc.sub_nota %} style="font-weight: 400;"{% endif %}>{{ nota_doc.get_print_heading() }}</h3>
 
