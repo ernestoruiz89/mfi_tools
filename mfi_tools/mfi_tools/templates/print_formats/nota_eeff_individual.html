@@ -1,3 +1,10 @@
+{% if getattr(doc, "orientacion", "Vertical") == "Horizontal" %}
+<style>
+  @page {
+    size: landscape;
+  }
+</style>
+{% endif %}
 <style>
   .cni-wrap,
   .cni-wrap * {
@@ -174,8 +181,10 @@
   }
 
   .cni-row-subtotal td,
-  .cni-row-total td {
-    font-weight: 700;
+  .cni-row-total td,
+  .cni-row-bold td,
+  .cni-row-bold td * {
+    font-weight: 700 !important;
   }
 
   .cni-row-blank td {
@@ -386,9 +395,12 @@
                 {% for fila in tabla.filas %}
                 {% set row_class = "" %}
                 {% if fila.es_total %}
-                {% set row_class = "cni-row-total" %}
+                {% set row_class = row_class + " cni-row-total" %}
                 {% elif fila.es_subtotal %}
-                {% set row_class = "cni-row-subtotal" %}
+                {% set row_class = row_class + " cni-row-subtotal" %}
+                {% endif %}
+                {% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}
+                {% set row_class = row_class + " cni-row-bold" %}
                 {% endif %}
                 <tr class="{{ row_class }}">
                   <td style="padding-left: {{ ((fila.nivel or 1) - 1) * 18 }}px;{% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}font-weight:700;{% endif %}{% if fila.subrayado %}text-decoration: underline;{% endif %}">

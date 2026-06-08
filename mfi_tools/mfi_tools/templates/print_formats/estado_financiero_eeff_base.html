@@ -274,8 +274,10 @@
 
   /* Estilos para estructuras complejas tabulares */
   .cef-row-total td,
-  .cef-row-subtotal td {
-    font-weight: 700;
+  .cef-row-subtotal td,
+  .cef-row-bold td,
+  .cef-row-bold td * {
+    font-weight: 700 !important;
   }
 
   .cef-row-subtotal td.num {
@@ -363,9 +365,12 @@
             {% for fila in tabla.filas %}
             {% set row_class = "" %}
             {% if fila.es_total %}
-            {% set row_class = "cef-row-total" %}
+            {% set row_class = row_class + " cef-row-total" %}
             {% elif fila.es_subtotal %}
-            {% set row_class = "cef-row-subtotal" %}
+            {% set row_class = row_class + " cef-row-subtotal" %}
+            {% endif %}
+            {% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}
+            {% set row_class = row_class + " cef-row-bold" %}
             {% endif %}
             <tr class="{{ row_class }}">
               <td style="padding-left: {{ ((fila.nivel or 1) - 1) * 18 }}px;{% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}font-weight:700;{% endif %}{% if fila.subrayado %}text-decoration: underline;{% endif %}">

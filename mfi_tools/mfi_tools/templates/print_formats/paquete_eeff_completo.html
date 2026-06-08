@@ -224,8 +224,10 @@
   .cpc-line-total td,
   .cpc-line-subtotal td,
   .cpc-row-total td,
-  .cpc-row-subtotal td {
-    font-weight: 700;
+  .cpc-row-subtotal td,
+  .cpc-row-bold td,
+  .cpc-row-bold td * {
+    font-weight: 700 !important;
   }
 
   .cpc-line-subtotal td.num,
@@ -428,9 +430,12 @@ limit_page_length=100
                 {% for fila in tabla.filas %}
                 {% set row_class = "" %}
                 {% if fila.es_total %}
-                {% set row_class = "cpc-row-total" %}
+                {% set row_class = row_class + " cpc-row-total" %}
                 {% elif fila.es_subtotal %}
-                {% set row_class = "cpc-row-subtotal" %}
+                {% set row_class = row_class + " cpc-row-subtotal" %}
+                {% endif %}
+                {% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}
+                {% set row_class = row_class + " cpc-row-bold" %}
                 {% endif %}
                 <tr class="{{ row_class }}">
                   <td style="padding-left: {{ ((fila.nivel or 1) - 1) * 18 }}px;{% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}font-weight:700;{% endif %}{% if fila.subrayado %}text-decoration: underline;{% endif %}">
@@ -585,7 +590,8 @@ limit_page_length=100
       {% set nota_font_size = nota_doc.get_print_font_size() %}
       {% set nota_table_width = nota_doc.get_print_table_width() %}
       {% set nota_table_align = nota_doc.get_print_table_alignment_css() %}
-    <div class="cpc-section cpc-note-block">
+    {% set is_landscape_class = " cpc-landscape-section" if getattr(nota_doc, "orientacion", "Vertical") == "Horizontal" else "" %}
+    <div class="cpc-section cpc-note-block{{ is_landscape_class }}">
       <h3{% if nota_doc.sub_nota %} style="font-weight: 400;"{% endif %}>{{ nota_doc.get_print_heading() }}</h3>
 
       {% set secciones_complejas = frappe.get_all("Seccion Nota EEFF", filters={"nota_eeff": nota_doc.name}, fields=["name", "orden"], order_by="orden asc, creation asc") %}
@@ -749,9 +755,12 @@ limit_page_length=100
                 {% for fila in tabla.filas %}
                 {% set row_class = "" %}
                 {% if fila.es_total %}
-                {% set row_class = "cpc-row-total" %}
+                {% set row_class = row_class + " cpc-row-total" %}
                 {% elif fila.es_subtotal %}
-                {% set row_class = "cpc-row-subtotal" %}
+                {% set row_class = row_class + " cpc-row-subtotal" %}
+                {% endif %}
+                {% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}
+                {% set row_class = row_class + " cpc-row-bold" %}
                 {% endif %}
                 <tr class="{{ row_class }}">
                   <td style="padding-left: {{ ((fila.nivel or 1) - 1) * 18 }}px;{% if fila.negrita or fila.es_total or fila.es_subtotal or fila.es_titulo %}font-weight:700;{% endif %}{% if fila.subrayado %}text-decoration: underline;{% endif %}">

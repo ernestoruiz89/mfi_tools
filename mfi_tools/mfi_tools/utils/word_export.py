@@ -439,9 +439,27 @@ def _add_notas_section(document, package):
         for subnote_doc in subnotes:
             printable_notes.append((subnote_doc, []))
 
+    Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor = _docx_imports()
+
     for note_index, (nota_doc, subnotes) in enumerate(printable_notes):
-        if note_index > 0:
-            document.add_page_break()
+        is_landscape = cstr(getattr(nota_doc, "orientacion", "Vertical") or "Vertical") == "Horizontal"
+        if note_index == 0:
+            section = document.sections[-1]
+            if is_landscape:
+                _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=True, document_title=REPORT_TITLE)
+        else:
+            section = document.add_section(WD_SECTION_START.NEW_PAGE)
+            _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=is_landscape, document_title=REPORT_TITLE)
+            _set_section_footer_page_number(section)
+
+        header_data = {
+            "cliente": get_customer_display(package.cliente) or package.cliente or "Cliente",
+            "titulo": "Notas a los Estados Financieros",
+            "periodo": package.periodo_nombre or "",
+            "subtitulo": nota_doc.get_print_heading() if hasattr(nota_doc, "get_print_heading") else (nota_doc.titulo or ""),
+        }
+        _set_section_header_content(section, header_data)
+
         _render_note_block(document, nota_doc, labels, package, currency_symbol, subnotes=subnotes)
 
 
@@ -687,16 +705,17 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
                 gap_col_indexes=tuple(gap_col_indexes),
             )
             for row_index, fila in rendered_rows:
+                is_bold = bool(
+                    cint(fila.get("negrita", 0))
+                    or fila["es_total"]
+                    or fila["es_subtotal"]
+                    or fila["es_titulo"]
+                )
                 desc_paragraph = table.rows[row_index].cells[0].paragraphs[0]
                 _set_paragraph_runs_font(
                     desc_paragraph,
                     size=min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
-                    bold=bool(
-                        cint(fila.get("negrita", 0))
-                        or fila["es_total"]
-                        or fila["es_subtotal"]
-                        or fila["es_titulo"]
-                    ),
+                    bold=is_bold,
                 )
                 if cint(fila.get("subrayado", 0)):
                     for run in desc_paragraph.runs:
@@ -709,6 +728,12 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
                         paragraph.alignment = 1
                     else:
                         paragraph.alignment = 2
+                    
+                    _set_paragraph_runs_font(
+                        paragraph,
+                        size=min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
+                        bold=is_bold,
+                    )
             _force_table_font_size(
                 table,
                 min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
@@ -716,8 +741,16 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
 
             if compact:
                 portrait_section = document.add_section(WD_SECTION_START.NEW_PAGE)
-                _configure_section(portrait_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE)
+                note_landscape = cstr(getattr(nota_doc, "orientacion", "Vertical") or "Vertical") == "Horizontal"
+                _configure_section(portrait_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=note_landscape, document_title=REPORT_TITLE)
                 _set_section_footer_page_number(portrait_section)
+                header_data = {
+                    "cliente": get_customer_display(package.cliente) or package.cliente or "Cliente",
+                    "titulo": "Notas a los Estados Financieros",
+                    "periodo": package.periodo_nombre or "",
+                    "subtitulo": nota_doc.get_print_heading() if hasattr(nota_doc, "get_print_heading") else (nota_doc.titulo or ""),
+                }
+                _set_section_header_content(portrait_section, header_data)
 
         if section_table_rendered:
             table_end_spacer = document.add_paragraph(" ")
@@ -1909,16 +1942,17 @@ def _render_estado_complex_tables(document, estado_doc, package, currency_symbol
             gap_col_indexes=tuple(gap_col_indexes),
         )
         for row_index, fila in rendered_rows:
+            is_bold = bool(
+                cint(fila.get("negrita", 0))
+                or fila["es_total"]
+                or fila["es_subtotal"]
+                or fila["es_titulo"]
+            )
             desc_paragraph = table.rows[row_index].cells[0].paragraphs[0]
             _set_paragraph_runs_font(
                 desc_paragraph,
                 size=min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
-                bold=bool(
-                    cint(fila.get("negrita", 0))
-                    or fila["es_total"]
-                    or fila["es_subtotal"]
-                    or fila["es_titulo"]
-                ),
+                bold=is_bold,
             )
             if cint(fila.get("subrayado", 0)):
                 for run in desc_paragraph.runs:
@@ -1931,6 +1965,12 @@ def _render_estado_complex_tables(document, estado_doc, package, currency_symbol
                     paragraph.alignment = 1
                 else:
                     paragraph.alignment = 2
+                
+                _set_paragraph_runs_font(
+                    paragraph,
+                    size=min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
+                    bold=is_bold,
+                )
         _force_table_font_size(
             table,
             min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
@@ -1938,5 +1978,8 @@ def _render_estado_complex_tables(document, estado_doc, package, currency_symbol
 
         if compact:
             portrait_section = document.add_section(WD_SECTION_START.NEW_PAGE)
-            _configure_section(portrait_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE)
+            estado_landscape = cstr(getattr(estado_doc, "orientacion", "Vertical") or "Vertical") == "Horizontal"
+            _configure_section(portrait_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=estado_landscape, document_title=REPORT_TITLE)
             _set_section_footer_page_number(portrait_section)
+            header = estado_doc.get_print_header()
+            _set_section_header_content(portrait_section, header)
