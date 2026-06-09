@@ -217,13 +217,16 @@ def _set_section_footer_page_number(section, start=None):
     _append_field(paragraph, "PAGE", "1", OxmlElement, qn)
     _set_paragraph_runs_font(paragraph, size=BODY_SIZE)
 
+    sect_pr = section._sectPr
+    pg_num = sect_pr.find(qn("w:pgNumType"))
     if start is not None:
-        sect_pr = section._sectPr
-        pg_num = sect_pr.find(qn("w:pgNumType"))
         if pg_num is None:
             pg_num = OxmlElement("w:pgNumType")
             sect_pr.append(pg_num)
         pg_num.set(qn("w:start"), cstr(start))
+    else:
+        if pg_num is not None:
+            pg_num.attrib.pop(qn("w:start"), None)
 
 
 def _clear_header_footer(container):
