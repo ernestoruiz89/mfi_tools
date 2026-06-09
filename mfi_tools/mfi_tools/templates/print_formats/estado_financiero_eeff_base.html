@@ -262,7 +262,6 @@
     <p>{{ header.titulo or "-" }}</p>
     {% if header.periodo %}<p>{{ header.periodo }}</p>{% endif %}
     {% if header.subtitulo %}<p class="cef-subtitle">{{ header.subtitulo }}</p>{% endif %}
-    {% if doc.observaciones %}<p>{{ doc.observaciones }}</p>{% endif %}
   </div>
 
   {% if doc.estructura_estado == "Compleja" %}
@@ -420,6 +419,12 @@
       {% endfor %}
     </tbody>
   </table>
+  {% endif %}
+
+  {% if doc.observaciones %}
+  <div class="cef-observaciones" style="margin-top: 12px; font-size: var(--cef-table-font-size, 12pt);">
+    <p style="margin: 0;">{{ doc.observaciones }}</p>
+  </div>
   {% endif %}
 
   {% if package.elaborado_por or package.revisado_por or package.autorizado_por %}
