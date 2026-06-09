@@ -25,10 +25,10 @@ def format_estado_line_value(linea, fieldname):
         return ""
 
     decimals = 0 if cint(getattr(linea, "redondear_entero", 0)) else 2
-    return format_accounting_number(value, fmt, trim_plain=(fmt == "Numero"), none_as="", decimals=decimals)
+    return format_accounting_number(value, fmt, none_as="", decimals=decimals)
 
 
-def format_accounting_number(value, format_type="Numero", trim_plain=True, none_as="-", decimals=2):
+def format_accounting_number(value, format_type="Numero", trim_plain=False, none_as="-", decimals=2):
     if value in (None, ""):
         return none_as
 
@@ -49,7 +49,5 @@ def format_accounting_number(value, format_type="Numero", trim_plain=True, none_
         text = f"{abs_number:,.{decimals}f}%"
     else:
         text = f"{abs_number:,.{decimals}f}"
-        if trim_plain and "." in text:
-            text = text.rstrip("0").rstrip(".")
 
     return f"({text})" if number < 0 else text

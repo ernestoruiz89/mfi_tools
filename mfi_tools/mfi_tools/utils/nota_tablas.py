@@ -67,7 +67,7 @@ def format_complex_note_value(cell=None, column=None):
     if rounded:
         return _format_accounting_number(number, decimals=0)
 
-    return _format_accounting_number(number, decimals=2, trim=True)
+    return _format_accounting_number(number, decimals=2)
 
 
 def _resolve_cell_format_type(cell=None, column=None, value_text=None):
@@ -252,14 +252,12 @@ class _DictWrapper:
         return self._values.get(item)
 
 
-def _format_accounting_number(value, decimals=2, suffix="", trim=False):
+def _format_accounting_number(value, decimals=2, suffix=""):
     number = flt(value or 0)
     if abs(number) < 0.0000001:
         return "-"
 
     text = f"{abs(number):,.{decimals}f}"
-    if trim and "." in text:
-        text = text.rstrip("0").rstrip(".")
     if suffix:
         text = f"{text}{suffix}"
     return f"({text})" if number < 0 else text

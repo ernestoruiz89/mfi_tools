@@ -223,7 +223,7 @@ class Factsheet(Document):
             return "-"
         decimals = 0 if cint(getattr(row, "redondear_entero", 0)) else 2
         from mfi_tools.mfi_tools.utils.estado_line_format import format_accounting_number
-        return format_accounting_number(val, fmt, trim_plain=(fmt == "Numero"), none_as="-", decimals=decimals)
+        return format_accounting_number(val, fmt, none_as="-", decimals=decimals)
 
     def on_trash(self):
         # Validar si tiene reglas de mapeo asociadas
