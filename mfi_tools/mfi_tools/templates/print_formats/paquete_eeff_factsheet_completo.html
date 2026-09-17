@@ -243,7 +243,7 @@
 
 <div class="cpc-wrap">
   <div class="cpc-head">
-    <h1>{{ doc.cliente or "-" }}</h1>
+    <h1>{{ doc.company or doc.get("cliente") or "-" }}</h1>
     <p>Reporte de Factsheets Completo</p>
     <p>Periodo: {{ doc.periodo_nombre or "-" }}</p>
   </div>

@@ -129,10 +129,22 @@ class EstadoFinancieroEEFF(Document):
 
     def get_print_header(self):
         package = frappe.get_doc("Paquete EEFF", self.paquete_eeff) if self.paquete_eeff else None
-        customer_name = get_customer_display(package.cliente) if package and package.cliente else cstr(getattr(package, "cliente", "") or "").strip()
+        entity_name = ""
+        if package:
+            if hasattr(package, "get_entity_display"):
+                entity_name = package.get_entity_display()
+            if not entity_name:
+                company = cstr(package.get("company") or "").strip()
+                cliente = cstr(package.get("cliente") or "").strip()
+                if company:
+                    company_name = frappe.db.get_value("Company", company, "company_name")
+                    entity_name = cstr(company_name or company).strip()
+                elif cliente:
+                    entity_name = get_customer_display(cliente) or cliente
         target_date = self._resolve_package_cutoff_date(package) if package else ""
         header = {
-            "cliente": customer_name or "-",
+            "cliente": entity_name or "-",
+            "company": entity_name or "-",
             "titulo": cstr(self.titulo or self.tipo_estado or "").strip() or "-",
             "periodo": "",
             "subtitulo": cstr(getattr(self, "subtitulo", "") or "").strip(),

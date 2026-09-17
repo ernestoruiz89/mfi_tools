@@ -39,10 +39,29 @@ def _clean(value):
     return cstr(value or "").strip()
 
 
+def _get_entity_display(name):
+    name = _clean(name)
+    if not name:
+        return ""
+    if frappe.db.exists("Company", name):
+        c_name = frappe.db.get_value("Company", name, "company_name")
+        return cstr(c_name or name).strip()
+    return get_customer_display(name) or name
+
+
+def _get_entity_display_map(names):
+    mapping = {}
+    for name in names:
+        mapping[name] = _get_entity_display(name)
+    return mapping
+
+
 def _build_filters(cliente=None, anio=None, mes=None):
     filters = {}
     if _clean(cliente):
-        filters["cliente"] = _clean(cliente)
+        meta = frappe.get_meta("Paquete EEFF")
+        field = "company" if meta.has_field("company") else "cliente"
+        filters[field] = _clean(cliente)
     if cint(anio or 0):
         filters["anio"] = cint(anio)
     if _clean(mes):
@@ -51,26 +70,36 @@ def _build_filters(cliente=None, anio=None, mes=None):
 
 
 def _get_clients():
+    meta = frappe.get_meta("Paquete EEFF")
+    field = "company" if meta.has_field("company") else ("cliente" if meta.has_field("cliente") else None)
+    if not field:
+        return []
     rows = frappe.get_all(
         "Paquete EEFF",
-        fields=["cliente"],
-        filters={"cliente": ["is", "set"]},
+        fields=[field],
+        filters={field: ["is", "set"]},
         distinct=True,
-        order_by="cliente asc",
+        order_by=f"{field} asc",
         limit_page_length=2000,
     )
-    values = sorted({_clean(row.cliente) for row in rows if _clean(row.cliente)})
-    display_map = get_customer_display_map(values)
+    values = sorted({_clean(row.get(field)) for row in rows if _clean(row.get(field))})
+    if not values and frappe.db.exists("DocType", "Company"):
+        for row in frappe.get_all("Company", fields=["name"], limit_page_length=100):
+            values.append(row.name)
+        values = sorted(set(values))
+    display_map = _get_entity_display_map(values)
     return [{"value": row, "label": display_map.get(row, row)} for row in values]
 
 
 def _get_packages(cliente=None, anio=None, mes=None):
+    meta = frappe.get_meta("Paquete EEFF")
+    entity_field = "company" if meta.has_field("company") else "cliente"
     rows = frappe.get_all(
         "Paquete EEFF",
         filters=_build_filters(cliente=cliente, anio=anio, mes=mes),
         fields=[
             "name",
-            "cliente",
+            entity_field,
             "anio",
             "mes",
             "periodo_nombre",
@@ -80,13 +109,13 @@ def _get_packages(cliente=None, anio=None, mes=None):
         order_by="modified desc",
         limit_page_length=500,
     )
-    customer_labels = get_customer_display_map([row.cliente for row in rows])
+    customer_labels = _get_entity_display_map([row.get(entity_field) for row in rows])
     return [
         {
             "value": row.name,
-            "label": f"{row.name} | {customer_labels.get(row.cliente, row.cliente) or '-'} | {row.mes or '-'} {row.anio or '-'} | {row.estado_preparacion or 'Borrador'}",
-            "cliente": row.cliente,
-            "cliente_label": customer_labels.get(row.cliente, row.cliente),
+            "label": f"{row.name} | {customer_labels.get(row.get(entity_field), row.get(entity_field)) or '-'} | {row.mes or '-'} {row.anio or '-'} | {row.estado_preparacion or 'Borrador'}",
+            "cliente": row.get(entity_field),
+            "cliente_label": customer_labels.get(row.get(entity_field), row.get(entity_field)),
             "anio": row.anio,
             "mes": row.mes,
         }
@@ -440,8 +469,8 @@ def _compute_indicators(paquete_name):
     return {
         "package": {
             "name": package.name,
-            "cliente": package.cliente,
-            "cliente_label": get_customer_display(package.cliente),
+            "cliente": package.get("company") or package.get("cliente"),
+            "cliente_label": _get_entity_display(package.get("company") or package.get("cliente")),
             "periodo_nombre": package.periodo_nombre,
             "estado_preparacion": package.estado_preparacion,
             "total_estados": len(estados),

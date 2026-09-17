@@ -13,6 +13,28 @@ FORMULA_SPLIT_RE = re.compile(r"[\n,;]+")
 
 
 class PaqueteEEFF(Document):
+    @property
+    def cliente(self):
+        val = self.__dict__.get("cliente")
+        if not val and hasattr(self, "_data") and isinstance(self._data, dict):
+            val = self._data.get("cliente")
+        return val or getattr(self, "company", None)
+
+    @cliente.setter
+    def cliente(self, value):
+        self.__dict__["cliente"] = value
+
+    def get_entity_display(self):
+        company = cstr(getattr(self, "company", "") or "").strip()
+        if company:
+            company_name = frappe.db.get_value("Company", company, "company_name")
+            return cstr(company_name or company).strip()
+        cliente = cstr(self.__dict__.get("cliente") or (self._data.get("cliente") if hasattr(self, "_data") and isinstance(self._data, dict) else "") or "").strip()
+        if cliente:
+            customer_name = frappe.db.get_value("Customer", cliente, "customer_name")
+            return cstr(customer_name or cliente).strip()
+        return ""
+
     def autoname(self):
         self._sync_names()
         if self.nombre_paquete:

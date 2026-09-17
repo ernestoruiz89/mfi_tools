@@ -94,10 +94,29 @@ def _ensure_page_access(write=False):
         )
 
 
+def _get_entity_display(name):
+    name = _clean(name)
+    if not name:
+        return ""
+    if frappe.db.exists("Company", name):
+        c_name = frappe.db.get_value("Company", name, "company_name")
+        return cstr(c_name or name).strip()
+    return get_customer_display(name) or name
+
+
+def _get_entity_display_map(names):
+    mapping = {}
+    for name in names:
+        mapping[name] = _get_entity_display(name)
+    return mapping
+
+
 def _build_filters(cliente=None, anio=None, mes=None):
     filters = {}
     if _clean(cliente):
-        filters["cliente"] = _clean(cliente)
+        meta = frappe.get_meta("Paquete EEFF")
+        field = "company" if meta.has_field("company") else "cliente"
+        filters[field] = _clean(cliente)
     if cint(anio or 0):
         filters["anio"] = cint(anio)
     if _clean(mes):
@@ -150,40 +169,52 @@ def _next_note_number(note_rows):
 
 
 def _get_clients():
+    meta = frappe.get_meta("Paquete EEFF")
+    field = "company" if meta.has_field("company") else ("cliente" if meta.has_field("cliente") else None)
+    if not field:
+        return []
     rows = frappe.get_all(
         "Paquete EEFF",
-        fields=["cliente"],
-        filters={"cliente": ["is", "set"]},
+        fields=[field],
+        filters={field: ["is", "set"]},
         distinct=True,
-        order_by="cliente asc",
+        order_by=f"{field} asc",
         limit_page_length=2000,
     )
-    names = sorted({_clean(row.cliente) for row in rows if _clean(row.cliente)})
-    label_map = get_customer_display_map(names)
+    names = sorted({_clean(row.get(field)) for row in rows if _clean(row.get(field))})
+    if not names and frappe.db.exists("DocType", "Company"):
+        for row in frappe.get_all("Company", fields=["name"], limit_page_length=100):
+            names.append(row.name)
+        names = sorted(set(names))
+    label_map = _get_entity_display_map(names)
     return [{"value": name, "label": label_map.get(name, name)} for name in names]
 
 
-def _build_package_label(row, customer_label):
-    return f"{row.name} | {customer_label or row.cliente or '-'} | {row.mes or '-'} {row.anio or '-'} | {row.estado_preparacion or 'Borrador'}"
+def _build_package_label(row, customer_label, entity_field="cliente"):
+    val = row.get(entity_field) if hasattr(row, "get") else getattr(row, entity_field, None)
+    return f"{row.name} | {customer_label or val or '-'} | {row.mes or '-'} {row.anio or '-'} | {row.estado_preparacion or 'Borrador'}"
 
 
 def _get_packages(cliente=None, anio=None, mes=None):
+    meta = frappe.get_meta("Paquete EEFF")
+    entity_field = "company" if meta.has_field("company") else "cliente"
     rows = frappe.get_all(
         "Paquete EEFF",
         filters=_build_filters(cliente=cliente, anio=anio, mes=mes),
-        fields=["name", "cliente", "anio", "mes", "periodo_nombre", "estado_preparacion", "modified"],
+        fields=["name", entity_field, "anio", "mes", "periodo_nombre", "estado_preparacion", "modified"],
         order_by="modified desc",
         limit_page_length=500,
     )
-    label_map = get_customer_display_map([row.cliente for row in rows])
+    label_map = _get_entity_display_map([row.get(entity_field) for row in rows])
     output = []
     for row in rows:
-        customer_label = label_map.get(row.cliente, row.cliente)
+        val = row.get(entity_field)
+        customer_label = label_map.get(val, val)
         output.append(
             {
                 "value": row.name,
-                "label": _build_package_label(row, customer_label),
-                "cliente": row.cliente,
+                "label": _build_package_label(row, customer_label, entity_field=entity_field),
+                "cliente": val,
                 "cliente_label": customer_label,
                 "anio": row.anio,
                 "mes": row.mes,
@@ -199,10 +230,12 @@ def _build_summary(package_name):
     if not package_name or not frappe.db.exists("Paquete EEFF", package_name):
         return None
 
+    meta = frappe.get_meta("Paquete EEFF")
+    entity_field = "company" if meta.has_field("company") else "cliente"
     package_values = frappe.db.get_value(
         "Paquete EEFF",
         package_name,
-        ["cliente", "anio", "mes", "periodo_nombre", "estado_preparacion", "total_notas"],
+        [entity_field, "anio", "mes", "periodo_nombre", "estado_preparacion", "total_notas"],
         as_dict=True,
     ) or {}
     note_rows = _serialize_note_rows(package_name)
@@ -210,10 +243,11 @@ def _build_summary(package_name):
     total_subnotas = sum(1 for row in note_rows if _clean(row.get("sub_nota")))
     total_principales = total_notas - total_subnotas
     total_complejas = sum(1 for row in note_rows if row.get("estructura_nota") == "Compleja")
+    entity_val = package_values.get(entity_field)
     return {
         "package_name": package_name,
-        "cliente": package_values.get("cliente"),
-        "cliente_label": get_customer_display(package_values.get("cliente")),
+        "cliente": entity_val,
+        "cliente_label": _get_entity_display(entity_val),
         "anio": cint(package_values.get("anio") or 0),
         "mes": package_values.get("mes"),
         "periodo_nombre": package_values.get("periodo_nombre"),
@@ -257,10 +291,12 @@ def _serialize_note(note_doc):
     if not note_doc:
         return None
 
+    meta = frappe.get_meta("Paquete EEFF")
+    entity_field = "company" if meta.has_field("company") else "cliente"
     package_values = frappe.db.get_value(
         "Paquete EEFF",
         note_doc.paquete_eeff,
-        ["cliente", "anio", "mes", "periodo_nombre", "estado_preparacion"],
+        [entity_field, "anio", "mes", "periodo_nombre", "estado_preparacion"],
         as_dict=True,
     ) or {}
     section_names = frappe.get_all(
@@ -279,8 +315,8 @@ def _serialize_note(note_doc):
             "nombre_nota": note_doc.nombre_nota,
             "paquete_eeff": note_doc.paquete_eeff,
             "identificador_nota": build_note_identifier(note_doc.numero_nota, note_doc.sub_nota),
-            "cliente": package_values.get("cliente"),
-            "cliente_label": get_customer_display(package_values.get("cliente")),
+            "cliente": package_values.get(entity_field),
+            "cliente_label": _get_entity_display(package_values.get(entity_field)),
             "anio": cint(package_values.get("anio") or 0),
             "mes": package_values.get("mes"),
             "periodo_nombre": package_values.get("periodo_nombre"),
@@ -381,13 +417,15 @@ def _build_bootstrap_payload(cliente=None, anio=None, mes=None, package_name=Non
 
     package_values = None
     if package_name and frappe.db.exists("Paquete EEFF", package_name):
+        meta = frappe.get_meta("Paquete EEFF")
+        entity_field = "company" if meta.has_field("company") else "cliente"
         package_values = frappe.db.get_value(
             "Paquete EEFF",
             package_name,
-            ["cliente", "anio", "mes"],
+            [entity_field, "anio", "mes"],
             as_dict=True,
         ) or {}
-        cliente = package_values.get("cliente") or cliente
+        cliente = package_values.get(entity_field) or cliente
         anio = package_values.get("anio") or anio
         mes = package_values.get("mes") or mes
 

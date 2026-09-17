@@ -40,36 +40,62 @@ def _year_or_throw(anio):
     return anio
 
 
+def _get_entity_display(name):
+    name = _clean(name)
+    if not name:
+        return ""
+    if frappe.db.exists("Company", name):
+        c_name = frappe.db.get_value("Company", name, "company_name")
+        return cstr(c_name or name).strip()
+    return get_customer_display(name) or name
+
+
+def _get_entity_display_map(names):
+    mapping = {}
+    for name in names:
+        mapping[name] = _get_entity_display(name)
+    return mapping
+
+
 def _ensure_basic_inputs(cliente, anio, mes):
     cliente = _clean(cliente)
     if not cliente:
-        frappe.throw(_("Debes indicar un cliente."), title=_("Cliente Requerido"))
+        frappe.throw(_("Debes indicar una compañía o cliente."), title=_("Compañía Requerida"))
     return cliente, _year_or_throw(anio), _month_or_throw(mes)
 
 
 def _get_clients():
     values = set()
     for doctype in ("Paquete EEFF", "Balanza Comprobacion EEFF"):
+        meta = frappe.get_meta(doctype)
+        field = "company" if meta.has_field("company") else ("cliente" if meta.has_field("cliente") else None)
+        if not field:
+            continue
         rows = frappe.get_all(
             doctype,
-            fields=["cliente"],
-            filters={"cliente": ["is", "set"]},
+            fields=[field],
+            filters={field: ["is", "set"]},
             distinct=True,
             limit_page_length=2000,
         )
         for row in rows:
-            cliente = _clean(row.cliente)
-            if cliente:
-                values.add(cliente)
+            val = _clean(row.get(field))
+            if val:
+                values.add(val)
+    if not values and frappe.db.exists("DocType", "Company"):
+        for row in frappe.get_all("Company", fields=["name"], limit_page_length=100):
+            values.add(row.name)
     output = sorted(values)
-    display_map = get_customer_display_map(output)
+    display_map = _get_entity_display_map(output)
     return [{"value": row, "label": display_map.get(row, row)} for row in output]
 
 
-def _build_filters(cliente=None, anio=None, mes=None):
+def _build_filters(cliente=None, anio=None, mes=None, doctype="Paquete EEFF"):
     filters = {}
     if _clean(cliente):
-        filters["cliente"] = _clean(cliente)
+        meta = frappe.get_meta(doctype)
+        field = "company" if meta.has_field("company") else "cliente"
+        filters[field] = _clean(cliente)
     if cint(anio or 0):
         filters["anio"] = cint(anio)
     if _clean(mes):
@@ -78,12 +104,14 @@ def _build_filters(cliente=None, anio=None, mes=None):
 
 
 def _get_packages(cliente=None, anio=None, mes=None):
+    meta = frappe.get_meta("Paquete EEFF")
+    entity_field = "company" if meta.has_field("company") else "cliente"
     rows = frappe.get_all(
         "Paquete EEFF",
-        filters=_build_filters(cliente=cliente, anio=anio, mes=mes),
+        filters=_build_filters(cliente=cliente, anio=anio, mes=mes, doctype="Paquete EEFF"),
         fields=[
             "name",
-            "cliente",
+            entity_field,
             "anio",
             "mes",
             "periodo_nombre",
@@ -97,13 +125,13 @@ def _get_packages(cliente=None, anio=None, mes=None):
         order_by="modified desc",
         limit_page_length=500,
     )
-    customer_labels = get_customer_display_map([row.cliente for row in rows])
+    customer_labels = _get_entity_display_map([row.get(entity_field) for row in rows])
     return [
         {
             "value": row.name,
-            "label": f"{row.name} | {customer_labels.get(row.cliente, row.cliente) or '-'} | {row.mes or '-'} {row.anio or '-'} | {row.estado_preparacion or 'Borrador'}",
-            "cliente": row.cliente,
-            "cliente_label": customer_labels.get(row.cliente, row.cliente),
+            "label": f"{row.name} | {customer_labels.get(row.get(entity_field), row.get(entity_field)) or '-'} | {row.mes or '-'} {row.anio or '-'} | {row.estado_preparacion or 'Borrador'}",
+            "cliente": row.get(entity_field),
+            "cliente_label": customer_labels.get(row.get(entity_field), row.get(entity_field)),
             "anio": row.anio,
             "mes": row.mes,
             "periodo_nombre": row.periodo_nombre,
@@ -115,12 +143,14 @@ def _get_packages(cliente=None, anio=None, mes=None):
 
 
 def _get_balanzas(cliente=None, anio=None, mes=None):
+    meta = frappe.get_meta("Balanza Comprobacion EEFF")
+    entity_field = "company" if meta.has_field("company") else "cliente"
     rows = frappe.get_all(
         "Balanza Comprobacion EEFF",
-        filters=_build_filters(cliente=cliente, anio=anio, mes=mes),
+        filters=_build_filters(cliente=cliente, anio=anio, mes=mes, doctype="Balanza Comprobacion EEFF"),
         fields=[
             "name",
-            "cliente",
+            entity_field,
             "anio",
             "mes",
             "periodo_nombre",
@@ -131,13 +161,13 @@ def _get_balanzas(cliente=None, anio=None, mes=None):
         order_by="modified desc",
         limit_page_length=500,
     )
-    customer_labels = get_customer_display_map([row.cliente for row in rows])
+    customer_labels = _get_entity_display_map([row.get(entity_field) for row in rows])
     return [
         {
             "value": row.name,
-            "label": f"{row.name} | {customer_labels.get(row.cliente, row.cliente) or '-'} | {row.mes or '-'} {row.anio or '-'} | Lineas: {cint(row.total_lineas or 0)}",
-            "cliente": row.cliente,
-            "cliente_label": customer_labels.get(row.cliente, row.cliente),
+            "label": f"{row.name} | {customer_labels.get(row.get(entity_field), row.get(entity_field)) or '-'} | {row.mes or '-'} {row.anio or '-'} | Lineas: {cint(row.total_lineas or 0)}",
+            "cliente": row.get(entity_field),
+            "cliente_label": customer_labels.get(row.get(entity_field), row.get(entity_field)),
             "anio": row.anio,
             "mes": row.mes,
             "periodo_nombre": row.periodo_nombre,
@@ -171,12 +201,13 @@ def _build_status(package_name=None, balanza_name=None):
         package = frappe.get_doc("Paquete EEFF", package_name)
         status["package_name"] = package.name
         status["periodo_nombre"] = package.periodo_nombre
-        status["cliente"] = package.cliente
-        status["cliente_label"] = get_customer_display(package.cliente)
+        entity_val = package.get("company") or package.get("cliente")
+        status["cliente"] = entity_val
+        status["cliente_label"] = _get_entity_display(entity_val)
         status["estado_preparacion"] = package.estado_preparacion
         status["total_estados"] = cint(package.total_estados or 0)
         status["total_notas"] = cint(package.total_notas or 0)
-        status["reglas_activas"] = frappe.db.count("Regla Mapeo Contable EEFF", {"company": package.company, "activo": 1})
+        status["reglas_activas"] = frappe.db.count("Regla Mapeo Contable EEFF", {"company": entity_val, "activo": 1})
         if package.balanza_comprobacion_eeff:
             status["balanza_name"] = package.balanza_comprobacion_eeff
 
@@ -184,8 +215,9 @@ def _build_status(package_name=None, balanza_name=None):
         balanza = frappe.get_doc("Balanza Comprobacion EEFF", status["balanza_name"])
         status["balanza_name"] = balanza.name
         status["periodo_nombre"] = status["periodo_nombre"] or balanza.periodo_nombre
-        status["cliente"] = status["cliente"] or balanza.cliente
-        status["cliente_label"] = status.get("cliente_label") or get_customer_display(balanza.cliente)
+        entity_val = status["cliente"] or balanza.get("company") or balanza.get("cliente")
+        status["cliente"] = entity_val
+        status["cliente_label"] = status.get("cliente_label") or _get_entity_display(entity_val)
         status["total_lineas"] = cint(balanza.total_lineas or 0)
         status["total_debe"] = balanza.total_debe or 0
         status["total_haber"] = balanza.total_haber or 0
@@ -215,9 +247,11 @@ def _find_or_create_balanza(cliente, anio, mes, balanza_name=None):
     if _clean(balanza_name) and frappe.db.exists("Balanza Comprobacion EEFF", balanza_name):
         return frappe.get_doc("Balanza Comprobacion EEFF", balanza_name)
 
+    meta = frappe.get_meta("Balanza Comprobacion EEFF")
+    entity_field = "company" if meta.has_field("company") else "cliente"
     existing = frappe.get_all(
         "Balanza Comprobacion EEFF",
-        filters={"cliente": cliente, "anio": anio, "mes": mes},
+        filters={entity_field: cliente, "anio": anio, "mes": mes},
         pluck="name",
         order_by="modified desc",
         limit_page_length=1,
@@ -225,14 +259,13 @@ def _find_or_create_balanza(cliente, anio, mes, balanza_name=None):
     if existing:
         return frappe.get_doc("Balanza Comprobacion EEFF", existing[0])
 
-    doc = frappe.get_doc(
-        {
-            "doctype": "Balanza Comprobacion EEFF",
-            "cliente": cliente,
-            "anio": anio,
-            "mes": mes,
-        }
-    )
+    doc_args = {
+        "doctype": "Balanza Comprobacion EEFF",
+        entity_field: cliente,
+        "anio": anio,
+        "mes": mes,
+    }
+    doc = frappe.get_doc(doc_args)
     doc.insert(ignore_permissions=True)
     return doc
 
@@ -241,9 +274,11 @@ def _find_or_create_package(cliente, anio, mes, balanza_doc, package_name=None):
     if _clean(package_name) and frappe.db.exists("Paquete EEFF", package_name):
         doc = frappe.get_doc("Paquete EEFF", package_name)
     else:
+        meta = frappe.get_meta("Paquete EEFF")
+        entity_field = "company" if meta.has_field("company") else "cliente"
         existing = frappe.get_all(
             "Paquete EEFF",
-            filters={"cliente": cliente, "anio": anio, "mes": mes},
+            filters={entity_field: cliente, "anio": anio, "mes": mes},
             pluck="name",
             order_by="modified desc",
             limit_page_length=1,
@@ -254,7 +289,7 @@ def _find_or_create_package(cliente, anio, mes, balanza_doc, package_name=None):
             doc = frappe.get_doc(
                 {
                     "doctype": "Paquete EEFF",
-                    "cliente": cliente,
+                    entity_field: cliente,
                     "anio": anio,
                     "mes": mes,
                     "balanza_comprobacion_eeff": balanza_doc.name,
@@ -300,7 +335,7 @@ def get_wizard_bootstrap(cliente=None, anio=None, mes=None, package_name=None, b
 def prepare_package(cliente, anio, mes, package_name=None, balanza_name=None):
     package_doc, balanza_doc = _prepare_docs(cliente, anio, mes, package_name=package_name, balanza_name=balanza_name)
     return _bootstrap_response(
-        cliente=package_doc.cliente,
+        cliente=package_doc.get("company") or package_doc.get("cliente"),
         anio=package_doc.anio,
         mes=package_doc.mes,
         package_name=package_doc.name,

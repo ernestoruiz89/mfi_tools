@@ -44,10 +44,28 @@ def build_paquete_eeff_word_content(package_name):
     return file_name, content
 
 
+def _get_package_entity_display(package):
+    if not package:
+        return ""
+    if hasattr(package, "get_entity_display"):
+        display = package.get_entity_display()
+        if display:
+            return display
+    company = cstr(package.get("company") or "").strip()
+    if company:
+        company_name = frappe.db.get_value("Company", company, "company_name")
+        return cstr(company_name or company).strip()
+    cliente = cstr(package.get("cliente") or "").strip()
+    if cliente:
+        return get_customer_display(cliente) or cliente
+    return ""
+
+
 def _build_package_document(package):
     Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
 
-    customer_display = get_customer_display(package.cliente)
+    entity_display = _get_package_entity_display(package)
+    entity_label = "Compañía" if package.get("company") else "Cliente"
 
     document = Document()
     _configure_document(document, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, Pt, document_title=REPORT_TITLE)
@@ -57,7 +75,7 @@ def _build_package_document(package):
 
     subtitle = document.add_paragraph(style="Subtitle")
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    subtitle.add_run(customer_display or package.cliente or "Cliente")
+    subtitle.add_run(entity_display or entity_label)
     _set_paragraph_runs_font(subtitle)
 
     badge = document.add_paragraph()
@@ -68,7 +86,7 @@ def _build_package_document(package):
     cover_table = document.add_table(rows=4, cols=2)
     cover_pairs = [
         ("Paquete", package.name or "-"),
-        ("Cliente", customer_display or package.cliente or "-"),
+        (entity_label, entity_display or "-"),
         ("Periodo", package.periodo_nombre or "-"),
         ("Mes", package.mes or "-"),
         ("Anio", cstr(package.anio or "-")),
@@ -92,7 +110,7 @@ def _build_package_document(package):
     _set_section_header_content(
         toc_section,
         {
-            "cliente": customer_display or package.cliente or "Cliente",
+            "cliente": entity_display or entity_label,
             "titulo": "Estados Financieros",
             "periodo": "",
             "subtitulo": "",
@@ -456,7 +474,8 @@ def _add_notas_section(document, package):
             _set_section_footer_page_number(section)
 
         header_data = {
-            "cliente": get_customer_display(package.cliente) or package.cliente or "Cliente",
+            "cliente": _get_package_entity_display(package) or "Compañía",
+            "company": _get_package_entity_display(package) or "Compañía",
             "titulo": "Notas a los Estados Financieros",
             "periodo": package.periodo_nombre or "",
             "subtitulo": nota_doc.get_print_heading() if hasattr(nota_doc, "get_print_heading") else (nota_doc.titulo or ""),
@@ -748,7 +767,8 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
                 _configure_section(portrait_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=note_landscape, document_title=REPORT_TITLE)
                 _set_section_footer_page_number(portrait_section)
                 header_data = {
-                    "cliente": get_customer_display(package.cliente) or package.cliente or "Cliente",
+                    "cliente": _get_package_entity_display(package) or "Compañía",
+                    "company": _get_package_entity_display(package) or "Compañía",
                     "titulo": "Notas a los Estados Financieros",
                     "periodo": package.periodo_nombre or "",
                     "subtitulo": nota_doc.get_print_heading() if hasattr(nota_doc, "get_print_heading") else (nota_doc.titulo or ""),

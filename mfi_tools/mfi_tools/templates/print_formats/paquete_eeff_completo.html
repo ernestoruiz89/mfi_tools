@@ -351,7 +351,7 @@ limit_page_length=100
 
 <div class="cpc-wrap">
   <div class="cpc-head">
-    <h1>{{ doc.cliente or "-" }}</h1>
+    <h1>{{ doc.company or doc.get("cliente") or "-" }}</h1>
     <p>Estado Financiero Completo</p>
     <p>Periodo: {{ doc.periodo_nombre or "-" }}</p>
   </div>
@@ -359,7 +359,7 @@ limit_page_length=100
   <table class="cpc-meta">
     <tr>
       <td><strong>Paquete</strong><br>{{ doc.name or "-" }}</td>
-      <td><strong>Cliente</strong><br>{{ doc.cliente or "-" }}</td>
+      <td><strong>{{ "Compañía" if doc.company else "Cliente" }}</strong><br>{{ doc.company or doc.get("cliente") or "-" }}</td>
       <td><strong>Mes</strong><br>{{ doc.mes or "-" }}</td>
       <td><strong>Anio</strong><br>{{ doc.anio or "-" }}</td>
     </tr>
