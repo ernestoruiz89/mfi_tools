@@ -690,7 +690,7 @@ def _reset_package_targets(package_name):
             child.monto_base_actual = 0, child.monto_base_comparativo = 0
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_titulo, 0) = 0
-          AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
+          AND IFNULL(child.origen_dato, 'Manual') NOT IN ('Manual', 'Formula')
     """, (package_name,))
     # Titulo lines -> zero (NOT NULL constraint on Currency fields)
     frappe.db.sql("""
@@ -713,7 +713,7 @@ def _reset_package_targets(package_name):
         WHERE parent.paquete_eeff = %s
           AND IFNULL(child.es_linea_blanco, 0) = 0
           AND IFNULL(child.es_titulo, 0) = 0
-          AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
+          AND IFNULL(child.origen_dato, 'Manual') NOT IN ('Manual', 'Formula')
     """, (package_name,))
     # Titulo or blank lines -> zero (NOT NULL constraint on Currency fields)
     frappe.db.sql("""
@@ -733,7 +733,7 @@ def _reset_package_targets(package_name):
         SET child.valor_numero = 0, child.valor_texto = '',
             child.ultima_regla_mapeo = NULL
         WHERE parent.paquete_eeff = %s
-          AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
+          AND IFNULL(child.origen_dato, 'Manual') NOT IN ('Manual', 'Formula')
     """, (package_name,))
 
     # --- Estado Financiero EEFF (Celda Tabular) ---
@@ -743,7 +743,7 @@ def _reset_package_targets(package_name):
         SET child.valor_numero = 0, child.valor_texto = '',
             child.ultima_regla_mapeo = NULL
         WHERE parent.paquete_eeff = %s
-          AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
+          AND IFNULL(child.origen_dato, 'Manual') NOT IN ('Manual', 'Formula')
     """, (package_name,))
 
     # --- Factsheet (Linea Factsheet) ---
@@ -752,7 +752,7 @@ def _reset_package_targets(package_name):
         INNER JOIN `tabFactsheet` parent ON parent.name = child.parent
         SET child.monto_actual = 0, child.monto_comparativo = 0
         WHERE parent.paquete_eeff = %s
-          AND IFNULL(child.origen_dato, 'Manual') != 'Manual'
+          AND IFNULL(child.origen_dato, 'Manual') NOT IN ('Manual', 'Formula')
     """, (package_name,))
 
     frappe.db.commit()
@@ -984,7 +984,7 @@ def aplicar_mapeo_paquete(paquete_name):
         source_type = cstr(getattr(rule, "fuente_tipo", "Balanza") or "Balanza").strip()
 
         destino = cstr(rule.destino_tipo or "").strip()
-        if destino in ("Linea Estado", "Celda Estado"):
+        if destino == "Linea Estado":
             if not resolved.get("estado_name"):
                 alertas.append(_("La regla {0} apunta a un estado inexistente.").format(rule.name))
                 continue
@@ -996,6 +996,8 @@ def aplicar_mapeo_paquete(paquete_name):
                     {
                         "codigo_linea": _normalize(rule.destino_codigo_linea),
                         "descripcion": rule.destino_codigo_linea,
+                        "formato_numero": "Moneda",
+                        "origen_dato": "Mapeo",
                     },
                 )
                 line = state_doc.lineas[-1]
@@ -1007,7 +1009,7 @@ def aplicar_mapeo_paquete(paquete_name):
                 line.origen_dato = "Manual"
                 touched_states.add(state_doc.name)
                 continue
-            if getattr(line, "origen_dato", "Manual") == "Manual":
+            if cstr(getattr(line, "origen_dato", "Manual")) in ("Manual", "Formula"):
                 continue
 
             selected_actual_amount, selected_comparative_amount = _select_figure_amounts(
@@ -1033,16 +1035,6 @@ def aplicar_mapeo_paquete(paquete_name):
                 alertas.append(_("La regla {0} apunta a una nota inexistente.").format(rule.name))
                 continue
             note_doc = get_note_doc(resolved["note_name"])
-            selected_actual_amount, selected_comparative_amount = _select_figure_amounts(
-                rule,
-                amount,
-                comparative_amount,
-                balances,
-                comparative_balances,
-                actual_stats,
-                comparative_stats,
-                historical_data=historical_data,
-            )
             figure = _find_note_figure(note_doc, rule.destino_codigo_cifra)
             if not figure:
                 note_doc.append(
@@ -1053,6 +1045,7 @@ def aplicar_mapeo_paquete(paquete_name):
                         "formato_numero": "Moneda",
                         "valor_texto_actual": "",
                         "valor_texto_comparativo": "",
+                        "origen_dato": "Mapeo",
                     },
                 )
                 figure = note_doc.cifras_nota[-1]
@@ -1064,8 +1057,20 @@ def aplicar_mapeo_paquete(paquete_name):
                 figure.origen_dato = "Manual"
                 touched_notes.add(note_doc.name)
                 continue
-            if getattr(figure, "origen_dato", "Manual") == "Manual":
+            if cstr(getattr(figure, "origen_dato", "Manual")) in ("Manual", "Formula"):
                 continue
+
+            selected_actual_amount, selected_comparative_amount = _select_figure_amounts(
+                rule,
+                amount,
+                comparative_amount,
+                balances,
+                comparative_balances,
+                actual_stats,
+                comparative_stats,
+                historical_data=historical_data,
+            )
+
             figure.monto_actual = flt(figure.monto_actual or 0) + selected_actual_amount
             figure.monto_comparativo = flt(figure.monto_comparativo or 0) + selected_comparative_amount
             figure.origen_dato = "Mapeo"
@@ -1076,18 +1081,6 @@ def aplicar_mapeo_paquete(paquete_name):
                 alertas.append(_("La regla {0} apunta a un estado inexistente.").format(rule.name))
                 continue
             state_doc = get_state_doc(resolved["estado_name"])
-            selected_amount = _select_section_cell_amount(
-                rule,
-                amount,
-                comparative_amount,
-                base_actual_amount,
-                base_comparative_amount,
-                balances,
-                comparative_balances,
-                actual_stats,
-                comparative_stats,
-                historical_data=historical_data,
-            )
             table_code = _normalize(rule.destino_codigo_tabla or "TABLA_01")
             row_code = _normalize(rule.destino_codigo_fila)
             column_code = _normalize(rule.destino_codigo_columna)
@@ -1129,21 +1122,13 @@ def aplicar_mapeo_paquete(paquete_name):
                         "codigo_fila": row_code,
                         "codigo_columna": column_code,
                         "formato_numero": "Numero",
+                        "origen_dato": "Mapeo",
                     },
                 )
                 cell = state_doc.celdas_tabulares[-1]
-            if getattr(cell, "origen_dato", "Manual") == "Manual":
+            if cstr(getattr(cell, "origen_dato", "Manual")) in ("Manual", "Formula"):
                 continue
-            cell.valor_numero = flt(getattr(cell, "valor_numero", 0) or 0) + selected_amount
-            cell.origen_dato = "Mapeo"
-            cell.ultima_regla_mapeo = rule.name
-            touched_states.add(state_doc.name)
 
-        elif destino == "Celda Seccion Nota":
-            if not resolved.get("section_name"):
-                alertas.append(_("La regla {0} apunta a una seccion inexistente.").format(rule.name))
-                continue
-            section_doc = get_section_doc(resolved["section_name"])
             selected_amount = _select_section_cell_amount(
                 rule,
                 amount,
@@ -1156,6 +1141,17 @@ def aplicar_mapeo_paquete(paquete_name):
                 comparative_stats,
                 historical_data=historical_data,
             )
+
+            cell.valor_numero = flt(getattr(cell, "valor_numero", 0) or 0) + selected_amount
+            cell.origen_dato = "Mapeo"
+            cell.ultima_regla_mapeo = rule.name
+            touched_states.add(state_doc.name)
+
+        elif destino == "Celda Seccion Nota":
+            if not resolved.get("section_name"):
+                alertas.append(_("La regla {0} apunta a una seccion inexistente.").format(rule.name))
+                continue
+            section_doc = get_section_doc(resolved["section_name"])
             table_code = _normalize(rule.destino_codigo_tabla or "TABLA_01")
             row_code = _normalize(rule.destino_codigo_fila)
             column_code = _normalize(rule.destino_codigo_columna)
@@ -1197,11 +1193,26 @@ def aplicar_mapeo_paquete(paquete_name):
                         "codigo_fila": row_code,
                         "codigo_columna": column_code,
                         "formato_numero": "Numero",
+                        "origen_dato": "Mapeo",
                     },
                 )
                 cell = section_doc.celdas_tabulares[-1]
-            if getattr(cell, "origen_dato", "Manual") == "Manual":
+            if cstr(getattr(cell, "origen_dato", "Manual")) in ("Manual", "Formula"):
                 continue
+
+            selected_amount = _select_section_cell_amount(
+                rule,
+                amount,
+                comparative_amount,
+                base_actual_amount,
+                base_comparative_amount,
+                balances,
+                comparative_balances,
+                actual_stats,
+                comparative_stats,
+                historical_data=historical_data,
+            )
+
             cell.valor_numero = flt(getattr(cell, "valor_numero", 0) or 0) + selected_amount
             cell.origen_dato = "Mapeo"
             cell.ultima_regla_mapeo = rule.name
@@ -1221,6 +1232,7 @@ def aplicar_mapeo_paquete(paquete_name):
                 fact_doc.append("lineas", {
                     "codigo_linea": _normalize(rule.destino_codigo_linea),
                     "descripcion": rule.destino_codigo_linea,
+                    "origen_dato": "Mapeo",
                 })
                 line = fact_doc.lineas[-1]
             if cstr(getattr(line, "origen_dato", "")) != "Mapeo":
@@ -1239,6 +1251,7 @@ def aplicar_mapeo_paquete(paquete_name):
 
             line.monto_actual = flt(line.monto_actual or 0) + selected_actual_amount
             line.monto_comparativo = flt(line.monto_comparativo or 0) + selected_comparative_amount
+            line.origen_dato = "Mapeo"
             touched_factsheets.add(fact_doc.name)
 
     # --- Evaluate Data Formulas ---
@@ -1340,7 +1353,7 @@ def aplicar_mapeo_paquete(paquete_name):
     states_to_recalc = states_with_formulas - touched_states
     if states_to_recalc:
         for state_name in states_to_recalc:
-            state_doc = frappe.get_doc("Estado Financiero EEFF", state_name)
+            state_doc = state_docs.get(state_name) or frappe.get_doc("Estado Financiero EEFF", state_name)
             for row in state_doc.lineas or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_lineas", "")):
                     expr = row.formula_lineas
@@ -1365,7 +1378,7 @@ def aplicar_mapeo_paquete(paquete_name):
     notes_to_recalc = notes_with_formulas - touched_notes
     if notes_to_recalc:
         for note_name in notes_to_recalc:
-            note_doc = frappe.get_doc("Nota EEFF", note_name)
+            note_doc = note_docs.get(note_name) or frappe.get_doc("Nota EEFF", note_name)
             for row in note_doc.cifras_nota or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_cifras", "")):
                     expr = row.formula_cifras
@@ -1384,7 +1397,7 @@ def aplicar_mapeo_paquete(paquete_name):
     sections_to_recalc = sections_with_formulas - touched_sections
     if sections_to_recalc:
         for section_name in sections_to_recalc:
-            section_doc = frappe.get_doc("Seccion Nota EEFF", section_name)
+            section_doc = section_docs.get(section_name) or frappe.get_doc("Seccion Nota EEFF", section_name)
             for row in section_doc.celdas_tabulares or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_celda", "")):
                     expr = row.formula_celda
