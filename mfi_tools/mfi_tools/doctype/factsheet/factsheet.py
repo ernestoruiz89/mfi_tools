@@ -161,9 +161,10 @@ class Factsheet(Document):
                 return str(val)
 
             expr = VAR_REGEX.sub(replacer, formula_str)
+            clean_expr = expr.strip().rstrip("; \t\r\n")
             try:
                 # safe evaluation of math expression
-                result = eval(expr, {"__builtins__": None}, {})
+                result = eval("(\n" + clean_expr + "\n)", {"__builtins__": None}, {})
                 val = flt(result)
             except ZeroDivisionError:
                 val = 0.0

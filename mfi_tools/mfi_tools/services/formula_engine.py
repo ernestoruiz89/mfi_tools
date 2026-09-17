@@ -57,7 +57,7 @@ def has_data_functions(expression):
     if "VAR " in expr:
         return True
     for func in DATA_FUNCTIONS:
-        if f"{func}(" in expr:
+        if f"{func}(" in expr or f"{func} (" in expr:
             return True
     return False
 
@@ -124,6 +124,125 @@ def _get_ytd_stat_value(code, historical_ytd_dict):
     for period_key, stat_map in historical_ytd_dict.items():
         total += flt(stat_map.get(pat, 0.0))
     return total
+
+
+VAR_PATTERN = re.compile(r"^\s*VAR\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=(.*)$", re.IGNORECASE)
+CONTINUATION_END_OPS = ("+", "-", "*", "/", "%", "**", ",", "(", "[", "=")
+CONTINUATION_START_OPS = ("+", "-", "*", "/", "%", "**", ",", ")", "]")
+
+
+def _is_escaped(s, idx):
+    count = 0
+    i = idx - 1
+    while i >= 0 and s[i] == "\\":
+        count += 1
+        i -= 1
+    return (count % 2) == 1
+
+
+def _clean_formula_line(line):
+    trimmed = line.strip()
+    if not trimmed or trimmed.startswith("//") or trimmed.startswith("#"):
+        return ""
+    if "//" in line or "#" in line:
+        in_quote = None
+        cleaned = []
+        for i, ch in enumerate(line):
+            if in_quote:
+                cleaned.append(ch)
+                if ch == in_quote and not _is_escaped(line, i):
+                    in_quote = None
+            elif ch in ('"', "'"):
+                in_quote = ch
+                cleaned.append(ch)
+            elif ch == "/" and i + 1 < len(line) and line[i + 1] == "/":
+                break
+            elif ch == "#":
+                break
+            else:
+                cleaned.append(ch)
+        trimmed = "".join(cleaned).rstrip()
+    return trimmed
+
+
+def _has_unclosed_delimiters(text):
+    in_quote = None
+    paren_depth = 0
+    for i, ch in enumerate(text):
+        if in_quote:
+            if ch == in_quote and not _is_escaped(text, i):
+                in_quote = None
+        elif ch in ('"', "'"):
+            in_quote = ch
+        elif ch in "([{":
+            paren_depth += 1
+        elif ch in ")]}":
+            paren_depth = max(0, paren_depth - 1)
+    return paren_depth > 0
+
+
+def _parse_formula_statements(expr):
+    raw_lines = [_clean_formula_line(l) for l in expr.splitlines()]
+    lines = [l for l in raw_lines if l]
+    if not lines:
+        return []
+
+    # Si no hay declaraciones VAR en toda la formula, se evalua toda como una sola expresion
+    has_any_var = any(VAR_PATTERN.match(l) for l in lines)
+    if not has_any_var:
+        return [("EXPR", None, "\n".join(lines))]
+
+    statements = []
+    current_type = None
+    current_var = None
+    current_chunk = []
+
+    def flush():
+        if current_type == "VAR":
+            statements.append(("VAR", current_var, "\n".join(current_chunk)))
+        elif current_type == "EXPR":
+            statements.append(("EXPR", None, "\n".join(current_chunk)))
+
+    for line in lines:
+        var_match = VAR_PATTERN.match(line)
+        if var_match:
+            flush()
+            current_type = "VAR"
+            current_var = var_match.group(1).strip()
+            rest = var_match.group(2).strip()
+            current_chunk = [rest] if rest else []
+            continue
+
+        if current_type is None:
+            current_type = "EXPR"
+            current_chunk = [line]
+            continue
+
+        # Si estamos en un VAR y no tenia expresion en la misma linea (ej. VAR SC = \n ...)
+        if current_type == "VAR" and not any(c.strip() for c in current_chunk):
+            current_chunk.append(line)
+            continue
+
+        prev_text = "\n".join(current_chunk).rstrip()
+        is_continuation = False
+        if _has_unclosed_delimiters(prev_text):
+            is_continuation = True
+        elif any(prev_text.endswith(op) for op in CONTINUATION_END_OPS):
+            is_continuation = True
+        elif any(line.startswith(op) for op in CONTINUATION_START_OPS):
+            is_continuation = True
+
+        if is_continuation:
+            current_chunk.append(line)
+        else:
+            flush()
+            current_type = "EXPR"
+            current_var = None
+            current_chunk = [line]
+
+    flush()
+    return statements
+
 
 def evaluate_formula(expression, context, period_context="actual"):
     expr = cstr(expression or "").strip().upper()
@@ -222,33 +341,29 @@ def evaluate_formula(expression, context, period_context="actual"):
     }
 
     try:
-        lines = [line.strip() for line in expr.splitlines() if line.strip()]
-        if not lines:
+        statements = _parse_formula_statements(expr)
+        if not statements:
             return 0.0
-            
+
         local_vars = {}
         result = 0.0
-        
-        for line in lines:
-            if line.startswith("VAR "):
-                parts = line[4:].split("=", 1)
-                if len(parts) == 2:
-                    var_name = parts[0].strip()
-                    var_expr = parts[1].strip()
-                    
-                    if var_name in safe_funcs:
-                        frappe.throw(_("No puedes usar '{0}' como nombre de variable porque es una función reservada.").format(var_name))
-                        
-                    val = eval(var_expr, {"__builtins__": None}, {**safe_funcs, **local_vars})
-                    local_vars[var_name] = flt(val)
-                    result = local_vars[var_name]
-                else:
-                    val = eval(line, {"__builtins__": None}, {**safe_funcs, **local_vars})
-                    result = flt(val)
+
+        for stype, var_name, code in statements:
+            clean_code = code.strip().rstrip("; \t\r\n")
+            if not clean_code:
+                continue
+
+            if stype == "VAR":
+                if var_name in safe_funcs:
+                    frappe.throw(_("No puedes usar '{0}' como nombre de variable porque es una función reservada.").format(var_name))
+
+                val = eval("(\n" + clean_code + "\n)", {"__builtins__": None}, {**safe_funcs, **local_vars})
+                local_vars[var_name] = flt(val)
+                result = local_vars[var_name]
             else:
-                val = eval(line, {"__builtins__": None}, {**safe_funcs, **local_vars})
+                val = eval("(\n" + clean_code + "\n)", {"__builtins__": None}, {**safe_funcs, **local_vars})
                 result = flt(val)
-                
+
         return result
     except ZeroDivisionError:
         return 0.0
