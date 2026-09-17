@@ -1,3 +1,4 @@
+import ast
 import re
 import frappe
 from frappe import _
@@ -128,7 +129,8 @@ def _get_ytd_stat_value(code, historical_ytd_dict):
 
 VAR_PATTERN = re.compile(r"^\s*VAR\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=(.*)$", re.IGNORECASE)
 CONTINUATION_END_OPS = ("+", "-", "*", "/", "%", "**", ",", "(", "[", "=")
-CONTINUATION_START_OPS = ("+", "-", "*", "/", "%", "**", ",", ")", "]")
+NON_UNARY_START_OPS = ("*", "/", "%", "**", ",", ")", "]")
+UNARY_OR_BINARY_OPS = ("+", "-")
 
 
 def _is_escaped(s, idx):
@@ -138,31 +140,6 @@ def _is_escaped(s, idx):
         count += 1
         i -= 1
     return (count % 2) == 1
-
-
-def _clean_formula_line(line):
-    trimmed = line.strip()
-    if not trimmed or trimmed.startswith("//") or trimmed.startswith("#"):
-        return ""
-    if "//" in line or "#" in line:
-        in_quote = None
-        cleaned = []
-        for i, ch in enumerate(line):
-            if in_quote:
-                cleaned.append(ch)
-                if ch == in_quote and not _is_escaped(line, i):
-                    in_quote = None
-            elif ch in ('"', "'"):
-                in_quote = ch
-                cleaned.append(ch)
-            elif ch == "/" and i + 1 < len(line) and line[i + 1] == "/":
-                break
-            elif ch == "#":
-                break
-            else:
-                cleaned.append(ch)
-        trimmed = "".join(cleaned).rstrip()
-    return trimmed
 
 
 def _has_unclosed_delimiters(text):
@@ -181,9 +158,62 @@ def _has_unclosed_delimiters(text):
     return paren_depth > 0
 
 
+def _is_valid_expr(s):
+    try:
+        ast.parse(s.strip().rstrip("; \t\r\n"), mode="eval")
+        return True
+    except (SyntaxError, ValueError):
+        return False
+
+
+def _split_into_lines(expr):
+    """
+    Divide una formula en lineas respetando saltos de linea, puntos y coma fuera de comillas,
+    y separando sentencias VAR que se hayan escrito consecutivamente en una sola linea.
+    """
+    raw_chunks = []
+    for raw_line in expr.splitlines():
+        in_quote = None
+        curr = []
+        i = 0
+        while i < len(raw_line):
+            ch = raw_line[i]
+            if in_quote:
+                curr.append(ch)
+                if ch == in_quote and not _is_escaped(raw_line, i):
+                    in_quote = None
+            elif ch in ('"', "'"):
+                in_quote = ch
+                curr.append(ch)
+            elif ch == ";":
+                chunk = "".join(curr).strip()
+                if chunk:
+                    raw_chunks.append(chunk)
+                curr = []
+            elif ch == "/" and i + 1 < len(raw_line) and raw_line[i + 1] == "/":
+                break
+            elif ch == "#":
+                break
+            else:
+                if (ch == "V" or ch == "v") and i + 3 < len(raw_line):
+                    sub = raw_line[i:i+4]
+                    if sub.upper() == "VAR " and curr:
+                        prev_char = raw_line[i-1] if i > 0 else " "
+                        if prev_char.isspace() or prev_char in "=;,+-*/":
+                            chunk = "".join(curr).strip()
+                            if chunk:
+                                raw_chunks.append(chunk)
+                            curr = []
+                curr.append(ch)
+            i += 1
+        chunk = "".join(curr).strip()
+        if chunk:
+            raw_chunks.append(chunk)
+    return raw_chunks
+
+
 def _parse_formula_statements(expr):
-    raw_lines = [_clean_formula_line(l) for l in expr.splitlines()]
-    lines = [l for l in raw_lines if l]
+    lines = _split_into_lines(expr)
     if not lines:
         return []
 
@@ -229,8 +259,18 @@ def _parse_formula_statements(expr):
             is_continuation = True
         elif any(prev_text.endswith(op) for op in CONTINUATION_END_OPS):
             is_continuation = True
-        elif any(line.startswith(op) for op in CONTINUATION_START_OPS):
+        elif any(line.startswith(op) for op in NON_UNARY_START_OPS):
             is_continuation = True
+        elif any(line.startswith(op) for op in UNARY_OR_BINARY_OPS):
+            if current_type == "VAR":
+                if current_var and re.search(r"\b" + re.escape(current_var) + r"\b", line):
+                    is_continuation = False
+                elif _is_valid_expr(prev_text):
+                    is_continuation = False
+                else:
+                    is_continuation = True
+            else:
+                is_continuation = True
 
         if is_continuation:
             current_chunk.append(line)
@@ -244,7 +284,7 @@ def _parse_formula_statements(expr):
     return statements
 
 
-def evaluate_formula(expression, context, period_context="actual"):
+def evaluate_formula(expression, context, period_context="actual", doc_context=None):
     expr = cstr(expression or "").strip().upper()
     if not expr:
         return 0.0
@@ -357,15 +397,44 @@ def evaluate_formula(expression, context, period_context="actual"):
                 if var_name in safe_funcs:
                     frappe.throw(_("No puedes usar '{0}' como nombre de variable porque es una función reservada.").format(var_name))
 
-                val = eval("(\n" + clean_code + "\n)", {"__builtins__": None}, {**safe_funcs, **local_vars})
+                val = eval("(\n" + clean_code + "\n)", {"__builtins__": {}}, {**safe_funcs, **local_vars})
                 local_vars[var_name] = flt(val)
                 result = local_vars[var_name]
             else:
-                val = eval("(\n" + clean_code + "\n)", {"__builtins__": None}, {**safe_funcs, **local_vars})
+                val = eval("(\n" + clean_code + "\n)", {"__builtins__": {}}, {**safe_funcs, **local_vars})
                 result = flt(val)
 
         return result
     except ZeroDivisionError:
         return 0.0
     except Exception as e:
-        frappe.throw(_("Error evaluando formula '{0}': {1}").format(expression, str(e)))
+        info_parts = []
+        if doc_context:
+            if isinstance(doc_context, dict):
+                tipo = doc_context.get("tipo") or doc_context.get("doctype")
+                nombre = doc_context.get("nombre") or doc_context.get("docname")
+                linea = doc_context.get("linea") or doc_context.get("row_code") or doc_context.get("codigo")
+                col = doc_context.get("columna") or doc_context.get("col")
+                desc = doc_context.get("descripcion") or doc_context.get("row_desc")
+                periodo = doc_context.get("periodo") or period_context
+
+                if tipo:
+                    info_parts.append(f"Tipo: {tipo}")
+                if nombre:
+                    info_parts.append(f"Documento: {nombre}")
+                if linea:
+                    info_parts.append(f"Línea/Fila: {linea}")
+                if col:
+                    info_parts.append(f"Columna: {col}")
+                if desc:
+                    info_parts.append(f"Descripción: {desc}")
+                if periodo:
+                    info_parts.append(f"Periodo: {periodo}")
+            else:
+                info_parts.append(str(doc_context))
+
+        ubicacion = f" [{', '.join(info_parts)}]" if info_parts else ""
+        frappe.throw(
+            _("Error evaluando formula '{0}'{1}: {2}").format(expression, ubicacion, str(e)),
+            title=_("Error en Fórmula")
+        )

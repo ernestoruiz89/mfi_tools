@@ -164,12 +164,12 @@ class Factsheet(Document):
             clean_expr = expr.strip().rstrip("; \t\r\n")
             try:
                 # safe evaluation of math expression
-                result = eval("(\n" + clean_expr + "\n)", {"__builtins__": None}, {})
+                result = eval("(\n" + clean_expr + "\n)", {"__builtins__": {}}, {})
                 val = flt(result)
             except ZeroDivisionError:
                 val = 0.0
             except Exception as e:
-                frappe.throw(_("Error evaluando formula '{0}' en linea {1}: {2}").format(formula_str, code, str(e)))
+                frappe.throw(_("Error evaluando formula '{0}' en Factsheet '{1}' (línea '{2}'): {3}").format(formula_str, self.name, code, str(e)))
 
             setattr(row, fieldname, val)
             cache[code] = val

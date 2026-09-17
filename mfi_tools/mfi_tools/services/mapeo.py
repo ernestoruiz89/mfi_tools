@@ -1252,16 +1252,30 @@ def aplicar_mapeo_paquete(paquete_name):
         historical_data=historical_data
     )
 
+    def _eval_formula(expr, period, doc_type, doc_obj, row, col_name=None):
+        doc_title = getattr(doc_obj, "titulo_estado", None) or getattr(doc_obj, "titulo_nota", None) or getattr(doc_obj, "titulo_seccion", None) or getattr(doc_obj, "codigo_factsheet", None) or getattr(doc_obj, "codigo_estado", "")
+        doc_desc = getattr(row, "descripcion", None) or getattr(row, "descripcion_cifra", None) or getattr(row, "descripcion_linea", "")
+        row_code = getattr(row, "codigo_linea", None) or getattr(row, "codigo_cifra", None) or getattr(row, "nombre_fila", None) or f"Fila #{getattr(row, 'idx', '')}"
+        ctx_info = {
+            "tipo": doc_type,
+            "nombre": f"{doc_obj.name} ({doc_title})" if doc_title else doc_obj.name,
+            "linea": row_code,
+            "columna": col_name,
+            "descripcion": doc_desc,
+            "periodo": period,
+        }
+        return evaluate_formula(expr, formula_ctx, period, ctx_info)
+
     for name in touched_states:
         doc = state_docs.get(name)
         if doc:
             for row in doc.lineas or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_lineas", "")):
                     expr = row.formula_lineas
-                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
-                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
-                    row.monto_base_actual = evaluate_formula(expr, formula_ctx, "actual")
-                    row.monto_base_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+                    row.monto_actual = _eval_formula(expr, "actual", "Estado Financiero EEFF", doc, row)
+                    row.monto_comparativo = _eval_formula(expr, "comparativo", "Estado Financiero EEFF", doc, row)
+                    row.monto_base_actual = _eval_formula(expr, "actual", "Estado Financiero EEFF", doc, row)
+                    row.monto_base_comparativo = _eval_formula(expr, "comparativo", "Estado Financiero EEFF", doc, row)
 
     for name in touched_notes:
         doc = note_docs.get(name)
@@ -1269,8 +1283,8 @@ def aplicar_mapeo_paquete(paquete_name):
             for row in doc.cifras_nota or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_cifras", "")):
                     expr = row.formula_cifras
-                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
-                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+                    row.monto_actual = _eval_formula(expr, "actual", "Nota EEFF", doc, row)
+                    row.monto_comparativo = _eval_formula(expr, "comparativo", "Nota EEFF", doc, row)
 
     for name in touched_sections:
         doc = section_docs.get(name)
@@ -1279,7 +1293,7 @@ def aplicar_mapeo_paquete(paquete_name):
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_celda", "")):
                     expr = row.formula_celda
                     # Sections mix actual/comp within cells, so evaluate as actual context always
-                    row.valor_numero = evaluate_formula(expr, formula_ctx, "actual")
+                    row.valor_numero = _eval_formula(expr, "actual", "Sección Nota EEFF", doc, row, col_name=getattr(row, "nombre_columna", None))
 
     for name in touched_factsheets:
         doc = factsheet_docs.get(name)
@@ -1287,8 +1301,8 @@ def aplicar_mapeo_paquete(paquete_name):
             for row in doc.lineas or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula", "")):
                     expr = row.formula
-                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
-                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+                    row.monto_actual = _eval_formula(expr, "actual", "Factsheet", doc, row)
+                    row.monto_comparativo = _eval_formula(expr, "comparativo", "Factsheet", doc, row)
 
     for name in touched_states:
         doc = state_docs.get(name)
@@ -1330,14 +1344,14 @@ def aplicar_mapeo_paquete(paquete_name):
             for row in state_doc.lineas or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_lineas", "")):
                     expr = row.formula_lineas
-                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
-                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
-                    row.monto_base_actual = evaluate_formula(expr, formula_ctx, "actual")
-                    row.monto_base_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+                    row.monto_actual = _eval_formula(expr, "actual", "Estado Financiero EEFF", state_doc, row)
+                    row.monto_comparativo = _eval_formula(expr, "comparativo", "Estado Financiero EEFF", state_doc, row)
+                    row.monto_base_actual = _eval_formula(expr, "actual", "Estado Financiero EEFF", state_doc, row)
+                    row.monto_base_comparativo = _eval_formula(expr, "comparativo", "Estado Financiero EEFF", state_doc, row)
             for row in state_doc.celdas_tabulares or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_celda", "")):
                     expr = row.formula_celda
-                    row.valor_numero = evaluate_formula(expr, formula_ctx, "actual")
+                    row.valor_numero = _eval_formula(expr, "actual", "Estado Financiero EEFF (Celda Tabular)", state_doc, row, col_name=getattr(row, "nombre_columna", None))
             state_doc.save(ignore_permissions=True)
             touched_states.add(state_name)
 
@@ -1355,8 +1369,8 @@ def aplicar_mapeo_paquete(paquete_name):
             for row in note_doc.cifras_nota or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_cifras", "")):
                     expr = row.formula_cifras
-                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
-                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+                    row.monto_actual = _eval_formula(expr, "actual", "Nota EEFF", note_doc, row)
+                    row.monto_comparativo = _eval_formula(expr, "comparativo", "Nota EEFF", note_doc, row)
             note_doc.save(ignore_permissions=True)
             touched_notes.add(note_name)
 
@@ -1374,7 +1388,7 @@ def aplicar_mapeo_paquete(paquete_name):
             for row in section_doc.celdas_tabulares or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula_celda", "")):
                     expr = row.formula_celda
-                    row.valor_numero = evaluate_formula(expr, formula_ctx, "actual")
+                    row.valor_numero = _eval_formula(expr, "actual", "Sección Nota EEFF", section_doc, row, col_name=getattr(row, "nombre_columna", None))
             section_doc.save(ignore_permissions=True)
             touched_sections.add(section_name)
 
@@ -1400,8 +1414,8 @@ def aplicar_mapeo_paquete(paquete_name):
             for row in fs_doc.lineas or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula", "")):
                     expr = row.formula
-                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
-                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+                    row.monto_actual = _eval_formula(expr, "actual", "Factsheet", fs_doc, row)
+                    row.monto_comparativo = _eval_formula(expr, "comparativo", "Factsheet", fs_doc, row)
             fs_doc.save(ignore_permissions=True)
 
     # Re-save touched factsheets that also have formulas (to pick up cross-references
@@ -1418,8 +1432,8 @@ def aplicar_mapeo_paquete(paquete_name):
             for row in fs_doc.lineas or []:
                 if getattr(row, "origen_dato", "") == "Formula" and has_data_functions(getattr(row, "formula", "")):
                     expr = row.formula
-                    row.monto_actual = evaluate_formula(expr, formula_ctx, "actual")
-                    row.monto_comparativo = evaluate_formula(expr, formula_ctx, "comparativo")
+                    row.monto_actual = _eval_formula(expr, "actual", "Factsheet", fs_doc, row)
+                    row.monto_comparativo = _eval_formula(expr, "comparativo", "Factsheet", fs_doc, row)
             fs_doc.save(ignore_permissions=True)
 
 
