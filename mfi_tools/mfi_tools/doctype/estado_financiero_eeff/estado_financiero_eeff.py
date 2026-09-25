@@ -166,15 +166,29 @@ class EstadoFinancieroEEFF(Document):
         return f"Del 01 de Enero al {pretty_date}"
 
     def on_trash(self):
+        company = ""
+        if self.paquete_eeff and frappe.db.exists("Paquete EEFF", self.paquete_eeff):
+            company = cstr(frappe.db.get_value("Paquete EEFF", self.paquete_eeff, "company") or "").strip()
+
+        codigo_estado = cstr(self.codigo_estado or "").strip().upper()
+        if not codigo_estado and self.tipo_estado:
+            codigo_estado = cstr(self.tipo_estado).strip().upper()
+
+        if not codigo_estado:
+            return
+
+        filters = {
+            "activo": 1,
+            "destino_tipo": ["in", ["Linea Estado", "Celda Estado"]],
+            "destino_codigo_estado": codigo_estado,
+        }
+        if company:
+            filters["company"] = company
+
         active_rules = frappe.get_all(
             "Regla Mapeo Contable EEFF",
-            filters={
-                "paquete_eeff": self.paquete_eeff,
-                "activo": 1,
-                "destino_tipo": "Linea Estado",
-                "estado_financiero_eeff": self.name,
-            },
-            fields=["name", "destino_codigo_linea"],
+            filters=filters,
+            fields=["name", "destino_codigo_linea", "destino_codigo_fila", "destino_codigo_columna"],
             order_by="modified desc",
             limit_page_length=20,
         )
@@ -182,7 +196,7 @@ class EstadoFinancieroEEFF(Document):
             return
 
         refs = ", ".join(
-            f"{row.name} -> {cstr(row.destino_codigo_linea or '-').strip() or '-'}"
+            f"{row.name} -> {cstr(row.destino_codigo_linea or row.destino_codigo_fila or '-').strip() or '-'}"
             for row in active_rules[:5]
         )
         if len(active_rules) > 5:
