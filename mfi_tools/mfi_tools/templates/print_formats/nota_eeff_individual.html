@@ -233,8 +233,8 @@
   }
 </style>
 
-{% macro render_note_body(note_doc, labels, currency_symbol, has_comparative=True) %}
-  {% set cifras = note_doc.cifras_nota or [] %}
+{% macro render_note_body(note_doc, labels, currency_symbol, has_comparative=True, exclude_zero_movements=False) %}
+  {% set cifras = note_doc.get_display_figures(exclude_zero_movements=exclude_zero_movements, has_comparative=has_comparative) %}
   {% set secciones_complejas = frappe.get_all("Seccion Nota EEFF", filters={"nota_eeff": note_doc.name}, fields=["name", "orden"], order_by="orden asc, creation asc") %}
   {% set note_font_size = note_doc.get_print_font_size() %}
   {% set note_table_width = note_doc.get_print_table_width() %}
@@ -246,11 +246,7 @@
   </div>
   {% endif %}
 
-  {% set ns_fig = namespace(tiene=0) %}
-  {% for cifra in cifras %}
-  {% if not cifra.no_imprimir %}{% set ns_fig.tiene = 1 %}{% endif %}
-  {% endfor %}
-  {% if ns_fig.tiene %}
+  {% if cifras | length > 0 %}
   <div class="cni-section">
     <table class="cni-table cni-align-{{ note_table_align }}" style="margin-top: {{ '0' if note_doc.contenido_narrativo else '4px' }}; --cni-table-width: {{ note_table_width }}; --cni-table-font-size: {{ note_font_size }}pt;">
       <colgroup>
@@ -355,6 +351,10 @@
       </tbody>
     </table>
   </div>
+  {% elif exclude_zero_movements and note_doc.has_configured_figures() and note_doc.estructura_nota != "Compleja" %}
+  <div class="cni-section">
+    <p class="cni-note-no-movements" style="margin-top: 6px; margin-bottom: 6px; font-style: italic;">No se registran movimientos para el período reportado.</p>
+  </div>
   {% endif %}
 
   {% if note_doc.estructura_nota == "Compleja" and secciones_complejas %}
@@ -374,6 +374,7 @@
         {% for tabla in tablas %}
           {% if tabla.columnas and tabla.filas %}
           {% set compact_table = (tabla.columnas | length) > 5 %}
+          {% if not exclude_zero_movements or tabla.tiene_movimientos %}
           <div class="cni-section">
             <table class="cni-table cni-align-{{ note_table_align }}" style="--cni-table-width: {{ note_table_width }}; --cni-table-font-size: {{ 10 if compact_table else note_font_size }}pt;">
               <thead>
@@ -433,6 +434,11 @@
               </tbody>
             </table>
           </div>
+          {% else %}
+          <div class="cni-section">
+            <p class="cni-note-no-movements" style="margin-top: 6px; margin-bottom: 6px; font-style: italic;">No se registran movimientos para el período reportado.</p>
+          </div>
+          {% endif %}
           {% endif %}
         {% endfor %}
 
@@ -452,6 +458,7 @@
 
 {% set package = frappe.get_doc("Paquete EEFF", doc.paquete_eeff) %}
 {% set has_comparative = (package.balanza_comparativa_eeff or "") | trim | length > 0 %}
+{% set exclude_zero_movements = (package.excluir_lineas_sin_movimientos or 0) | int == 1 %}
 {% set labels = package.get_column_labels() %}
 {% set currency_ctx = package.get_currency_context() %}
 {% set currency_symbol = currency_ctx.symbol or "$" %}
@@ -482,7 +489,7 @@
     </h1>
   </div>
 
-  {{ render_note_body(doc, labels, currency_symbol, has_comparative) }}
+  {{ render_note_body(doc, labels, currency_symbol, has_comparative, exclude_zero_movements) }}
 
   {% if sub_notas %}
   <div class="cni-subnotes">
@@ -496,7 +503,7 @@
         <div class="cni-section">
           <h2 style="font-weight: 400;">{{ sub_doc.get_print_heading() }}</h2>
         </div>
-        {{ render_note_body(sub_doc, labels, currency_symbol, has_comparative) }}
+        {{ render_note_body(sub_doc, labels, currency_symbol, has_comparative, exclude_zero_movements) }}
       </div>
     {% endfor %}
   </div>

@@ -197,6 +197,97 @@ class NotaEEFF(Document):
             return next(iter(formats))
         return "Numero"
 
+    def has_figure_movement(self, row, has_comparative=True):
+        if not row:
+            return False
+        if cint(getattr(row, "no_imprimir", 0)):
+            return False
+        if cint(getattr(row, "es_linea_blanco", 0)) or cint(getattr(row, "es_titulo", 0)):
+            return False
+        if self.is_text_figure(row):
+            t_act = cstr(getattr(row, "valor_texto_actual", "") or "").strip()
+            t_comp = cstr(getattr(row, "valor_texto_comparativo", "") or "").strip()
+            return bool(t_act or (has_comparative and t_comp))
+        m_act = flt(getattr(row, "monto_actual", 0) or 0)
+        m_comp = flt(getattr(row, "monto_comparativo", 0) or 0)
+        if has_comparative:
+            return abs(m_act) > 1e-6 or abs(m_comp) > 1e-6
+        return abs(m_act) > 1e-6
+
+    def has_configured_figures(self):
+        return any(
+            not cint(getattr(r, "no_imprimir", 0))
+            and not cint(getattr(r, "es_linea_blanco", 0))
+            and not cint(getattr(r, "es_titulo", 0))
+            for r in (self.cifras_nota or [])
+        )
+
+    def get_display_figures(self, exclude_zero_movements=False, has_comparative=True):
+        all_rows = list(self.cifras_nota or [])
+        visible_rows = [r for r in all_rows if not cint(getattr(r, "no_imprimir", 0))]
+        if not visible_rows:
+            return []
+
+        if not exclude_zero_movements:
+            return visible_rows
+
+        data_rows = [
+            r for r in visible_rows
+            if not cint(getattr(r, "es_linea_blanco", 0)) and not cint(getattr(r, "es_titulo", 0))
+        ]
+        if not data_rows:
+            return []
+
+        has_any_movement = any(self.has_figure_movement(r, has_comparative) for r in data_rows)
+        if not has_any_movement:
+            return []
+
+        kept_rows = []
+        for r in visible_rows:
+            if cint(getattr(r, "es_linea_blanco", 0)) or cint(getattr(r, "es_titulo", 0)):
+                kept_rows.append(r)
+            elif self.has_figure_movement(r, has_comparative):
+                kept_rows.append(r)
+
+        final_rows = []
+        n = len(kept_rows)
+        for i, r in enumerate(kept_rows):
+            if cint(getattr(r, "es_titulo", 0)):
+                r_level = cint(getattr(r, "nivel", 1) or 1)
+                has_child = False
+                for j in range(i + 1, n):
+                    next_r = kept_rows[j]
+                    if cint(getattr(next_r, "es_titulo", 0)):
+                        next_level = cint(getattr(next_r, "nivel", 1) or 1)
+                        if next_level <= r_level:
+                            break
+                    elif not cint(getattr(next_r, "es_linea_blanco", 0)):
+                        has_child = True
+                        break
+                if has_child:
+                    final_rows.append(r)
+            else:
+                final_rows.append(r)
+
+        cleaned = []
+        for r in final_rows:
+            is_blank = cint(getattr(r, "es_linea_blanco", 0))
+            if is_blank:
+                if not cleaned:
+                    continue
+                if cint(getattr(cleaned[-1], "es_linea_blanco", 0)):
+                    continue
+                if cint(getattr(cleaned[-1], "es_titulo", 0)):
+                    continue
+                cleaned.append(r)
+            else:
+                cleaned.append(r)
+
+        while cleaned and cint(getattr(cleaned[-1], "es_linea_blanco", 0)):
+            cleaned.pop()
+
+        return cleaned
+
     def render_contenido_narrativo(self, extra_context=None):
         return self._render_template_field(
             "contenido_narrativo",

@@ -43,6 +43,12 @@ class SeccionNotaEEFF(Document):
     def get_render_tables(self):
         return build_complex_section_tables(self)
 
+    def tiene_movimientos(self):
+        tablas = self.get_render_tables()
+        if not tablas:
+            return False
+        return any(t.get("tiene_movimientos", False) for t in tablas)
+
     def render_contenido_narrativo(self, extra_context=None):
         template = cstr(getattr(self, "contenido_narrativo", "") or "").strip()
         if not template:

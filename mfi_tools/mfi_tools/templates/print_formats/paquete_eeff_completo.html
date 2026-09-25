@@ -358,6 +358,7 @@ order_by="numero_factsheet asc, codigo_factsheet asc",
 limit_page_length=100
 ) %}
 {% set has_comparative = (doc.balanza_comparativa_eeff or "") | trim | length > 0 %}
+{% set exclude_zero_movements = (doc.excluir_lineas_sin_movimientos or 0) | int == 1 %}
 {% set labels = doc.get_column_labels() %}
 {% set currency_ctx = doc.get_currency_context() %}
 {% set currency_symbol = currency_ctx.symbol or "$" %}
@@ -611,7 +612,7 @@ limit_page_length=100
     {% if notas %}
     {% for nota in notas %}
     {% set nota_doc = frappe.get_doc("Nota EEFF", nota.name) %}
-    {% set cifras = nota_doc.cifras_nota or [] %}
+    {% set cifras = nota_doc.get_display_figures(exclude_zero_movements=exclude_zero_movements, has_comparative=has_comparative) %}
       {% set nota_font_size = nota_doc.get_print_font_size() %}
       {% set nota_table_width = nota_doc.get_print_table_width() %}
       {% set nota_table_align = nota_doc.get_print_table_alignment_css() %}
@@ -624,11 +625,7 @@ limit_page_length=100
       <div class="cpc-note-narrative">{{ nota_doc.render_contenido_narrativo() | safe }}</div>
       {% endif %}
 
-      {% set ns_fig = namespace(tiene=0) %}
-      {% for cifra in cifras %}
-      {% if not cifra.no_imprimir %}{% set ns_fig.tiene = 1 %}{% endif %}
-      {% endfor %}
-      {% if ns_fig.tiene %}
+      {% if cifras | length > 0 %}
       <table class="cpc-table cpc-align-{{ nota_table_align }}" style="margin-top: {{ '0' if nota_doc.contenido_narrativo else '8px' }}; --cpc-table-width: {{ nota_table_width }}; --cpc-table-font-size: {{ nota_font_size }}pt;">
         <colgroup>
           {% if has_comparative %}
@@ -734,6 +731,8 @@ limit_page_length=100
           {% endif %}
         </tbody>
       </table>
+      {% elif exclude_zero_movements and nota_doc.has_configured_figures() and nota_doc.estructura_nota != "Compleja" %}
+      <p class="cpc-note-no-movements" style="margin-top: 6px; margin-bottom: 6px; font-style: italic;">No se registran movimientos para el período reportado.</p>
       {% endif %}
 
       {% if nota_doc.estructura_nota == "Compleja" and secciones_complejas %}
@@ -754,6 +753,7 @@ limit_page_length=100
           {% for tabla in tablas %}
           {% if tabla.columnas and tabla.filas %}
           {% set compact_table = (tabla.columnas | length) > 5 %}
+          {% if not exclude_zero_movements or tabla.tiene_movimientos %}
           <div style="margin-top: 10px;">
             <table class="cpc-table cpc-align-{{ nota_table_align }}" style="--cpc-table-width: {{ nota_table_width }}; --cpc-table-font-size: {{ 10 if compact_table else nota_font_size }}pt;">
               <thead>
@@ -813,6 +813,9 @@ limit_page_length=100
               </tbody>
             </table>
           </div>
+          {% else %}
+          <p class="cpc-note-no-movements" style="margin-top: 6px; margin-bottom: 6px; font-style: italic;">No se registran movimientos para el período reportado.</p>
+          {% endif %}
           {% endif %}
           {% endfor %}
 

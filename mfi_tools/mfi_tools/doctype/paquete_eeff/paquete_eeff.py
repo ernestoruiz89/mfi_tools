@@ -332,6 +332,9 @@ class PaqueteEEFF(Document):
     def tiene_comparativo(self):
         return bool(cstr(getattr(self, "balanza_comparativa_eeff", "") or "").strip())
 
+    def excluir_lineas_sin_movimientos(self):
+        return bool(cint(getattr(self, "excluir_lineas_sin_movimientos", 0)))
+
     def get_column_labels(self):
         mes = cstr(self.mes or "").strip() or _("Actual")
         anio = cint(self.anio or 0)

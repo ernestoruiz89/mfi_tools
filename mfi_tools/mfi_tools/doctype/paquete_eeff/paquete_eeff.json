@@ -24,6 +24,7 @@
         "control_section",
         "estado_preparacion",
         "fecha_emision",
+        "excluir_lineas_sin_movimientos",
         "control_column",
         "total_estados",
         "total_notas",
@@ -166,6 +167,13 @@
             "fieldname": "fecha_emision",
             "fieldtype": "Date",
             "label": "Fecha Emision"
+        },
+        {
+            "default": "0",
+            "fieldname": "excluir_lineas_sin_movimientos",
+            "fieldtype": "Check",
+            "label": "Excluir Lineas sin Movimientos",
+            "description": "Si está activo, en las notas no se mostrarán líneas con saldo cero o sin movimientos."
         },
         {
             "fieldname": "control_column",

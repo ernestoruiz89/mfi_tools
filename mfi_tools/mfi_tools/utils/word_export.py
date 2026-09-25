@@ -531,10 +531,11 @@ def _render_note_block(document, nota_doc, labels, package, currency_symbol, sub
         run.bold = not is_subnote
 
     has_comparative = bool(cstr(getattr(package, "balanza_comparativa_eeff", "") or "").strip())
+    exclude_zero_movements = bool(cint(getattr(package, "excluir_lineas_sin_movimientos", 0)))
     if cstr(getattr(nota_doc, "estructura_nota", "Simple") or "Simple").strip() == "Compleja":
-        _render_complex_note_content(document, nota_doc, labels, package, currency_symbol, has_comparative=has_comparative)
+        _render_complex_note_content(document, nota_doc, labels, package, currency_symbol, has_comparative=has_comparative, exclude_zero_movements=exclude_zero_movements)
     else:
-        _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=has_comparative)
+        _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=has_comparative, exclude_zero_movements=exclude_zero_movements)
 
     rendered_observaciones = _get_rendered_note_observaciones(nota_doc)
     if rendered_observaciones:
@@ -557,7 +558,7 @@ def _render_note_block(document, nota_doc, labels, package, currency_symbol, sub
             )
 
 
-def _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=True):
+def _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=True, exclude_zero_movements=False):
     note_font_size = nota_doc.get_print_font_size() if hasattr(nota_doc, "get_print_font_size") else BODY_SIZE
     note_alignment = nota_doc.get_print_table_alignment() if hasattr(nota_doc, "get_print_table_alignment") else "Centro"
     rendered_narrative = _get_rendered_note_narrative(nota_doc)
@@ -566,14 +567,25 @@ def _render_simple_note_content(document, nota_doc, labels, currency_symbol, has
         spacer = document.add_paragraph(" ")
         _set_paragraph_runs_font(spacer, size=BODY_SIZE)
 
-    _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol, has_comparative=has_comparative)
+    _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol, has_comparative=has_comparative, exclude_zero_movements=exclude_zero_movements)
 
 
-def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol, has_comparative=True):
-    cifras = sorted(list(nota_doc.cifras_nota or []), key=lambda row: cint(row.idx or 0))
-    visible_cifras = [row for row in cifras if not cint(getattr(row, "no_imprimir", 0))]
+def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol, has_comparative=True, exclude_zero_movements=False):
+    if hasattr(nota_doc, "get_display_figures"):
+        visible_cifras = nota_doc.get_display_figures(exclude_zero_movements=exclude_zero_movements, has_comparative=has_comparative)
+    else:
+        cifras = sorted(list(nota_doc.cifras_nota or []), key=lambda row: cint(row.idx or 0))
+        visible_cifras = [row for row in cifras if not cint(getattr(row, "no_imprimir", 0))]
     if not visible_cifras:
-        return
+        if exclude_zero_movements and getattr(nota_doc, "estructura_nota", "Simple") != "Compleja":
+            has_configured = nota_doc.has_configured_figures() if hasattr(nota_doc, "has_configured_figures") else False
+            if has_configured:
+                p = document.add_paragraph("No se registran movimientos para el período reportado.")
+                _set_paragraph_runs_font(p, size=note_font_size)
+                for run in p.runs:
+                    run.italic = True
+                return True
+        return False
 
     if has_comparative:
         table = document.add_table(rows=1, cols=4)
@@ -647,14 +659,15 @@ def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignm
     for line_index, cifra in rendered_rows:
         _apply_note_figure_format(table.rows[line_index], cifra, font_size=note_font_size)
     _force_table_font_size(table, note_font_size)
+    return True
 
-def _render_complex_note_content(document, nota_doc, labels, package, currency_symbol, has_comparative=True):
+def _render_complex_note_content(document, nota_doc, labels, package, currency_symbol, has_comparative=True, exclude_zero_movements=False):
     Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
     note_font_size = nota_doc.get_print_font_size() if hasattr(nota_doc, "get_print_font_size") else BODY_SIZE
     note_alignment = nota_doc.get_print_table_alignment() if hasattr(nota_doc, "get_print_table_alignment") else "Centro"
     sections = _get_complex_note_sections(nota_doc.name)
     if not sections:
-        _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=has_comparative)
+        _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=has_comparative, exclude_zero_movements=exclude_zero_movements)
         return
 
     rendered_narrative = _get_rendered_note_narrative(nota_doc)
@@ -663,12 +676,8 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
         spacer = document.add_paragraph(" ")
         _set_paragraph_runs_font(spacer, size=BODY_SIZE)
 
-    has_visible_figures = any(
-        not cint(getattr(row, "no_imprimir", 0))
-        for row in (nota_doc.cifras_nota or [])
-    )
-    _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol, has_comparative=has_comparative)
-    if has_visible_figures:
+    rendered_any = _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol, has_comparative=has_comparative, exclude_zero_movements=exclude_zero_movements)
+    if rendered_any:
         spacer = document.add_paragraph("")
         _set_paragraph_runs_font(spacer, size=note_font_size)
 
@@ -693,6 +702,12 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
         section_table_rendered = False
         for table_meta in tables:
             if not table_meta.get("columnas") or not table_meta.get("filas"):
+                continue
+            if exclude_zero_movements and not table_meta.get("tiene_movimientos", True):
+                p = document.add_paragraph("No se registran movimientos para el período reportado.")
+                _set_paragraph_runs_font(p, size=note_font_size)
+                for run in p.runs:
+                    run.italic = True
                 continue
             if not section_table_started:
                 table_spacer = document.add_paragraph(" ")

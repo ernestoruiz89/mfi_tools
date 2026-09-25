@@ -78,6 +78,29 @@ def _resolve_cell_format_type(cell=None, column=None, value_text=None):
     return format_type
 
 
+def complex_cell_has_movement(cell=None, column=None):
+    if not cell:
+        return False
+    value_text = cstr(getattr(cell, "valor_texto", "") or "").strip()
+    value_number = getattr(cell, "valor_numero", None)
+    format_type = _resolve_cell_format_type(cell, column, value_text=value_text)
+
+    if format_type == "Texto":
+        return bool(value_text and value_text != "-")
+
+    if value_number not in (None, ""):
+        return abs(flt(value_number)) > 1e-6
+
+    if value_text and value_text != "-":
+        try:
+            clean_num = value_text.replace(",", "").replace("$", "").replace("%", "").strip("()")
+            return abs(float(clean_num)) > 1e-6
+        except ValueError:
+            return True
+
+    return False
+
+
 def build_complex_section_tables(section_doc):
     if isinstance(section_doc, str):
         section_doc = frappe.get_doc("Seccion Nota EEFF", section_doc)
@@ -141,13 +164,22 @@ def build_complex_section_tables(section_doc):
         rows = sorted(rows, key=lambda row: (cint(row.get("idx", 0)), row.get("codigo_fila")))
 
         rendered_rows = []
+        table_has_movement = False
         for row_meta in rows:
             row_type = cstr(row_meta.get("tipo_fila") or "Detalle").strip()
+            is_title = row_type == "Titulo"
             cells = []
+            row_has_movement = False
             for col_meta in columns:
                 cell = cells_by_key.get((table_code, row_meta["codigo_fila"], col_meta["codigo_columna"]))
-                format_type = _resolve_cell_format_type(cell, _DictWrapper(col_meta))
-                text = "" if row_type == "Titulo" else format_complex_note_value(cell, _DictWrapper(col_meta))
+                wrapped_col = _DictWrapper(col_meta)
+                format_type = _resolve_cell_format_type(cell, wrapped_col)
+                text = "" if is_title else format_complex_note_value(cell, wrapped_col)
+                cell_has_mv = False
+                if not is_title:
+                    cell_has_mv = complex_cell_has_movement(cell, wrapped_col)
+                    if cell_has_mv:
+                        row_has_movement = True
                 cells.append(
                     {
                         "codigo_columna": col_meta["codigo_columna"],
@@ -156,15 +188,19 @@ def build_complex_section_tables(section_doc):
                         "es_moneda": format_type == "Moneda",
                         "alineacion": col_meta["alineacion"] if col_meta["alineacion"] in TABLE_ALIGNMENTS else "Right",
                         "comentario": cstr(getattr(cell, "comentario", "") or "").strip() if cell else "",
+                        "tiene_movimiento": cell_has_mv,
                     }
                 )
+            if row_has_movement:
+                table_has_movement = True
             rendered_rows.append(
                 {
                     **row_meta,
                     "texto": row_meta["descripcion"],
                     "es_total": row_type == "Total",
                     "es_subtotal": row_type == "Subtotal",
-                    "es_titulo": row_type == "Titulo",
+                    "es_titulo": is_title,
+                    "tiene_movimiento": row_has_movement,
                     "celdas": cells,
                 }
             )
@@ -177,6 +213,7 @@ def build_complex_section_tables(section_doc):
                 "filas": rendered_rows,
                 "grupos_columnas": group_headers,
                 "tiene_grupos": any(group["label"] for group in group_headers),
+                "tiene_movimientos": table_has_movement,
             }
         )
 
