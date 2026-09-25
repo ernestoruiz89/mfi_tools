@@ -12,7 +12,6 @@
         "anio",
         "mes",
         "periodo_nombre",
-        "paquete_origen",
         "fuentes_section",
         "balanza_comprobacion_eeff",
         "balanza_comparativa_eeff",
@@ -54,7 +53,8 @@
             "fieldtype": "Data",
             "label": "Nombre Paquete",
             "read_only": 1,
-            "in_list_view": 1
+            "in_list_view": 1,
+            "no_copy": 1
         },
 
         {
@@ -95,14 +95,8 @@
             "fieldtype": "Data",
             "label": "Periodo Nombre",
             "read_only": 1,
-            "in_list_view": 1
-        },
-        {
-            "fieldname": "paquete_origen",
-            "fieldtype": "Link",
-            "label": "Paquete Origen",
-            "options": "Paquete EEFF",
-            "description": "Selecciona un paquete anterior para copiar la estructura de estados financieros y notas."
+            "in_list_view": 1,
+            "no_copy": 1
         },
         {
             "fieldname": "fuentes_section",
@@ -161,12 +155,14 @@
             "label": "Estado Preparacion",
             "options": "Borrador\nEn Preparacion\nListo para Emitir\nEmitido",
             "default": "Borrador",
-            "in_list_view": 1
+            "in_list_view": 1,
+            "no_copy": 1
         },
         {
             "fieldname": "fecha_emision",
             "fieldtype": "Date",
-            "label": "Fecha Emision"
+            "label": "Fecha Emision",
+            "no_copy": 1
         },
         {
             "default": "0",
@@ -183,19 +179,22 @@
             "fieldname": "total_estados",
             "fieldtype": "Int",
             "label": "Total Estados",
-            "read_only": 1
+            "read_only": 1,
+            "no_copy": 1
         },
         {
             "fieldname": "total_notas",
             "fieldtype": "Int",
             "label": "Total Notas",
-            "read_only": 1
+            "read_only": 1,
+            "no_copy": 1
         },
         {
             "fieldname": "total_datos_estadisticos",
             "fieldtype": "Int",
             "label": "Total Datos Estadisticos",
-            "read_only": 1
+            "read_only": 1,
+            "no_copy": 1
         },
         {
             "fieldname": "datos_consolidados_section",

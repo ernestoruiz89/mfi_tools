@@ -50,7 +50,8 @@
             "fieldtype": "Data",
             "label": "Nombre del Estado",
             "read_only": 1,
-            "in_list_view": 1
+            "in_list_view": 1,
+            "no_copy": 1
         },
         {
             "fieldname": "paquete_eeff",

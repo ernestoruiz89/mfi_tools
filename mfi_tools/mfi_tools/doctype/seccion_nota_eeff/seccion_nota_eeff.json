@@ -33,7 +33,7 @@
     ],
     "fields": [
         {"fieldname": "identificacion_section", "fieldtype": "Section Break", "label": "Identificacion"},
-        {"fieldname": "nombre_seccion", "fieldtype": "Data", "label": "Nombre Seccion", "read_only": 1, "in_list_view": 1},
+        {"fieldname": "nombre_seccion", "fieldtype": "Data", "label": "Nombre Seccion", "read_only": 1, "in_list_view": 1, "no_copy": 1},
         {"fieldname": "paquete_eeff", "fieldtype": "Link", "label": "Paquete EEFF", "options": "Paquete EEFF", "reqd": 1, "in_list_view": 1},
         {"fieldname": "identificacion_column", "fieldtype": "Column Break"},
         {"fieldname": "nota_eeff", "fieldtype": "Link", "label": "Nota EEFF", "options": "Nota EEFF", "reqd": 1, "in_list_view": 1},

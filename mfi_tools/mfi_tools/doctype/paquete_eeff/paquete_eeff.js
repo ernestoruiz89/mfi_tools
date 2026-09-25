@@ -47,9 +47,9 @@ function runPackageMapping(frm, paqueteName) {
     });
 }
 
-function openCopyNotesDialog(frm) {
+function openCopyEEFFAndNotesDialog(frm) {
     const dialog = new frappe.ui.Dialog({
-        title: __("Copiar Notas desde otro Paquete"),
+        title: __("Copiar EEFF y Notas desde otro Paquete"),
         fields: [
             {
                 fieldtype: "Link",
@@ -60,8 +60,8 @@ function openCopyNotesDialog(frm) {
             },
             {
                 fieldtype: "Check",
-                fieldname: "limpiar_notas",
-                label: __("Reemplazar Notas Actuales"),
+                fieldname: "limpiar_existentes",
+                label: __("Reemplazar EEFF y Notas Actuales"),
                 default: 0,
             },
         ],
@@ -73,18 +73,25 @@ function openCopyNotesDialog(frm) {
             }
 
             frappe.call({
-                method: "mfi_tools.mfi_tools.doctype.paquete_eeff.paquete_eeff.copiar_notas_desde_paquete",
+                method: "mfi_tools.mfi_tools.doctype.paquete_eeff.paquete_eeff.copiar_eeff_y_notas_desde_paquete",
                 args: {
                     paquete_name: frm.doc.name,
                     paquete_fuente: values.paquete_fuente,
-                    limpiar_notas: values.limpiar_notas ? 1 : 0,
+                    limpiar_existentes: values.limpiar_existentes ? 1 : 0,
                 },
                 freeze: true,
-                freeze_message: __("Copiando notas desde paquete fuente..."),
+                freeze_message: __("Copiando EEFF y notas desde paquete fuente..."),
                 callback: (r) => {
                     const message = r.message || {};
+                    const parts = [
+                        `${message.estados_copiados || 0} EEFF`,
+                        `${message.notas_copiadas || 0} Notas`,
+                    ];
+                    if (message.factsheets_copiados) {
+                        parts.push(`${message.factsheets_copiados} Factsheets`);
+                    }
                     frappe.show_alert({
-                        message: __("Notas copiadas: {0}", [message.notas_copiadas || 0]),
+                        message: __("Copiados: {0}", [parts.join(", ")]),
                         indicator: "green",
                     });
                     dialog.hide();
@@ -105,7 +112,33 @@ function openCopyNotesDialog(frm) {
     dialog.show();
 }
 
+const openCopyNotesDialog = openCopyEEFFAndNotesDialog;
+
+function updatePackageNames(frm) {
+    const company = (frm.doc.company || "").trim();
+    const mes = (frm.doc.mes || "").trim();
+    const anio = frm.doc.anio;
+    if (company && mes && anio) {
+        frm.set_value("periodo_nombre", `${company}-${mes}-${anio}`);
+        if (frm.is_new()) {
+            frm.set_value("nombre_paquete", `EEFF - ${company} - ${mes} ${anio}`);
+        }
+    } else if (frm.is_new()) {
+        frm.set_value("periodo_nombre", "");
+        frm.set_value("nombre_paquete", "");
+    }
+}
+
 frappe.ui.form.on("Paquete EEFF", {
+    company(frm) {
+        updatePackageNames(frm);
+    },
+    mes(frm) {
+        updatePackageNames(frm);
+    },
+    anio(frm) {
+        updatePackageNames(frm);
+    },
     setup(frm) {
         const get_balance_filters = () => {
             const filters = {};
@@ -155,7 +188,10 @@ frappe.ui.form.on("Paquete EEFF", {
         });
     },
     refresh(frm) {
-        if (frm.is_new()) return;
+        if (frm.is_new()) {
+            updatePackageNames(frm);
+            return;
+        }
 
         frm.add_custom_button(__("Ejecutar Mapeo"), () => {
             runPackageMapping(frm, frm.doc.name);
@@ -171,8 +207,8 @@ frappe.ui.form.on("Paquete EEFF", {
             frappe.set_route("indicadores-emision-eeff");
         }, __("Revision"));
 
-        frm.add_custom_button(__("Copiar Notas desde Paquete"), () => {
-            openCopyNotesDialog(frm);
+        frm.add_custom_button(__("Copiar EEFF y notas de paquete"), () => {
+            openCopyEEFFAndNotesDialog(frm);
         }, __("Configuracion"));
 
         frm.add_custom_button(__("Asistente de Notas"), () => {
