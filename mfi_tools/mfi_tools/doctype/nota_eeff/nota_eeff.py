@@ -7,6 +7,7 @@ from frappe.model.document import Document
 from frappe.utils import cint, cstr, flt
 from mfi_tools.mfi_tools.utils.nota_eeff import (
     build_note_autoname,
+    build_note_identifier,
     normalize_note_number,
     normalize_sub_note,
     normalize_sub_note_key,
