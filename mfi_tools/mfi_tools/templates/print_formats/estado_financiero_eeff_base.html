@@ -96,6 +96,18 @@
     width: 2px;
   }
 
+  .cef-no-comparative .cef-col-desc {
+    width: 68%;
+  }
+
+  .cef-no-comparative .cef-col-nota {
+    width: 8%;
+  }
+
+  .cef-no-comparative .cef-col-monto {
+    width: 24%;
+  }
+
   .cef-table th.num,
   .cef-table td.num {
     text-align: right;
@@ -250,13 +262,14 @@
 {% endif %}
 
 {% set package = frappe.get_doc("Paquete EEFF", doc.paquete_eeff) %}
+{% set has_comparative = (package.balanza_comparativa_eeff or "") | trim | length > 0 %}
 {% set labels = package.get_column_labels() %}
 {% set currency_ctx = package.get_currency_context() %}
 {% set currency_symbol = currency_ctx.symbol or "$" %}
 {% set lineas = (doc.lineas or []) %}
 {% set header = doc.get_print_header() %}
 
-<div class="cef-wrap" style="--cef-table-font-size: {{ doc.get_print_font_size() }}pt; --cef-table-width: {{ doc.get_print_table_width() }};">
+<div class="cef-wrap {% if not has_comparative %}cef-no-comparative{% endif %}" style="--cef-table-font-size: {{ doc.get_print_font_size() }}pt; --cef-table-width: {{ doc.get_print_table_width() }};">
   <div class="cef-head">
     <h1>{{ header.cliente or "-" }}</h1>
     <p>{{ header.titulo or "-" }}</p>
@@ -336,16 +349,20 @@
       <col class="cef-col-desc">
       <col class="cef-col-nota">
       <col class="cef-col-monto">
+      {% if has_comparative %}
       <col class="cef-col-gap">
       <col class="cef-col-monto">
+      {% endif %}
     </colgroup>
     <thead>
       <tr>
         <th></th>
         <th class="cef-note">Nota</th>
         <th class="num cef-val-actual">{{ labels.actual }}</th>
+        {% if has_comparative %}
         <th class="cef-gap"></th>
         <th class="num cef-val-comparativo">{{ labels.comparativo }}</th>
+        {% endif %}
       </tr>
     </thead>
     <tbody>
@@ -369,13 +386,17 @@
         {% if linea.es_linea_blanco %}
         <td class="cef-note"></td>
         <td class="cef-val-actual"></td>
+        {% if has_comparative %}
         <td class="cef-gap"></td>
         <td class="cef-val-comparativo"></td>
+        {% endif %}
         {% elif linea.es_titulo %}
         <td class="cef-note">{{ linea.nota or "" }}</td>
         <td class="num cef-val-actual"></td>
+        {% if has_comparative %}
         <td class="cef-gap"></td>
         <td class="num cef-val-comparativo"></td>
+        {% endif %}
         {% elif doc.is_text_line(linea) %}
         <td class="cef-note">{{ linea.nota or "" }}</td>
         <td class="cef-val-actual">
@@ -388,8 +409,10 @@
           {{ doc.format_line_value(linea, "monto_actual") }}
           {% endif %}
         </td>
+        {% if has_comparative %}
         <td class="cef-gap"></td>
         <td class="num cef-val-comparativo"></td>
+        {% endif %}
         {% else %}
         <td class="cef-note">{{ linea.nota or "" }}</td>
         <td class="num cef-val-actual">
@@ -402,6 +425,7 @@
           {{ doc.format_line_value(linea, "monto_actual") }}
           {% endif %}
         </td>
+        {% if has_comparative %}
         <td class="cef-gap"></td>
         <td class="num cef-val-comparativo">
           {% if linea.formato_presentacion == "Moneda" and doc.format_line_value(linea, "monto_comparativo") %}
@@ -413,6 +437,7 @@
           {{ doc.format_line_value(linea, "monto_comparativo") }}
           {% endif %}
         </td>
+        {% endif %}
         {% endif %}
       </tr>
       {% endif %}

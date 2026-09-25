@@ -164,6 +164,18 @@
     width: 2px;
   }
 
+  .cpc-no-comparative .cpc-col-desc {
+    width: 68%;
+  }
+
+  .cpc-no-comparative .cpc-col-nota {
+    width: 8%;
+  }
+
+  .cpc-no-comparative .cpc-col-monto {
+    width: 24%;
+  }
+
   .cpc-table th.num,
   .cpc-table td.num {
     text-align: right;
@@ -345,11 +357,12 @@ fields=["name", "codigo_factsheet", "numero_factsheet", "titulo"],
 order_by="numero_factsheet asc, codigo_factsheet asc",
 limit_page_length=100
 ) %}
+{% set has_comparative = (doc.balanza_comparativa_eeff or "") | trim | length > 0 %}
 {% set labels = doc.get_column_labels() %}
 {% set currency_ctx = doc.get_currency_context() %}
 {% set currency_symbol = currency_ctx.symbol or "$" %}
 
-<div class="cpc-wrap">
+<div class="cpc-wrap {% if not has_comparative %}cpc-no-comparative{% endif %}">
   <div class="cpc-head">
     <h1>{{ doc.company or doc.get("cliente") or "-" }}</h1>
     <p>Estado Financiero Completo</p>
@@ -460,16 +473,20 @@ limit_page_length=100
           <col class="cpc-col-desc">
           <col class="cpc-col-nota">
           <col class="cpc-col-monto">
+          {% if has_comparative %}
           <col class="cpc-col-gap">
           <col class="cpc-col-monto">
+          {% endif %}
         </colgroup>
         <thead>
           <tr>
             <th></th>
             <th class="cpc-note">Nota</th>
             <th class="num cpc-val-actual">{{ labels.actual }}</th>
+            {% if has_comparative %}
             <th class="cpc-gap"></th>
             <th class="num cpc-val-comparativo">{{ labels.comparativo }}</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -493,13 +510,17 @@ limit_page_length=100
             {% if linea.es_linea_blanco %}
             <td class="cpc-note"></td>
             <td class="cpc-val-actual"></td>
+            {% if has_comparative %}
             <td class="cpc-gap"></td>
             <td class="cpc-val-comparativo"></td>
+            {% endif %}
             {% elif linea.es_titulo %}
             <td class="cpc-note">{{ linea.nota or "" }}</td>
             <td class="num cpc-val-actual"></td>
+            {% if has_comparative %}
             <td class="cpc-gap"></td>
             <td class="num cpc-val-comparativo"></td>
+            {% endif %}
             {% elif estado_doc.is_text_line(linea) %}
             <td class="cpc-note">{{ linea.nota or "" }}</td>
             <td class="cpc-val-actual">
@@ -512,8 +533,10 @@ limit_page_length=100
               {{ estado_doc.format_line_value(linea, "monto_actual") }}
               {% endif %}
             </td>
+            {% if has_comparative %}
             <td class="cpc-gap"></td>
             <td class="num cpc-val-comparativo"></td>
+            {% endif %}
             {% else %}
             <td class="cpc-note">{{ linea.nota or "" }}</td>
             <td class="num cpc-val-actual">
@@ -526,6 +549,7 @@ limit_page_length=100
               {{ estado_doc.format_line_value(linea, "monto_actual") }}
               {% endif %}
             </td>
+            {% if has_comparative %}
             <td class="cpc-gap"></td>
             <td class="num cpc-val-comparativo">
               {% if linea.formato_presentacion == "Moneda" and estado_doc.format_line_value(linea, "monto_comparativo") %}
@@ -537,6 +561,7 @@ limit_page_length=100
               {{ estado_doc.format_line_value(linea, "monto_comparativo") }}
               {% endif %}
             </td>
+            {% endif %}
             {% endif %}
           </tr>
           {% endif %}
@@ -606,17 +631,24 @@ limit_page_length=100
       {% if ns_fig.tiene %}
       <table class="cpc-table cpc-align-{{ nota_table_align }}" style="margin-top: {{ '0' if nota_doc.contenido_narrativo else '8px' }}; --cpc-table-width: {{ nota_table_width }}; --cpc-table-font-size: {{ nota_font_size }}pt;">
         <colgroup>
+          {% if has_comparative %}
           <col style="width:60%;">
           <col style="width:19.5%;">
           <col class="cpc-gap">
           <col style="width:19.5%;">
+          {% else %}
+          <col style="width:75%;">
+          <col style="width:25%;">
+          {% endif %}
         </colgroup>
         <thead>
           <tr>
             <th></th>
             <th class="num cpc-val-actual">{{ labels.actual }}</th>
+            {% if has_comparative %}
             <th class="cpc-gap"></th>
             <th class="num cpc-val-comparativo">{{ labels.comparativo }}</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -654,6 +686,7 @@ limit_page_length=100
                 {% endif %}
               {% endif %}
             </td>
+            {% if has_comparative %}
             <td class="cpc-gap"></td>
             <td class="num cpc-val-comparativo">
               {% if not cifra.es_linea_blanco and not cifra.es_titulo %}
@@ -667,6 +700,7 @@ limit_page_length=100
                 {% endif %}
               {% endif %}
             </td>
+            {% endif %}
           </tr>
           {% endif %}
           {% endfor %}
@@ -683,6 +717,7 @@ limit_page_length=100
               {{ nota_doc.format_figure_amount(ns.total_actual, total_format) }}
               {% endif %}
             </td>
+            {% if has_comparative %}
             <td class="cpc-gap"></td>
             <td class="num cpc-val-comparativo">
               {% if total_format == "Moneda" %}
@@ -694,6 +729,7 @@ limit_page_length=100
               {{ nota_doc.format_figure_amount(ns.total_comparativo, total_format) }}
               {% endif %}
             </td>
+            {% endif %}
           </tr>
           {% endif %}
         </tbody>
@@ -820,16 +856,20 @@ limit_page_length=100
           <col class="cpc-col-desc">
           <col class="cpc-col-nota">
           <col class="cpc-col-monto">
+          {% if has_comparative %}
           <col class="cpc-col-gap">
           <col class="cpc-col-monto">
+          {% endif %}
         </colgroup>
         <thead>
           <tr>
             <th>Concepto</th>
             <th class="cpc-note"></th>
             <th class="num cpc-val-actual">{{ labels.actual }}</th>
+            {% if has_comparative %}
             <th class="cpc-gap"></th>
             <th class="num cpc-val-comparativo">{{ labels.comparativo }}</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -864,6 +904,7 @@ limit_page_length=100
                 {% endif %}
               {% endif %}
             </td>
+            {% if has_comparative %}
             <td class="cpc-gap"></td>
             <td class="num cpc-val-comparativo">
               {% if not row.es_linea_blanco and not row.es_titulo %}
@@ -877,6 +918,7 @@ limit_page_length=100
                 {% endif %}
               {% endif %}
             </td>
+            {% endif %}
           </tr>
           {% endif %}
           {% endfor %}

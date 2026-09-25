@@ -92,6 +92,14 @@
     text-align: right;
   }
 
+  .cfi-no-comparative .cfi-col-desc {
+    width: 75%;
+  }
+
+  .cfi-no-comparative .cfi-col-monto {
+    width: 25%;
+  }
+
   .cfi-table td.num {
     text-align: right;
     white-space: nowrap;
@@ -172,6 +180,7 @@
 </style>
 
 {% set package = frappe.get_doc("Paquete EEFF", doc.paquete_eeff) %}
+{% set has_comparative = (package.balanza_comparativa_eeff or "") | trim | length > 0 %}
 {% set labels = package.get_column_labels() %}
 {% set currency_ctx = package.get_currency_context() %}
 {% set currency_symbol = currency_ctx.symbol or "$" %}
@@ -180,7 +189,7 @@
 {% set table_align = doc.get_print_table_alignment_css() %}
 {% set font_size = doc.get_print_font_size() %}
 
-<div class="cfi-wrap">
+<div class="cfi-wrap {% if not has_comparative %}cfi-no-comparative{% endif %}">
   <div class="cfi-head">
     <h1><strong>{{ doc.titulo or doc.codigo_factsheet or "Factsheet" }}</strong></h1>
     <p>Paquete: {{ doc.paquete_eeff }}</p>
@@ -191,15 +200,19 @@
       <colgroup>
         <col class="cfi-col-desc">
         <col class="cfi-col-monto">
+        {% if has_comparative %}
         <col class="cfi-gap">
         <col class="cfi-col-monto">
+        {% endif %}
       </colgroup>
       <thead>
         <tr>
           <th>Concepto</th>
           <th class="num cfi-val-actual">{{ labels.actual }}</th>
+          {% if has_comparative %}
           <th class="cfi-gap"></th>
           <th class="num cfi-val-comparativo">{{ labels.comparativo }}</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
@@ -231,6 +244,7 @@
                   {% endif %}
                 {% endif %}
               </td>
+              {% if has_comparative %}
               <td class="cfi-gap"></td>
               <td class="num cfi-val-comparativo">
                 {% if not row.es_linea_blanco and not row.es_titulo %}
@@ -244,6 +258,7 @@
                   {% endif %}
                 {% endif %}
               </td>
+              {% endif %}
             </tr>
           {% endif %}
         {% endfor %}

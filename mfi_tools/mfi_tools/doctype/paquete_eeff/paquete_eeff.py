@@ -329,17 +329,20 @@ class PaqueteEEFF(Document):
         setattr(self, cache_key, output)
         return output
 
+    def tiene_comparativo(self):
+        return bool(cstr(getattr(self, "balanza_comparativa_eeff", "") or "").strip())
+
     def get_column_labels(self):
         mes = cstr(self.mes or "").strip() or _("Actual")
         anio = cint(self.anio or 0)
         if anio:
             return {
                 "actual": f"{mes} {anio}",
-                "comparativo": f"{mes} {anio - 1}",
+                "comparativo": f"{mes} {anio - 1}" if self.tiene_comparativo() else "",
             }
         return {
             "actual": mes,
-            "comparativo": _("Comparativo"),
+            "comparativo": _("Comparativo") if self.tiene_comparativo() else "",
         }
 
     def get_currency_context(self):

@@ -134,6 +134,14 @@
     text-align: right;
   }
 
+  .cni-no-comparative .cni-col-desc {
+    width: 75%;
+  }
+
+  .cni-no-comparative .cni-col-monto {
+    width: 25%;
+  }
+
   .cni-table td.num {
     text-align: right;
     white-space: nowrap;
@@ -225,7 +233,7 @@
   }
 </style>
 
-{% macro render_note_body(note_doc, labels, currency_symbol) %}
+{% macro render_note_body(note_doc, labels, currency_symbol, has_comparative=True) %}
   {% set cifras = note_doc.cifras_nota or [] %}
   {% set secciones_complejas = frappe.get_all("Seccion Nota EEFF", filters={"nota_eeff": note_doc.name}, fields=["name", "orden"], order_by="orden asc, creation asc") %}
   {% set note_font_size = note_doc.get_print_font_size() %}
@@ -248,15 +256,19 @@
       <colgroup>
         <col class="cni-col-desc">
         <col class="cni-col-monto">
+        {% if has_comparative %}
         <col class="cni-gap">
         <col class="cni-col-monto">
+        {% endif %}
       </colgroup>
       <thead>
         <tr>
           <th></th>
           <th class="num cni-val-actual">{{ labels.actual }}</th>
+          {% if has_comparative %}
           <th class="cni-gap"></th>
           <th class="num cni-val-comparativo">{{ labels.comparativo }}</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
@@ -294,6 +306,7 @@
                 {% endif %}
               {% endif %}
             </td>
+            {% if has_comparative %}
             <td class="cni-gap"></td>
             <td class="num cni-val-comparativo">
               {% if not cifra.es_linea_blanco and not cifra.es_titulo %}
@@ -307,6 +320,7 @@
                 {% endif %}
               {% endif %}
             </td>
+            {% endif %}
           </tr>
         {% endif %}
         {% endfor %}
@@ -323,6 +337,7 @@
             {{ note_doc.format_figure_amount(ns.total_actual, total_format) }}
             {% endif %}
           </td>
+          {% if has_comparative %}
           <td class="cni-gap"></td>
           <td class="num cni-val-comparativo">
             {% if total_format == "Moneda" %}
@@ -334,6 +349,7 @@
             {{ note_doc.format_figure_amount(ns.total_comparativo, total_format) }}
             {% endif %}
           </td>
+          {% endif %}
         </tr>
         {% endif %}
       </tbody>
@@ -435,6 +451,7 @@
 {% endmacro %}
 
 {% set package = frappe.get_doc("Paquete EEFF", doc.paquete_eeff) %}
+{% set has_comparative = (package.balanza_comparativa_eeff or "") | trim | length > 0 %}
 {% set labels = package.get_column_labels() %}
 {% set currency_ctx = package.get_currency_context() %}
 {% set currency_symbol = currency_ctx.symbol or "$" %}
@@ -454,7 +471,7 @@
   ) %}
 {% endif %}
 
-<div class="cni-wrap">
+<div class="cni-wrap {% if not has_comparative %}cni-no-comparative{% endif %}">
   <div class="cni-head">
     <h1{% if doc.sub_nota %} style="font-weight: 400;"{% endif %}>
       {% if doc.sub_nota %}
@@ -465,7 +482,7 @@
     </h1>
   </div>
 
-  {{ render_note_body(doc, labels, currency_symbol) }}
+  {{ render_note_body(doc, labels, currency_symbol, has_comparative) }}
 
   {% if sub_notas %}
   <div class="cni-subnotes">
@@ -479,7 +496,7 @@
         <div class="cni-section">
           <h2 style="font-weight: 400;">{{ sub_doc.get_print_heading() }}</h2>
         </div>
-        {{ render_note_body(sub_doc, labels, currency_symbol) }}
+        {{ render_note_body(sub_doc, labels, currency_symbol, has_comparative) }}
       </div>
     {% endfor %}
   </div>

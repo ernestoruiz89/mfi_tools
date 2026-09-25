@@ -309,6 +309,7 @@ def _add_estados_section(document, package):
         _set_paragraph_runs_font(paragraph)
         return
 
+    has_comparative = bool(cstr(getattr(package, "balanza_comparativa_eeff", "") or "").strip())
     labels = package.get_column_labels()
     currency_symbol = _get_package_currency_symbol(package)
 
@@ -337,9 +338,13 @@ def _add_estados_section(document, package):
         if getattr(estado_doc, "estructura_estado", "Simple") == "Compleja":
             _render_estado_complex_tables(document, estado_doc, package, currency_symbol, section, estado_font_size)
         else:
-            table = document.add_table(rows=1, cols=5)
+            if has_comparative:
+                table = document.add_table(rows=1, cols=5)
+                headers = ["", "Nota", labels["actual"], "", labels["comparativo"]]
+            else:
+                table = document.add_table(rows=1, cols=3)
+                headers = ["", "Nota", labels["actual"]]
             _set_word_table_alignment(table, estado_doc.get_print_table_alignment())
-            headers = ["", "Nota", labels["actual"], "", labels["comparativo"]]
             for header_index, title in enumerate(headers):
                 table.rows[0].cells[header_index].text = title
     
@@ -354,48 +359,77 @@ def _add_estados_section(document, package):
                 line_index = len(table.rows)
                 row = table.add_row().cells
                 row[0].text = "" if cint(getattr(linea, "es_linea_blanco", 0)) else (("    " * max((cint(linea.nivel or 1) - 1), 0)) + (cstr(linea.descripcion or "-")))
-                if cint(getattr(linea, "es_linea_blanco", 0)):
-                    row[1].text = ""
-                    row[2].text = ""
-                    row[3].text = ""
-                    row[4].text = ""
-                elif cint(getattr(linea, "es_titulo", 0)):
-                    row[1].text = cstr(getattr(linea, "nota", "") or "")
-                    row[2].text = ""
-                    row[3].text = ""
-                    row[4].text = ""
-                elif is_text_estado_line(linea):
-                    row[1].text = cstr(getattr(linea, "nota", "") or "")
-                    row[2].text = format_estado_line_value(linea, "monto_actual")
-                    row[3].text = ""
-                    row[4].text = ""
+                if has_comparative:
+                    if cint(getattr(linea, "es_linea_blanco", 0)):
+                        row[1].text = ""
+                        row[2].text = ""
+                        row[3].text = ""
+                        row[4].text = ""
+                    elif cint(getattr(linea, "es_titulo", 0)):
+                        row[1].text = cstr(getattr(linea, "nota", "") or "")
+                        row[2].text = ""
+                        row[3].text = ""
+                        row[4].text = ""
+                    elif is_text_estado_line(linea):
+                        row[1].text = cstr(getattr(linea, "nota", "") or "")
+                        row[2].text = format_estado_line_value(linea, "monto_actual")
+                        row[3].text = ""
+                        row[4].text = ""
+                    else:
+                        row[1].text = cstr(getattr(linea, "nota", "") or "")
+                        actual_value = format_estado_line_value(linea, "monto_actual")
+                        comparative_value = format_estado_line_value(linea, "monto_comparativo")
+                        if _is_estado_currency_line(linea):
+                            actual_value = _apply_currency_symbol(actual_value, currency_symbol)
+                            comparative_value = _apply_currency_symbol(comparative_value, currency_symbol)
+                        row[2].text = actual_value
+                        row[3].text = ""
+                        row[4].text = comparative_value
                 else:
-                    row[1].text = cstr(getattr(linea, "nota", "") or "")
-                    actual_value = format_estado_line_value(linea, "monto_actual")
-                    comparative_value = format_estado_line_value(linea, "monto_comparativo")
-                    if _is_estado_currency_line(linea):
-                        actual_value = _apply_currency_symbol(actual_value, currency_symbol)
-                        comparative_value = _apply_currency_symbol(comparative_value, currency_symbol)
-                    row[2].text = actual_value
-                    row[3].text = ""
-                    row[4].text = comparative_value
+                    if cint(getattr(linea, "es_linea_blanco", 0)):
+                        row[1].text = ""
+                        row[2].text = ""
+                    elif cint(getattr(linea, "es_titulo", 0)):
+                        row[1].text = cstr(getattr(linea, "nota", "") or "")
+                        row[2].text = ""
+                    elif is_text_estado_line(linea):
+                        row[1].text = cstr(getattr(linea, "nota", "") or "")
+                        row[2].text = format_estado_line_value(linea, "monto_actual")
+                    else:
+                        row[1].text = cstr(getattr(linea, "nota", "") or "")
+                        actual_value = format_estado_line_value(linea, "monto_actual")
+                        if _is_estado_currency_line(linea):
+                            actual_value = _apply_currency_symbol(actual_value, currency_symbol)
+                        row[2].text = actual_value
                 rendered_rows.append((line_index, linea))
                 if cint(getattr(linea, "es_total", 0)):
                     total_rows.append(line_index)
                 elif cint(getattr(linea, "es_subtotal", 0)):
                     subtotal_rows.append(line_index)
     
-            _set_table_column_widths(table, _get_estado_table_widths_cm(section, estado_doc))
-            _style_financial_table(
-                table,
-                total_rows=total_rows,
-                subtotal_rows=subtotal_rows,
-                font_size=estado_font_size,
-                note_col_index=1,
-                numeric_col_indexes=(2, 4),
-                gap_col_index=3,
-                align_numeric_headers=True,
-            )
+            _set_table_column_widths(table, _get_estado_table_widths_cm(section, estado_doc, has_comparative=has_comparative))
+            if has_comparative:
+                _style_financial_table(
+                    table,
+                    total_rows=total_rows,
+                    subtotal_rows=subtotal_rows,
+                    font_size=estado_font_size,
+                    note_col_index=1,
+                    numeric_col_indexes=(2, 4),
+                    gap_col_index=3,
+                    align_numeric_headers=True,
+                )
+            else:
+                _style_financial_table(
+                    table,
+                    total_rows=total_rows,
+                    subtotal_rows=subtotal_rows,
+                    font_size=estado_font_size,
+                    note_col_index=1,
+                    numeric_col_indexes=(2,),
+                    gap_col_index=None,
+                    align_numeric_headers=True,
+                )
             for line_index, linea in rendered_rows:
                 _apply_estado_line_format(table.rows[line_index], linea, font_size=estado_font_size)
                 if cint(getattr(linea, "es_linea_blanco", 0)):
@@ -496,10 +530,11 @@ def _render_note_block(document, nota_doc, labels, package, currency_symbol, sub
     for run in heading_paragraph.runs:
         run.bold = not is_subnote
 
+    has_comparative = bool(cstr(getattr(package, "balanza_comparativa_eeff", "") or "").strip())
     if cstr(getattr(nota_doc, "estructura_nota", "Simple") or "Simple").strip() == "Compleja":
-        _render_complex_note_content(document, nota_doc, labels, package, currency_symbol)
+        _render_complex_note_content(document, nota_doc, labels, package, currency_symbol, has_comparative=has_comparative)
     else:
-        _render_simple_note_content(document, nota_doc, labels, currency_symbol)
+        _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=has_comparative)
 
     rendered_observaciones = _get_rendered_note_observaciones(nota_doc)
     if rendered_observaciones:
@@ -522,7 +557,7 @@ def _render_note_block(document, nota_doc, labels, package, currency_symbol, sub
             )
 
 
-def _render_simple_note_content(document, nota_doc, labels, currency_symbol):
+def _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=True):
     note_font_size = nota_doc.get_print_font_size() if hasattr(nota_doc, "get_print_font_size") else BODY_SIZE
     note_alignment = nota_doc.get_print_table_alignment() if hasattr(nota_doc, "get_print_table_alignment") else "Centro"
     rendered_narrative = _get_rendered_note_narrative(nota_doc)
@@ -531,18 +566,22 @@ def _render_simple_note_content(document, nota_doc, labels, currency_symbol):
         spacer = document.add_paragraph(" ")
         _set_paragraph_runs_font(spacer, size=BODY_SIZE)
 
-    _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol)
+    _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol, has_comparative=has_comparative)
 
 
-def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol):
+def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol, has_comparative=True):
     cifras = sorted(list(nota_doc.cifras_nota or []), key=lambda row: cint(row.idx or 0))
     visible_cifras = [row for row in cifras if not cint(getattr(row, "no_imprimir", 0))]
     if not visible_cifras:
         return
 
-    table = document.add_table(rows=1, cols=4)
+    if has_comparative:
+        table = document.add_table(rows=1, cols=4)
+        headers = ["", labels["actual"], "", labels["comparativo"]]
+    else:
+        table = document.add_table(rows=1, cols=2)
+        headers = ["", labels["actual"]]
     _set_word_table_alignment(table, note_alignment)
-    headers = ["", labels["actual"], "", labels["comparativo"]]
     for header_index, title in enumerate(headers):
         table.rows[0].cells[header_index].text = title
 
@@ -564,14 +603,20 @@ def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignm
         if cifra.comentario and not cint(getattr(cifra, "es_linea_blanco", 0)):
             concept_parts.append(cstr(cifra.comentario))
         row[0].text = "\n".join([part for part in concept_parts if part])
-        if cint(getattr(cifra, "es_linea_blanco", 0)) or cint(getattr(cifra, "es_titulo", 0)):
-            row[1].text = ""
-            row[2].text = ""
-            row[3].text = ""
+        if has_comparative:
+            if cint(getattr(cifra, "es_linea_blanco", 0)) or cint(getattr(cifra, "es_titulo", 0)):
+                row[1].text = ""
+                row[2].text = ""
+                row[3].text = ""
+            else:
+                row[1].text = _format_note_figure_value(nota_doc, cifra, "monto_actual", currency_symbol)
+                row[2].text = ""
+                row[3].text = _format_note_figure_value(nota_doc, cifra, "monto_comparativo", currency_symbol)
         else:
-            row[1].text = _format_note_figure_value(nota_doc, cifra, "monto_actual", currency_symbol)
-            row[2].text = ""
-            row[3].text = _format_note_figure_value(nota_doc, cifra, "monto_comparativo", currency_symbol)
+            if cint(getattr(cifra, "es_linea_blanco", 0)) or cint(getattr(cifra, "es_titulo", 0)):
+                row[1].text = ""
+            else:
+                row[1].text = _format_note_figure_value(nota_doc, cifra, "monto_actual", currency_symbol)
         rendered_rows.append((line_index, cifra))
 
         if cint(getattr(cifra, "es_total", 0)):
@@ -588,23 +633,28 @@ def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignm
         total_row = table.add_row().cells
         total_row[0].text = "Total"
         total_row[1].text = _format_note_figure_amount(nota_doc, total_actual, total_format, currency_symbol)
-        total_row[2].text = ""
-        total_row[3].text = _format_note_figure_amount(nota_doc, total_comparativo, total_format, currency_symbol)
+        if has_comparative:
+            total_row[2].text = ""
+            total_row[3].text = _format_note_figure_amount(nota_doc, total_comparativo, total_format, currency_symbol)
         total_rows.append(total_row_index)
 
-    _set_table_column_widths(table, [9.5, 3.2, 0.1, 3.2])
-    _style_note_table(table, total_rows=total_rows, subtotal_rows=subtotal_rows, font_size=note_font_size)
+    if has_comparative:
+        _set_table_column_widths(table, [9.5, 3.2, 0.1, 3.2])
+        _style_note_table(table, total_rows=total_rows, subtotal_rows=subtotal_rows, font_size=note_font_size)
+    else:
+        _set_table_column_widths(table, [12.5, 3.5])
+        _style_note_table(table, total_rows=total_rows, subtotal_rows=subtotal_rows, font_size=note_font_size, numeric_col_indexes=(1,), gap_col_indexes=())
     for line_index, cifra in rendered_rows:
         _apply_note_figure_format(table.rows[line_index], cifra, font_size=note_font_size)
     _force_table_font_size(table, note_font_size)
 
-def _render_complex_note_content(document, nota_doc, labels, package, currency_symbol):
+def _render_complex_note_content(document, nota_doc, labels, package, currency_symbol, has_comparative=True):
     Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
     note_font_size = nota_doc.get_print_font_size() if hasattr(nota_doc, "get_print_font_size") else BODY_SIZE
     note_alignment = nota_doc.get_print_table_alignment() if hasattr(nota_doc, "get_print_table_alignment") else "Centro"
     sections = _get_complex_note_sections(nota_doc.name)
     if not sections:
-        _render_simple_note_content(document, nota_doc, labels, currency_symbol)
+        _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=has_comparative)
         return
 
     rendered_narrative = _get_rendered_note_narrative(nota_doc)
@@ -617,7 +667,7 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
         not cint(getattr(row, "no_imprimir", 0))
         for row in (nota_doc.cifras_nota or [])
     )
-    _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol)
+    _render_note_figures(document, nota_doc, labels, note_font_size, note_alignment, currency_symbol, has_comparative=has_comparative)
     if has_visible_figures:
         spacer = document.add_paragraph("")
         _set_paragraph_runs_font(spacer, size=note_font_size)
@@ -837,6 +887,7 @@ def _build_complex_note_tables(cells):
 
 def _add_datos_estadisticos_section(document, package):
     document.add_paragraph("Datos Estadisticos", style="Heading 1")
+    has_comparative = bool(cstr(getattr(package, "balanza_comparativa_eeff", "") or "").strip())
     labels = package.get_column_labels()
     comparative_map = package.get_datos_estadisticos_comparativos_map() if hasattr(package, "get_datos_estadisticos_comparativos_map") else {}
     datos = sorted(
@@ -848,8 +899,12 @@ def _add_datos_estadisticos_section(document, package):
         _set_paragraph_runs_font(paragraph)
         return
 
-    table = document.add_table(rows=1, cols=4)
-    headers = ["Dato", "Unidad", labels["actual"], labels["comparativo"]]
+    if has_comparative:
+        table = document.add_table(rows=1, cols=4)
+        headers = ["Dato", "Unidad", labels["actual"], labels["comparativo"]]
+    else:
+        table = document.add_table(rows=1, cols=3)
+        headers = ["Dato", "Unidad", labels["actual"]]
     for header_index, title in enumerate(headers):
         table.rows[0].cells[header_index].text = title
 
@@ -859,10 +914,15 @@ def _add_datos_estadisticos_section(document, package):
         data_row[0].text = cstr(row.descripcion or row.codigo_dato or "-")
         data_row[1].text = cstr(row.unidad_medida or "-")
         data_row[2].text = _fmt_number(row.valor_actual)
-        data_row[3].text = _fmt_number(comparative_map.get(code, 0))
+        if has_comparative:
+            data_row[3].text = _fmt_number(comparative_map.get(code, 0))
 
-    _set_table_column_widths(table, [7.0, 2.5, 3.0, 3.0])
-    _style_note_table(table)
+    if has_comparative:
+        _set_table_column_widths(table, [7.0, 2.5, 3.0, 3.0])
+        _style_note_table(table)
+    else:
+        _set_table_column_widths(table, [9.0, 3.25, 3.25])
+        _style_note_table(table, numeric_col_indexes=(2,), gap_col_indexes=())
 
 
 def _build_tabular_sections(celdas):
@@ -1019,9 +1079,11 @@ def _force_table_font_size(table, font_size):
                 _set_paragraph_runs_font(paragraph, size=font_size)
 
 
-def _get_estado_table_widths_cm(section, estado_doc):
+def _get_estado_table_widths_cm(section, estado_doc, has_comparative=True):
     # Word usa anchos fijos en cm para evitar que el motor DOCX redistribuya
     # de forma inconsistente la columna comparativa.
+    if not has_comparative:
+        return [12.5, 1.25, 3.5]
     return [10.0, 1.25, 2.9, 0.2, 2.9]
 
 

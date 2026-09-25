@@ -141,6 +141,18 @@
     width: 2px;
   }
 
+  .cpc-no-comparative .cpc-col-desc {
+    width: 68%;
+  }
+
+  .cpc-no-comparative .cpc-col-nota {
+    width: 8%;
+  }
+
+  .cpc-no-comparative .cpc-col-monto {
+    width: 24%;
+  }
+
   .cpc-table th.num,
   .cpc-table td.num {
     text-align: right;
@@ -237,11 +249,12 @@
   order_by="numero_factsheet asc, codigo_factsheet asc",
   limit_page_length=100
 ) %}
+{% set has_comparative = (doc.balanza_comparativa_eeff or "") | trim | length > 0 %}
 {% set labels = doc.get_column_labels() %}
 {% set currency_ctx = doc.get_currency_context() %}
 {% set currency_symbol = currency_ctx.symbol or "$" %}
 
-<div class="cpc-wrap">
+<div class="cpc-wrap {% if not has_comparative %}cpc-no-comparative{% endif %}">
   <div class="cpc-head">
     <h1>{{ doc.company or doc.get("cliente") or "-" }}</h1>
     <p>Reporte de Factsheets Completo</p>
@@ -270,16 +283,20 @@
               <col class="cpc-col-desc">
               <col class="cpc-col-nota">
               <col class="cpc-col-monto">
+              {% if has_comparative %}
               <col class="cpc-col-gap">
               <col class="cpc-col-monto">
+              {% endif %}
             </colgroup>
             <thead>
               <tr>
                 <th>Concepto</th>
                 <th class="cpc-note"></th>
                 <th class="num cpc-val-actual">{{ labels.actual }}</th>
+                {% if has_comparative %}
                 <th class="cpc-gap"></th>
                 <th class="num cpc-val-comparativo">{{ labels.comparativo }}</th>
+                {% endif %}
               </tr>
             </thead>
             <tbody>
@@ -314,6 +331,7 @@
                         {% endif %}
                       {% endif %}
                     </td>
+                    {% if has_comparative %}
                     <td class="cpc-gap"></td>
                     <td class="num cpc-val-comparativo">
                       {% if not row.es_linea_blanco and not row.es_titulo %}
@@ -327,6 +345,7 @@
                         {% endif %}
                       {% endif %}
                     </td>
+                    {% endif %}
                   </tr>
                 {% endif %}
               {% endfor %}
