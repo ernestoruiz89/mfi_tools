@@ -94,6 +94,15 @@ class EstadoFinancieroEEFF(Document):
             return False
         return is_text_estado_line(row)
 
+    def get_background_image(self):
+        img = cstr(getattr(self, "imagen_fondo", "") or "").strip()
+        if img:
+            return img
+        paquete = cstr(getattr(self, "paquete_eeff", "") or "").strip()
+        if paquete and frappe.db.exists("Paquete EEFF", paquete):
+            return cstr(frappe.db.get_value("Paquete EEFF", paquete, "imagen_fondo_estados") or "").strip()
+        return ""
+
     def get_print_font_size(self):
         value = flt(getattr(self, "tamano_letra_impresion", 0) or 12)
         if not math.isfinite(value):

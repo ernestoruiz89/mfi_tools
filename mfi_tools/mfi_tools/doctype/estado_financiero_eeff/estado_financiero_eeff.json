@@ -21,6 +21,8 @@
         "impresion_column",
         "ancho_tabla_impresion",
         "alineacion_tabla_impresion",
+        "orientacion",
+        "imagen_fondo",
         "estado_aprobacion",
         "total_lineas",
         "lineas_tab",
@@ -149,6 +151,12 @@
             "label": "Orientacion",
             "options": "Vertical\nHorizontal",
             "default": "Vertical"
+        },
+        {
+            "description": "Imagen de fondo para el estado financiero (cubre el 100% de la página en Word y PDF).",
+            "fieldname": "imagen_fondo",
+            "fieldtype": "Attach Image",
+            "label": "Imagen de Fondo"
         },
         {
             "fieldname": "estado_aprobacion",

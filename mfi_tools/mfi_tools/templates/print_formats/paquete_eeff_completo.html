@@ -337,17 +337,40 @@
   }
 
   .cpc-cover-page,
-  .cpc-index-page {
+  .cpc-index-page,
+  .cpc-estado-block.cpc-has-bg {
     position: relative;
     width: 100%;
-    height: 100vh;
     min-height: 279mm;
-    page-break-after: always;
-    page-break-inside: avoid;
-    overflow: hidden;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+  }
+
+  .cpc-cover-page,
+  .cpc-index-page {
+    height: 100vh;
+    page-break-after: always;
+    page-break-inside: avoid;
+    overflow: hidden;
+  }
+
+  .cpc-estado-block.cpc-has-bg {
+    page-break-inside: avoid;
+    overflow: hidden;
+  }
+
+  .cpc-estado-inner {
+    position: relative;
+    z-index: 2;
+    padding: 28mm 20mm 24mm 20mm;
+    box-sizing: border-box;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-estado-header-block {
+    border-bottom: 2px solid #000000;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
   }
 
   .cpc-page-bg-img {
@@ -468,13 +491,37 @@
       break-after: page !important;
     }
     .cpc-wrap {
-      padding: 15mm 20mm !important;
+      padding: 0 !important;
+    }
+    .cpc-head,
+    .cpc-meta,
+    .cpc-estado-block:not(.cpc-has-bg),
+    .cpc-notas-wrapper {
+      padding-left: 20mm !important;
+      padding-right: 20mm !important;
+    }
+    .cpc-head {
+      padding-top: 15mm !important;
+    }
+    .cpc-estado-block:not(.cpc-has-bg) {
+      padding-top: 15mm !important;
+      padding-bottom: 15mm !important;
+    }
+    .cpc-notas-wrapper {
+      padding-top: 15mm !important;
+      padding-bottom: 15mm !important;
+    }
+    .cpc-estado-block.cpc-has-bg {
+      width: 100% !important;
+      min-height: 100vh !important;
+      page-break-inside: avoid !important;
     }
   }
 
   @media screen {
     .cpc-cover-page,
-    .cpc-index-page {
+    .cpc-index-page,
+    .cpc-estado-block.cpc-has-bg {
       min-height: 1050px;
       margin-bottom: 25px;
       box-shadow: 0 0 10px rgba(0,0,0,0.15);
@@ -606,20 +653,27 @@ limit_page_length=100
   {% endif %}
 
   <div class="cpc-section">
-    {% if not cover_bg %}
+    {% if not cover_bg and not doc.imagen_fondo_estados %}
     <h2>Estados Financieros</h2>
     {% endif %}
     {% if estados %}
     {% for estado in estados %}
     {% set estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name) %}
+    {% set estado_bg = estado_doc.get_background_image() if hasattr(estado_doc, "get_background_image") else (estado_doc.imagen_fondo or doc.imagen_fondo_estados) %}
     {% set lineas = (estado_doc.lineas or []) %}
     {% set estado_header = estado_doc.get_print_header() %}
     {% set is_landscape_class = " cpc-landscape-section" if estado_doc.orientacion == "Horizontal" else "" %}
-    <div id="cpc-estado-{{ loop.index0 }}" class="cpc-section cpc-estado-block{{ is_landscape_class }}" {% if loop.index0 > 0 or not cover_bg %}style="page-break-before: always; break-before: page;"{% endif %}>
-      <h3>{{ estado_header.cliente or "-" }}</h3>
-      <p class="cpc-subtitle">{{ estado_header.titulo or "-" }}</p>
-      {% if estado_header.periodo %}<p class="cpc-subtitle">{{ estado_header.periodo }}</p>{% endif %}
-      {% if estado_header.subtitulo %}<p class="cpc-subtitle">{{ estado_header.subtitulo }}</p>{% endif %}
+    <div id="cpc-estado-{{ loop.index0 }}" class="cpc-section cpc-estado-block{% if estado_bg %} cpc-has-bg{% endif %}{{ is_landscape_class }}" {% if loop.index0 > 0 or not cover_bg %}style="page-break-before: always; break-before: page;"{% endif %}>
+      {% if estado_bg %}
+      <img class="cpc-page-bg-img" src="{{ estado_bg }}" alt="Fondo">
+      <div class="cpc-estado-inner">
+      {% endif %}
+      <div class="cpc-estado-header-block">
+        <h3>{{ estado_header.cliente or "-" }}</h3>
+        <p class="cpc-subtitle">{{ estado_header.titulo or "-" }}</p>
+        {% if estado_header.periodo %}<p class="cpc-subtitle">{{ estado_header.periodo }}</p>{% endif %}
+        {% if estado_header.subtitulo %}<p class="cpc-subtitle">{{ estado_header.subtitulo }}</p>{% endif %}
+      </div>
 
       {% if estado_doc.estructura_estado == "Compleja" %}
         {% set tablas = estado_doc.get_render_tables() %}
@@ -818,7 +872,9 @@ limit_page_length=100
         {% endif %}
       </div>
       {% endif %}
-
+      {% if estado_bg %}
+      </div>
+      {% endif %}
     </div>
     {% endfor %}
     {% else %}

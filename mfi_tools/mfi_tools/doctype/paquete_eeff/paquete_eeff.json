@@ -32,6 +32,7 @@
         "imagen_portada",
         "diseno_column",
         "imagen_indice",
+        "imagen_fondo_estados",
         "datos_consolidados_section",
         "datos_estadisticos",
         "firmas_section",
@@ -220,6 +221,12 @@
             "fieldname": "imagen_indice",
             "fieldtype": "Attach Image",
             "label": "Imagen de Índice"
+        },
+        {
+            "description": "Imagen de fondo por defecto para los estados financieros (cubre el 100% de la página en Word y PDF).",
+            "fieldname": "imagen_fondo_estados",
+            "fieldtype": "Attach Image",
+            "label": "Imagen de Fondo Estados Financieros"
         },
         {
             "fieldname": "datos_consolidados_section",

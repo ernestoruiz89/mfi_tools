@@ -253,6 +253,54 @@
     padding: 0 !important;
     width: 2px;
   }
+
+  .cef-page-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    z-index: 1;
+    display: block;
+    pointer-events: none;
+  }
+
+  .cef-wrap.cef-has-bg {
+    position: relative;
+    padding: 0 !important;
+    min-height: 279mm;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .cef-wrap.cef-has-bg .cef-inner {
+    position: relative;
+    z-index: 2;
+    padding: 28mm 20mm 24mm 20mm;
+    box-sizing: border-box;
+  }
+
+  @media print {
+    body, html, .print-format {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .cef-wrap.cef-has-bg {
+      width: 100% !important;
+      height: 100vh !important;
+      min-height: 100vh !important;
+      page-break-inside: avoid !important;
+    }
+  }
+
+  @media screen {
+    .cef-wrap.cef-has-bg {
+      min-height: 1050px;
+      margin: 0 auto 25px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    }
+  }
 </style>
 
 {% if doc.orientacion == "Horizontal" %}
@@ -261,15 +309,21 @@
 </style>
 {% endif %}
 
-{% set package = frappe.get_doc("Paquete EEFF", doc.paquete_eeff) %}
-{% set has_comparative = (package.balanza_comparativa_eeff or "") | trim | length > 0 %}
-{% set labels = package.get_column_labels() %}
-{% set currency_ctx = package.get_currency_context() %}
+{% set package = frappe.get_doc("Paquete EEFF", doc.paquete_eeff) if doc.paquete_eeff else None %}
+{% set estado_bg = doc.get_background_image() if hasattr(doc, "get_background_image") else (doc.imagen_fondo or (package.imagen_fondo_estados if package else None)) %}
+{% set has_comparative = (package.balanza_comparativa_eeff or "") | trim | length > 0 if package else False %}
+{% set labels = package.get_column_labels() if package else {"actual": "Actual", "comparativo": "Comparativo"} %}
+{% set currency_ctx = package.get_currency_context() if package else {} %}
 {% set currency_symbol = currency_ctx.symbol or "$" %}
 {% set lineas = (doc.lineas or []) %}
 {% set header = doc.get_print_header() %}
 
-<div class="cef-wrap {% if not has_comparative %}cef-no-comparative{% endif %}" style="--cef-table-font-size: {{ doc.get_print_font_size() }}pt; --cef-table-width: {{ doc.get_print_table_width() }};">
+<div class="cef-wrap {% if not has_comparative %}cef-no-comparative{% endif %}{% if estado_bg %} cef-has-bg{% endif %}" style="--cef-table-font-size: {{ doc.get_print_font_size() }}pt; --cef-table-width: {{ doc.get_print_table_width() }};">
+  {% if estado_bg %}
+  <img class="cef-page-bg-img" src="{{ estado_bg }}" alt="Fondo">
+  <div class="cef-inner">
+  {% endif %}
+
   <div class="cef-head">
     <h1>{{ header.cliente or "-" }}</h1>
     <p>{{ header.titulo or "-" }}</p>
@@ -481,4 +535,7 @@
   </div>
   {% endif %}
 
+  {% if estado_bg %}
+  </div>
+  {% endif %}
 </div>

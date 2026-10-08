@@ -527,7 +527,6 @@ def _set_section_header_content(section, header_data):
 
 
 def _add_estados_section(document, package):
-    document.add_paragraph("Estados Financieros", style="Heading 1")
     estados = frappe.get_all(
         "Estado Financiero EEFF",
         filters={"paquete_eeff": package.name},
@@ -536,9 +535,17 @@ def _add_estados_section(document, package):
         limit_page_length=100,
     )
     if not estados:
+        document.add_paragraph("Estados Financieros", style="Heading 1")
         paragraph = document.add_paragraph("No hay estados financieros registrados para este paquete.")
         _set_paragraph_runs_font(paragraph)
         return
+
+    has_any_estado_bg = any(
+        bool(_resolve_image_path(frappe.db.get_value("Estado Financiero EEFF", e.name, "imagen_fondo") or package.get("imagen_fondo_estados")))
+        for e in estados
+    )
+    if not has_any_estado_bg:
+        document.add_paragraph("Estados Financieros", style="Heading 1")
 
     has_comparative = bool(cstr(getattr(package, "balanza_comparativa_eeff", "") or "").strip())
     labels = package.get_column_labels()
@@ -549,6 +556,8 @@ def _add_estados_section(document, package):
     for index, estado in enumerate(estados):
         estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name)
         is_landscape = cstr(estado_doc.get("orientacion") or "Vertical") == "Horizontal"
+        estado_bg_file = estado_doc.get_background_image() if hasattr(estado_doc, "get_background_image") else (estado_doc.get("imagen_fondo") or package.get("imagen_fondo_estados"))
+        estado_image_path = _resolve_image_path(estado_bg_file) if estado_bg_file else None
         
         if index == 0:
             section = document.sections[-1]
@@ -560,11 +569,64 @@ def _add_estados_section(document, package):
             _set_section_footer_page_number(section)
             
         header = estado_doc.get_print_header()
-        _set_section_header_content(section, header)
         estado_font_size = estado_doc.get_print_font_size()
 
-        if index == 0:
-            document.add_paragraph("")
+        if estado_image_path:
+            section.top_margin = Cm(2.8)
+            section.bottom_margin = Cm(2.6)
+            section.left_margin = Cm(2.0)
+            section.right_margin = Cm(2.0)
+            section.header_distance = Cm(0)
+            section.footer_distance = Cm(1.2)
+            _apply_section_background_image(section, estado_image_path, OxmlElement, qn)
+
+            # Titulo y encabezado en el cuerpo del documento
+            p1 = document.add_paragraph(cstr(header.get("cliente") or "-"))
+            p1.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            _set_paragraph_runs_font(p1, size=BODY_SIZE, bold=True)
+            p1.paragraph_format.space_before = Pt(0)
+            p1.paragraph_format.space_after = Pt(2)
+
+            p2 = document.add_paragraph(cstr(header.get("titulo") or "-"), style="Heading 1")
+            p2.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            _set_paragraph_runs_font(p2, size=BODY_SIZE, bold=True)
+            p2.paragraph_format.space_before = Pt(0)
+            p2.paragraph_format.space_after = Pt(2)
+
+            if cstr(header.get("periodo") or "").strip():
+                p3 = document.add_paragraph(cstr(header.get("periodo") or ""))
+                p3.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                _set_paragraph_runs_font(p3, size=BODY_SIZE, bold=True)
+                p3.paragraph_format.space_before = Pt(0)
+                p3.paragraph_format.space_after = Pt(2)
+
+            if cstr(header.get("subtitulo") or "").strip():
+                p4 = document.add_paragraph(cstr(header.get("subtitulo") or ""))
+                p4.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                _set_paragraph_runs_font(p4, size=BODY_SIZE, bold=False)
+                p4.paragraph_format.space_before = Pt(0)
+                p4.paragraph_format.space_after = Pt(4)
+
+            p_div = document.add_paragraph()
+            _set_paragraph_runs_font(p_div, size=Pt(2))
+            p_div.paragraph_format.space_before = Pt(0)
+            p_div.paragraph_format.space_after = Pt(6)
+            pPr = p_div._element.get_or_add_pPr()
+            pbdr = pPr.first_child_found_in("w:pBdr")
+            if pbdr is None:
+                pbdr = OxmlElement("w:pBdr")
+                pPr.append(pbdr)
+            bottom = pbdr.find(qn("w:bottom"))
+            if bottom is None:
+                bottom = OxmlElement("w:bottom")
+                pbdr.append(bottom)
+            bottom.set(qn("w:val"), "single")
+            bottom.set(qn("w:sz"), "8")
+            bottom.set(qn("w:color"), "000000")
+        else:
+            _set_section_header_content(section, header)
+            if index == 0:
+                document.add_paragraph("")
 
         if getattr(estado_doc, "estructura_estado", "Simple") == "Compleja":
             _render_estado_complex_tables(document, estado_doc, package, currency_symbol, section, estado_font_size)
