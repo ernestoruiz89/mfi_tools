@@ -121,6 +121,9 @@ def _get_image_file_path(file_url):
     return None
 
 
+_resolve_image_path = _get_image_file_path
+
+
 def _apply_section_background_image(section, image_source, OxmlElement, qn):
     if not image_source:
         return
@@ -541,7 +544,7 @@ def _add_estados_section(document, package):
         return
 
     has_any_estado_bg = any(
-        bool(_resolve_image_path(frappe.db.get_value("Estado Financiero EEFF", e.name, "imagen_fondo") or package.get("imagen_fondo_estados")))
+        bool(_get_image_file_path(frappe.db.get_value("Estado Financiero EEFF", e.name, "imagen_fondo") or package.get("imagen_fondo_estados")))
         for e in estados
     )
     if not has_any_estado_bg:
@@ -557,7 +560,7 @@ def _add_estados_section(document, package):
         estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name)
         is_landscape = cstr(estado_doc.get("orientacion") or "Vertical") == "Horizontal"
         estado_bg_file = estado_doc.get_background_image() if hasattr(estado_doc, "get_background_image") else (estado_doc.get("imagen_fondo") or package.get("imagen_fondo_estados"))
-        estado_image_path = _resolve_image_path(estado_bg_file) if estado_bg_file else None
+        estado_image_path = _get_image_file_path(estado_bg_file) if estado_bg_file else None
         
         if index == 0:
             section = document.sections[-1]
