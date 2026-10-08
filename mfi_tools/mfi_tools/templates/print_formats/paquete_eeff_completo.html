@@ -358,14 +358,6 @@
     page: landscape_page;
   }
 
-  @page cpc_notes_page {
-    size: letter portrait;
-    margin: 15mm 0mm 0mm 0mm;
-  }
-  .cpc-notas-wrapper {
-    page: cpc_notes_page;
-  }
-
   .cpc-cover-page,
   .cpc-index-page,
   .cpc-estado-block.cpc-has-bg {
@@ -618,7 +610,14 @@
       padding-bottom: var(--cpc-margin-bottom, 15mm) !important;
     }
     .cpc-notas-wrapper {
+      padding-top: 15mm !important;
       padding-bottom: 15mm !important;
+    }
+    .cpc-note-block + .cpc-note-block {
+      page-break-before: always !important;
+      break-before: page;
+      margin-top: 0 !important;
+      padding-top: 15mm !important;
     }
     .cpc-estado-block.cpc-has-bg {
       width: 100% !important;
