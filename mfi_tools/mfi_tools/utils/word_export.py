@@ -858,8 +858,8 @@ def _add_notas_section(document, package):
         if principal:
             printable_notes.append((principal, subnotes))
             continue
-        for subnote_doc in subnotes:
-            printable_notes.append((subnote_doc, []))
+        if subnotes:
+            printable_notes.append((subnotes[0], subnotes[1:]))
 
     Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
 
@@ -889,6 +889,7 @@ def _add_notas_section(document, package):
 
 def _render_note_block(document, nota_doc, labels, package, currency_symbol, subnotes=None, heading_style="Heading 2"):
     note_font_size = nota_doc.get_print_font_size() if hasattr(nota_doc, "get_print_font_size") else BODY_SIZE
+    rendered_observaciones = _get_rendered_note_observaciones(nota_doc)
     is_subnote = bool(cstr(getattr(nota_doc, "sub_nota", "") or "").strip())
     # Solo las notas principales deben tener estilo Heading para figurar en el índice de Word;
     # las sub-notas se dejan con estilo Normal para excluirse de la tabla de contenido.
@@ -904,11 +905,21 @@ def _render_note_block(document, nota_doc, labels, package, currency_symbol, sub
     has_comparative = bool(cstr(getattr(package, "balanza_comparativa_eeff", "") or "").strip())
     exclude_zero_movements = bool(cint(getattr(package, "excluir_lineas_sin_movimientos", 0)))
     if cstr(getattr(nota_doc, "estructura_nota", "Simple") or "Simple").strip() == "Compleja":
-        _render_complex_note_content(document, nota_doc, labels, package, currency_symbol, has_comparative=has_comparative, exclude_zero_movements=exclude_zero_movements)
+        _render_complex_note_content(
+            document,
+            nota_doc,
+            labels,
+            package,
+            currency_symbol,
+            has_comparative=has_comparative,
+            exclude_zero_movements=exclude_zero_movements,
+            return_to_note_layout=bool(rendered_observaciones and not subnotes),
+            allow_layout_switch=not is_subnote,
+            keep_group_layout=bool(subnotes),
+        )
     else:
         _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=has_comparative, exclude_zero_movements=exclude_zero_movements)
 
-    rendered_observaciones = _get_rendered_note_observaciones(nota_doc)
     if rendered_observaciones:
         spacer = document.add_paragraph(" ")
         _set_paragraph_runs_font(spacer, size=BODY_SIZE)
@@ -1032,10 +1043,23 @@ def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignm
     _force_table_font_size(table, note_font_size)
     return True
 
-def _render_complex_note_content(document, nota_doc, labels, package, currency_symbol, has_comparative=True, exclude_zero_movements=False):
+def _render_complex_note_content(document, nota_doc, labels, package, currency_symbol, has_comparative=True, exclude_zero_movements=False, return_to_note_layout=False, allow_layout_switch=True, keep_group_layout=False):
     Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
     note_font_size = nota_doc.get_print_font_size() if hasattr(nota_doc, "get_print_font_size") else BODY_SIZE
     note_alignment = nota_doc.get_print_table_alignment() if hasattr(nota_doc, "get_print_table_alignment") else "Centro"
+    note_landscape = cstr(getattr(nota_doc, "orientacion", "Vertical") or "Vertical").lower() in ("horizontal", "landscape")
+    current_section = document.sections[-1]
+    current_layout_landscape = current_section.page_width > current_section.page_height
+
+    def switch_layout(landscape):
+        nonlocal current_layout_landscape
+        if not allow_layout_switch or current_layout_landscape == landscape:
+            return
+        section = document.add_section(WD_SECTION_START.NEW_PAGE)
+        _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=landscape, document_title=REPORT_TITLE)
+        _set_section_footer_page_number(section)
+        current_layout_landscape = landscape
+
     sections = _get_complex_note_sections(nota_doc.name)
     if not sections:
         _render_simple_note_content(document, nota_doc, labels, currency_symbol, has_comparative=has_comparative, exclude_zero_movements=exclude_zero_movements)
@@ -1067,6 +1091,23 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
             and renderable_tables
             and len(renderable_tables[0]["columnas"]) > 5
         )
+        section_starts_compact = bool(
+            renderable_tables and len(renderable_tables[0]["columnas"]) > 5
+        )
+        rendered_section_narrative = _get_rendered_section_narrative(section_doc)
+        has_suppressed_table_message = bool(
+            exclude_zero_movements
+            and any(table_meta.get("columnas") and table_meta.get("filas") for table_meta in tables)
+        )
+        section_has_content = bool(
+            show_section_title
+            or rendered_section_narrative
+            or renderable_tables
+            or section_doc.observaciones
+            or has_suppressed_table_message
+        )
+        if current_layout_landscape != note_landscape and not section_starts_compact and section_has_content:
+            switch_layout(note_landscape)
         section_title_rendered = False
 
         def add_section_title():
@@ -1086,7 +1127,6 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
             add_section_title()
             section_title_rendered = True
 
-        rendered_section_narrative = _get_rendered_section_narrative(section_doc)
         if rendered_section_narrative:
             _add_rich_block(document, rendered_section_narrative, size=BODY_SIZE)
 
@@ -1103,9 +1143,9 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
                 continue
             compact = len(table_meta["columnas"]) > 5
             if compact:
-                landscape_section = document.add_section(WD_SECTION_START.NEW_PAGE)
-                _configure_section(landscape_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=True, document_title=REPORT_TITLE)
-                _set_section_footer_page_number(landscape_section)
+                switch_layout(True)
+            elif current_layout_landscape != note_landscape:
+                switch_layout(note_landscape)
             if show_section_title and not section_title_rendered:
                 add_section_title()
                 section_title_rendered = True
@@ -1222,12 +1262,8 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
                 min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
             )
 
-            if compact:
-                portrait_section = document.add_section(WD_SECTION_START.NEW_PAGE)
-                note_landscape = cstr(getattr(nota_doc, "orientacion", "Vertical") or "Vertical") == "Horizontal"
-                _configure_section(portrait_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=note_landscape, document_title=REPORT_TITLE)
-                _set_section_footer_page_number(portrait_section)
-
+        if section_doc.observaciones and current_layout_landscape != note_landscape and not keep_group_layout:
+            switch_layout(note_landscape)
         if section_table_rendered:
             table_end_spacer = document.add_paragraph(" ")
             _set_paragraph_runs_font(table_end_spacer, size=note_font_size)
@@ -1235,6 +1271,9 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
         if section_doc.observaciones:
             paragraph = document.add_paragraph(cstr(section_doc.observaciones))
             _set_paragraph_runs_font(paragraph, size=BODY_SIZE)
+
+    if return_to_note_layout and current_layout_landscape != note_landscape:
+        switch_layout(note_landscape)
 
 
 def _get_complex_note_sections(note_name):
