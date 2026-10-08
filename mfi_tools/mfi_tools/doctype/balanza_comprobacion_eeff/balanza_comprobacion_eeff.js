@@ -12,6 +12,9 @@ frappe.ui.form.on("Balanza Comprobacion EEFF", {
         frm.add_custom_button(__("Descargar Plantilla"), () => {
             download_balance_template();
         });
+        frm.add_custom_button(__("Descargar Excel"), () => {
+            download_balance_excel(frm);
+        });
         frm.add_custom_button(__("Duplicar a otra Moneda"), () => {
             open_duplicate_dialog(frm, "mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.duplicar_a_moneda");
         });
@@ -190,6 +193,17 @@ async function fetch_file_and_import(frm, file_url, moneda, tasaCambio, dialog) 
     } catch (error) {
         frappe.msgprint(error.message || __("No se pudo importar el archivo CSV."));
     }
+}
+
+function download_balance_excel(frm) {
+    if (!(frm.doc.lineas || []).length) {
+        frappe.msgprint(__("La balanza no tiene lineas cargadas para descargar."));
+        return;
+    }
+    const url = frappe.urllib.get_full_url(
+        `/api/method/mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.descargar_balanza_excel?balanza_name=${encodeURIComponent(frm.doc.name)}`
+    );
+    window.open(url, "_blank");
 }
 
 function download_balance_template() {

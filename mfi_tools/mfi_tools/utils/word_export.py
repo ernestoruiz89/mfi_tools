@@ -1465,6 +1465,23 @@ def _set_paragraph_runs_font(paragraph, font_name=FONT_NAME, size=BODY_SIZE, bol
     paragraph_format = paragraph.paragraph_format
     paragraph_format.space_before = Pt(0)
     paragraph_format.space_after = Pt(0)
+    if paragraph._p.getparent().tag == qn("w:tc"):
+        # Word includes the cell's paragraph mark when calculating row height.
+        # Match its font to the text so it cannot inherit the larger Normal size.
+        ppr = paragraph._p.get_or_add_pPr()
+        mark_rpr = ppr.find(qn("w:rPr"))
+        if mark_rpr is None:
+            mark_rpr = OxmlElement("w:rPr")
+            ppr.insert_element_before(mark_rpr, "w:sectPr", "w:pPrChange")
+        mark_fonts = mark_rpr.get_or_add_rFonts()
+        for script in ("ascii", "hAnsi", "eastAsia", "cs"):
+            mark_fonts.set(qn(f"w:{script}"), font_name)
+        mark_rpr.sz_val = Pt(size)
+        mark_size_cs = mark_rpr.find(qn("w:szCs"))
+        if mark_size_cs is None:
+            mark_size_cs = OxmlElement("w:szCs")
+            mark_rpr.append(mark_size_cs)
+        mark_size_cs.set(qn("w:val"), mark_rpr.sz.get(qn("w:val")))
     for run in paragraph.runs:
         run.font.name = font_name
         run.font.size = Pt(size)

@@ -34,6 +34,22 @@ BALANCE_AMOUNT_FIELDS = (
     "haber_saldo",
 )
 
+BALANCE_EXPORT_COLUMNS = (
+    ("codigo_cuenta", "Codigo Cuenta"),
+    ("descripcion_cuenta", "Descripcion Cuenta"),
+    ("centro_costo", "Centro Costo"),
+    ("moneda", "Moneda"),
+    ("debe_saldo_anterior", "Debe Saldo Anterior"),
+    ("haber_saldo_anterior", "Haber Saldo Anterior"),
+    ("saldo_anterior", "Saldo Anterior"),
+    ("debe_mes", "Debe Mes"),
+    ("haber_mes", "Haber Mes"),
+    ("movimiento_del_mes", "Movimiento del Mes"),
+    ("debe_saldo", "Debe Saldo"),
+    ("haber_saldo", "Haber Saldo"),
+    ("saldo", "Saldo"),
+)
+
 
 def _normalize_header(value):
     normalized = unicodedata.normalize("NFKD", cstr(value or ""))
@@ -327,6 +343,66 @@ def cargar_balanza_csv(balanza_name, csv_content, tasa_cambio=None, moneda=None)
             if cstr(getattr(row, "moneda", "") or "").strip()
         ],
     }
+
+
+def _build_balance_excel(doc):
+    from openpyxl import Workbook
+    from openpyxl.cell import WriteOnlyCell
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    workbook = Workbook(write_only=True)
+    sheet = workbook.create_sheet("Balanza")
+    sheet.freeze_panes = "E2"
+    sheet.auto_filter.ref = f"A1:M{len(doc.lineas) + 1}"
+    for index, width in enumerate((20, 60, 22, 12) + (22,) * 9, start=1):
+        sheet.column_dimensions[get_column_letter(index)].width = width
+
+    header = []
+    for fieldname, label in BALANCE_EXPORT_COLUMNS:
+        cell = WriteOnlyCell(sheet, value=_(label))
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill("solid", fgColor="D9EAF7")
+        header.append(cell)
+    sheet.append(header)
+
+    for row in doc.lineas:
+        cells = []
+        for index, (fieldname, _label) in enumerate(BALANCE_EXPORT_COLUMNS):
+            value = row.get(fieldname)
+            if index < 4:
+                if fieldname == "moneda":
+                    value = value or doc.moneda
+                cell = WriteOnlyCell(sheet, value=cstr(value or ""))
+                # Keep account codes and descriptions literal, including leading zeros.
+                cell.data_type = "s"
+                cell.number_format = "@"
+            else:
+                cell = WriteOnlyCell(sheet, value=flt(value or 0))
+                cell.number_format = '#,##0.00;[Red](#,##0.00);0.00'
+            cells.append(cell)
+        sheet.append(cells)
+
+    with io.BytesIO() as output:
+        workbook.save(output)
+        return output.getvalue()
+
+
+@frappe.whitelist()
+def descargar_balanza_excel(balanza_name):
+    doc = frappe.get_doc("Balanza Comprobacion EEFF", balanza_name)
+    doc.check_permission("read")
+    doc.check_permission("export")
+    if not doc.get("lineas"):
+        frappe.throw(_("La balanza no tiene lineas cargadas para descargar."))
+
+    content = _build_balance_excel(doc)
+    safe_name = re.sub(r'[\\/:*?"<>|\r\n]+', "-", cstr(doc.name)).strip(" .") or "balanza"
+    frappe.local.response.filename = f"Balanza-{safe_name[:140]}.xlsx"
+    frappe.local.response.filecontent = content
+    frappe.local.response.type = "download"
+    frappe.local.response.display_content_as = "attachment"
+    frappe.local.response.content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 @frappe.whitelist()
