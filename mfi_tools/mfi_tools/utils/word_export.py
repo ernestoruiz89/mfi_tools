@@ -467,6 +467,7 @@ def _configure_document(document, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, 
 
 def _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE):
     _Document, _Align, WD_ORIENTATION, _SectionStart, _TableAlign, _OxmlElement, _qn, _Cm, _Pt, _RGBColor, _WD_AV = _docx_imports()
+    section.different_first_page_header_footer = False
     section.top_margin = Cm(2.2)
     section.bottom_margin = Cm(2.0)
     section.left_margin = Cm(2.3)
@@ -551,9 +552,17 @@ def _clear_header_footer(container):
         container.add_paragraph()
 
 
-def _set_section_header_content(section, header_data):
+def _set_section_header_content(section, header_data, first_page_only=False):
     Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
-    header = section.header
+    if first_page_only:
+        section.different_first_page_header_footer = True
+        regular_header = section.header
+        regular_header.is_linked_to_previous = False
+        _clear_header_footer(regular_header)
+        header = section.first_page_header
+    else:
+        header = section.header
+    header.is_linked_to_previous = False
     _clear_header_footer(header)
 
     lines = [
@@ -870,9 +879,10 @@ def _add_notas_section(document, package):
             "company": _get_package_entity_display(package) or "Compañía",
             "titulo": "Notas a los Estados Financieros",
             "periodo": package.periodo_nombre or "",
-            "subtitulo": nota_doc.get_print_heading() if hasattr(nota_doc, "get_print_heading") else (nota_doc.titulo or ""),
+            "subtitulo": "Notas a los Estados Financieros",
         }
-        _set_section_header_content(section, header_data)
+        if note_index == 0:
+            _set_section_header_content(section, header_data, first_page_only=True)
 
         _render_note_block(document, nota_doc, labels, package, currency_symbol, subnotes=subnotes)
 
@@ -1043,22 +1053,43 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
         _set_paragraph_runs_font(spacer, size=note_font_size)
 
     for section_doc in sections:
-        if cint(getattr(section_doc, "mostrar_titulo", 1)):
+        show_section_title = bool(cint(getattr(section_doc, "mostrar_titulo", 1)))
+        tables = build_complex_section_tables(section_doc)
+        renderable_tables = [
+            table_meta
+            for table_meta in tables
+            if table_meta.get("columnas")
+            and table_meta.get("filas")
+            and not (exclude_zero_movements and not table_meta.get("tiene_movimientos", True))
+        ]
+        defer_section_title = bool(
+            show_section_title
+            and renderable_tables
+            and len(renderable_tables[0]["columnas"]) > 5
+        )
+        section_title_rendered = False
+
+        def add_section_title():
             title_paragraph = document.add_paragraph(
                 cstr(section_doc.titulo_seccion or section_doc.codigo_seccion or "Seccion"),
                 style="Normal",
             )
             _set_paragraph_runs_font(title_paragraph, size=BODY_SIZE, bold=True)
+            title_paragraph.paragraph_format.keep_with_next = True
+            title_paragraph.paragraph_format.space_after = Pt(6)
             for run in title_paragraph.runs:
                 run.bold = True
                 run.italic = True
                 run.underline = True
 
+        if show_section_title and not defer_section_title:
+            add_section_title()
+            section_title_rendered = True
+
         rendered_section_narrative = _get_rendered_section_narrative(section_doc)
         if rendered_section_narrative:
             _add_rich_block(document, rendered_section_narrative, size=BODY_SIZE)
 
-        tables = build_complex_section_tables(section_doc)
         section_table_started = False
         section_table_rendered = False
         for table_meta in tables:
@@ -1070,16 +1101,20 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
                 for run in p.runs:
                     run.italic = True
                 continue
-            if not section_table_started:
-                table_spacer = document.add_paragraph(" ")
-                _set_paragraph_runs_font(table_spacer, size=note_font_size)
-                section_table_started = True
-            section_table_rendered = True
             compact = len(table_meta["columnas"]) > 5
             if compact:
                 landscape_section = document.add_section(WD_SECTION_START.NEW_PAGE)
                 _configure_section(landscape_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=True, document_title=REPORT_TITLE)
                 _set_section_footer_page_number(landscape_section)
+            if show_section_title and not section_title_rendered:
+                add_section_title()
+                section_title_rendered = True
+            if not section_table_started:
+                table_spacer = document.add_paragraph(" ")
+                _set_paragraph_runs_font(table_spacer, size=note_font_size)
+                table_spacer.paragraph_format.keep_with_next = True
+                section_table_started = True
+            section_table_rendered = True
             data_col_indexes = [1 + (idx * 2) for idx in range(len(table_meta["columnas"]))]
             gap_col_indexes = [2 + (idx * 2) for idx in range(max(len(table_meta["columnas"]) - 1, 0))]
             header_rows = 2 if table_meta["tiene_grupos"] else 1
@@ -1192,14 +1227,6 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
                 note_landscape = cstr(getattr(nota_doc, "orientacion", "Vertical") or "Vertical") == "Horizontal"
                 _configure_section(portrait_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=note_landscape, document_title=REPORT_TITLE)
                 _set_section_footer_page_number(portrait_section)
-                header_data = {
-                    "cliente": _get_package_entity_display(package) or "Compañía",
-                    "company": _get_package_entity_display(package) or "Compañía",
-                    "titulo": "Notas a los Estados Financieros",
-                    "periodo": package.periodo_nombre or "",
-                    "subtitulo": nota_doc.get_print_heading() if hasattr(nota_doc, "get_print_heading") else (nota_doc.titulo or ""),
-                }
-                _set_section_header_content(portrait_section, header_data)
 
         if section_table_rendered:
             table_end_spacer = document.add_paragraph(" ")
