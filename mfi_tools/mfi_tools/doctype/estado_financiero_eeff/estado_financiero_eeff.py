@@ -103,12 +103,103 @@ class EstadoFinancieroEEFF(Document):
             return cstr(frappe.db.get_value("Paquete EEFF", paquete, "imagen_fondo_estados") or "").strip()
         return ""
 
+    def _get_printable_row_count(self):
+        if getattr(self, "estructura_estado", "Simple") == "Compleja":
+            try:
+                tablas = self.get_render_tables()
+                total = sum(len(t.get("filas", [])) for t in tablas if isinstance(t, dict))
+                if total > 0:
+                    return total
+            except Exception:
+                pass
+            return len(getattr(self, "filas_complejas", []) or [])
+        return len([row for row in (self.lineas or []) if not cint(getattr(row, "no_imprimir", 0))])
+
+    def get_auto_font_size(self):
+        rows = self._get_printable_row_count()
+        is_landscape = cstr(getattr(self, "orientacion", "") or "").strip().lower() in ("horizontal", "landscape")
+        if is_landscape:
+            if rows <= 12:
+                return 10.0
+            elif rows <= 18:
+                return 9.0
+            elif rows <= 25:
+                return 8.5
+            else:
+                return 8.0
+        else:
+            if rows <= 14:
+                return 11.0
+            elif rows <= 21:
+                return 10.5
+            elif rows <= 27:
+                return 10.0
+            elif rows <= 34:
+                return 9.5
+            elif rows <= 40:
+                return 9.0
+            else:
+                return 8.5
+
     def get_print_font_size(self):
-        value = flt(getattr(self, "tamano_letra_impresion", 0) or 12)
-        if not math.isfinite(value):
-            value = 12
-        value = max(8.0, min(value, 18.0))
+        val = flt(getattr(self, "tamano_letra_impresion", 0) or 0)
+        rows = self._get_printable_row_count()
+        is_landscape = cstr(getattr(self, "orientacion", "") or "").strip().lower() in ("horizontal", "landscape")
+
+        if val <= 0:
+            value = self.get_auto_font_size()
+        elif val == 12.0 and (rows > 16 or is_landscape):
+            # 12 es el valor por defecto en el DocType; si el reporte supera 16 filas o es apaisado,
+            # 12pt desbordaría a una segunda página. Se auto-ajusta para asegurar 1 página.
+            value = self.get_auto_font_size()
+        else:
+            value = max(7.0, min(val, 18.0))
+
         return int(value) if abs(value - int(value)) < 0.001 else round(value, 2)
+
+    def get_print_row_padding(self):
+        font_size = flt(self.get_print_font_size())
+        is_landscape = cstr(getattr(self, "orientacion", "") or "").strip().lower() in ("horizontal", "landscape")
+        if is_landscape:
+            if font_size >= 10.0:
+                return "2.0px"
+            elif font_size >= 9.0:
+                return "1.4px"
+            elif font_size >= 8.5:
+                return "0.9px"
+            else:
+                return "0.5px"
+        else:
+            if font_size >= 11.0:
+                return "3.2px"
+            elif font_size >= 10.5:
+                return "2.6px"
+            elif font_size >= 10.0:
+                return "2.2px"
+            elif font_size >= 9.5:
+                return "1.8px"
+            elif font_size >= 9.0:
+                return "1.3px"
+            elif font_size >= 8.5:
+                return "0.9px"
+            else:
+                return "0.5px"
+
+    def get_print_line_height(self):
+        font_size = flt(self.get_print_font_size())
+        if font_size >= 11.0:
+            return "1.20"
+        elif font_size >= 10.5:
+            return "1.18"
+        elif font_size >= 10.0:
+            return "1.15"
+        elif font_size >= 9.5:
+            return "1.12"
+        elif font_size >= 9.0:
+            return "1.08"
+        else:
+            return "1.05"
+
 
     def get_print_table_width(self):
         value = cstr(getattr(self, "ancho_tabla_impresion", "") or "").strip()

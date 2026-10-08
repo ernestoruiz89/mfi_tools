@@ -150,14 +150,14 @@
 
   .cpc-table,
   .cpc-table * {
-    font-size: var(--cpc-table-font-size, 12pt) !important;
-    line-height: 1.1 !important;
+    font-size: var(--cpc-table-font-size, 10pt) !important;
+    line-height: var(--cpc-table-line-height, 1.12) !important;
   }
 
   .cpc-table th,
   .cpc-table td {
     border: none;
-    padding: 1px 0 !important;
+    padding: var(--cpc-table-row-padding, 1.5px) 0 !important;
     vertical-align: middle !important;
   }
 
@@ -424,13 +424,13 @@
 
   .cpc-estado-block.cpc-has-bg .cpc-table,
   .cpc-estado-block.cpc-has-bg .cpc-table * {
-    font-size: 8.5pt !important;
-    line-height: 1.05 !important;
+    font-size: var(--cpc-table-font-size, 9.5pt) !important;
+    line-height: var(--cpc-table-line-height, 1.12) !important;
   }
 
   .cpc-estado-block.cpc-has-bg .cpc-table th,
   .cpc-estado-block.cpc-has-bg .cpc-table td {
-    padding: 0.5px 0 !important;
+    padding: var(--cpc-table-row-padding, 1.8px) 0 !important;
   }
 
   .cpc-estado-block.cpc-has-bg .cpc-line-blank td {
@@ -810,7 +810,7 @@ limit_page_length=100
           {% if tabla.columnas and tabla.filas %}
           {% set compact_table = (tabla.columnas | length) > 5 %}
           <div style="margin-top: 10px;">
-            <table class="cpc-table cpc-align-{{ estado_doc.get_print_table_alignment_css() }}" style="--cpc-table-width: {{ estado_doc.get_print_table_width() }}; --cpc-table-font-size: {{ 10 if compact_table else estado_doc.get_print_font_size() }}pt;">
+            <table class="cpc-table cpc-align-{{ estado_doc.get_print_table_alignment_css() }}" style="--cpc-table-width: {{ estado_doc.get_print_table_width() }}; --cpc-table-font-size: {{ 10 if compact_table else estado_doc.get_print_font_size() }}pt; --cpc-table-row-padding: {{ estado_doc.get_print_row_padding() }}; --cpc-table-line-height: {{ estado_doc.get_print_line_height() }};">
               <thead>
                 {% if tabla.tiene_grupos %}
                 <tr>
@@ -871,7 +871,7 @@ limit_page_length=100
           {% endif %}
           {% endfor %}
       {% else %}
-      <table class="cpc-table cpc-align-{{ estado_doc.get_print_table_alignment_css() }}" style="--cpc-table-font-size: {{ estado_doc.get_print_font_size() }}pt; --cpc-table-width: {{ estado_doc.get_print_table_width() }};">
+      <table class="cpc-table cpc-align-{{ estado_doc.get_print_table_alignment_css() }}" style="--cpc-table-font-size: {{ estado_doc.get_print_font_size() }}pt; --cpc-table-width: {{ estado_doc.get_print_table_width() }}; --cpc-table-row-padding: {{ estado_doc.get_print_row_padding() }}; --cpc-table-line-height: {{ estado_doc.get_print_line_height() }};">
         <colgroup>
           <col class="cpc-col-desc">
           <col class="cpc-col-nota">

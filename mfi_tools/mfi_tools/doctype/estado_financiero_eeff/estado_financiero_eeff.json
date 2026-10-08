@@ -125,7 +125,7 @@
             "fieldtype": "Float",
             "label": "Tamano Letra Tabla",
             "default": 12,
-            "description": "Tamano de letra de la tabla en impresion."
+            "description": "Tamano de letra en pt (ej. 9.5, 10). Dejar en 0 para auto-ajuste inteligente a 1 pagina."
         },
         {
             "fieldname": "impresion_column",

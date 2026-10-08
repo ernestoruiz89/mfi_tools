@@ -82,14 +82,14 @@
 
   .cef-table,
   .cef-table * {
-    font-size: var(--cef-table-font-size, 12pt) !important;
-    line-height: 1.1;
+    font-size: var(--cef-table-font-size, 10pt) !important;
+    line-height: var(--cef-table-line-height, 1.12) !important;
   }
 
   .cef-table th,
   .cef-table td {
     border: none;
-    padding: 1px 0 !important;
+    padding: var(--cef-table-row-padding, 1.5px) 0 !important;
     vertical-align: middle !important;
   }
 
@@ -325,13 +325,13 @@
 
   .cef-wrap.cef-has-bg .cef-table,
   .cef-wrap.cef-has-bg .cef-table * {
-    font-size: 8.5pt !important;
-    line-height: 1.05 !important;
+    font-size: var(--cef-table-font-size, 9.5pt) !important;
+    line-height: var(--cef-table-line-height, 1.12) !important;
   }
 
   .cef-wrap.cef-has-bg .cef-table th,
   .cef-wrap.cef-has-bg .cef-table td {
-    padding: 0.5px 0 !important;
+    padding: var(--cef-table-row-padding, 1.8px) 0 !important;
   }
 
   .cef-wrap.cef-has-bg .cef-line-blank td {
@@ -473,7 +473,7 @@
       {% if tabla.columnas and tabla.filas %}
       {% set compact_table = (tabla.columnas | length) > 5 %}
       <div class="cef-section" style="margin-top: 10px;">
-        <table class="cef-table cef-align-{{ doc.get_print_table_alignment_css() }}" style="--cef-table-font-size: {{ 10 if compact_table else doc.get_print_font_size() }}pt; --cef-table-width: {{ doc.get_print_table_width() }};">
+        <table class="cef-table cef-align-{{ doc.get_print_table_alignment_css() }}" style="--cef-table-font-size: {{ 10 if compact_table else doc.get_print_font_size() }}pt; --cef-table-width: {{ doc.get_print_table_width() }}; --cef-table-row-padding: {{ doc.get_print_row_padding() }}; --cef-table-line-height: {{ doc.get_print_line_height() }};">
           <thead>
             {% if tabla.tiene_grupos %}
             <tr>
@@ -534,7 +534,7 @@
       {% endif %}
     {% endfor %}
   {% else %}
-  <table class="cef-table cef-align-{{ doc.get_print_table_alignment_css() }}">
+  <table class="cef-table cef-align-{{ doc.get_print_table_alignment_css() }}" style="--cef-table-font-size: {{ doc.get_print_font_size() }}pt; --cef-table-width: {{ doc.get_print_table_width() }}; --cef-table-row-padding: {{ doc.get_print_row_padding() }}; --cef-table-line-height: {{ doc.get_print_line_height() }};">
     <colgroup>
       <col class="cef-col-desc">
       <col class="cef-col-nota">
