@@ -290,9 +290,9 @@
   .cef-wrap.cef-has-bg {
     position: relative;
     padding: 0 !important;
-    height: 100vh;
-    min-height: 279mm;
-    max-height: 100vh;
+    height: 279.4mm;
+    min-height: 0;
+    max-height: 279.4mm;
     box-sizing: border-box;
     overflow: hidden;
     page-break-inside: avoid;
@@ -380,9 +380,9 @@
     }
     .cef-wrap.cef-has-bg {
       width: 100% !important;
-      height: 100vh !important;
-      min-height: 100vh !important;
-      max-height: 100vh !important;
+      height: 279.4mm !important;
+      min-height: 0 !important;
+      max-height: 279.4mm !important;
       page-break-inside: avoid !important;
       overflow: hidden !important;
     }
@@ -402,6 +402,34 @@
 {% if doc.orientacion == "Horizontal" %}
 <style>
   @page { size: letter landscape; margin: 0mm !important; }
+  .cef-wrap.cef-has-bg {
+    height: 215.9mm !important;
+    max-height: 215.9mm !important;
+    min-height: 0 !important;
+  }
+  .cef-wrap.cef-has-bg .cef-inner {
+    padding: 30mm 18mm 20mm 18mm !important;
+  }
+  @media print {
+    .cef-wrap.cef-has-bg {
+      width: 100% !important;
+      height: 215.9mm !important;
+      max-height: 215.9mm !important;
+      min-height: 0 !important;
+      page-break-inside: avoid !important;
+      overflow: hidden !important;
+    }
+    .cef-wrap.cef-has-bg .cef-inner {
+      padding: 30mm 18mm 20mm 18mm !important;
+    }
+  }
+  @media screen {
+    .cef-wrap.cef-has-bg {
+      min-height: 750px;
+      height: auto;
+      max-height: none;
+    }
+  }
 </style>
 {% endif %}
 

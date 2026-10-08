@@ -363,9 +363,9 @@
   .cpc-estado-block.cpc-has-bg {
     position: relative;
     width: 100%;
-    height: 100vh;
-    min-height: 279mm;
-    max-height: 100vh;
+    height: 279.4mm;
+    min-height: 0;
+    max-height: 279.4mm;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -374,18 +374,16 @@
     overflow: hidden;
   }
 
-  .cpc-cover-page,
-  .cpc-index-page {
-    height: 100vh;
-    page-break-after: always;
-    page-break-inside: avoid;
-    overflow: hidden;
+  .cpc-estado-block.cpc-has-bg.cpc-landscape-section,
+  .cpc-landscape-section.cpc-estado-block.cpc-has-bg {
+    height: 215.9mm !important;
+    max-height: 215.9mm !important;
+    min-height: 0 !important;
   }
 
-  .cpc-estado-block.cpc-has-bg {
-    page-break-inside: avoid;
-    page-break-after: always;
-    overflow: hidden;
+  .cpc-estado-block.cpc-has-bg.cpc-landscape-section .cpc-estado-inner,
+  .cpc-landscape-section.cpc-estado-block.cpc-has-bg .cpc-estado-inner {
+    padding: 30mm 18mm 20mm 18mm !important;
   }
 
   .cpc-estado-inner {
@@ -569,10 +567,13 @@
     .cpc-cover-page,
     .cpc-index-page {
       width: 100% !important;
-      height: 100vh !important;
-      min-height: 100vh !important;
+      height: 279.4mm !important;
+      min-height: 0 !important;
+      max-height: 279.4mm !important;
       page-break-after: always !important;
       break-after: page !important;
+      page-break-inside: avoid !important;
+      overflow: hidden !important;
     }
     .cpc-wrap {
       padding: 0 !important;
@@ -597,13 +598,28 @@
     }
     .cpc-estado-block.cpc-has-bg {
       width: 100% !important;
-      height: 100vh !important;
-      min-height: 100vh !important;
-      max-height: 100vh !important;
+      height: 279.4mm !important;
+      min-height: 0 !important;
+      max-height: 279.4mm !important;
       page-break-after: always !important;
       break-after: page !important;
       page-break-inside: avoid !important;
       overflow: hidden !important;
+    }
+    .cpc-estado-block.cpc-has-bg.cpc-landscape-section,
+    .cpc-landscape-section.cpc-estado-block.cpc-has-bg {
+      width: 100% !important;
+      height: 215.9mm !important;
+      min-height: 0 !important;
+      max-height: 215.9mm !important;
+      page-break-after: always !important;
+      break-after: page !important;
+      page-break-inside: avoid !important;
+      overflow: hidden !important;
+    }
+    .cpc-estado-block.cpc-has-bg.cpc-landscape-section .cpc-estado-inner,
+    .cpc-landscape-section.cpc-estado-block.cpc-has-bg .cpc-estado-inner {
+      padding: 30mm 18mm 20mm 18mm !important;
     }
   }
 
@@ -616,6 +632,12 @@
       max-height: none;
       margin-bottom: 25px;
       box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    }
+    .cpc-estado-block.cpc-has-bg.cpc-landscape-section,
+    .cpc-landscape-section.cpc-estado-block.cpc-has-bg {
+      min-height: 750px;
+      height: auto;
+      max-height: none;
     }
   }
 </style>
