@@ -1,4 +1,25 @@
+<div id="header-html" class="hidden-pdf">
+  <div id="variables" style="display:none;">
+    <span id="margin-top">0mm</span>
+    <span id="margin-left">0mm</span>
+    <span id="margin-right">0mm</span>
+    <span id="margin-bottom">0mm</span>
+  </div>
+</div>
 <style>
+  @page {
+    size: letter portrait;
+    margin: 0mm !important;
+  }
+
+  .print-format {
+    margin-top: 0mm !important;
+    margin-bottom: 0mm !important;
+    margin-left: 0mm !important;
+    margin-right: 0mm !important;
+    padding: 0mm !important;
+  }
+
   .cef-wrap,
   .cef-wrap * {
     font-family: "Arial Narrow", Arial, "Helvetica Neue", sans-serif !important;
@@ -269,16 +290,80 @@
   .cef-wrap.cef-has-bg {
     position: relative;
     padding: 0 !important;
+    height: 100vh;
     min-height: 279mm;
+    max-height: 100vh;
     box-sizing: border-box;
     overflow: hidden;
+    page-break-inside: avoid;
   }
 
   .cef-wrap.cef-has-bg .cef-inner {
     position: relative;
     z-index: 2;
-    padding: 28mm 20mm 24mm 20mm;
+    padding: 38mm 18mm 28mm 18mm;
     box-sizing: border-box;
+  }
+
+  .cef-wrap.cef-has-bg .cef-head {
+    border-bottom: 2px solid #000000;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+  }
+
+  .cef-wrap.cef-has-bg .cef-head h1 {
+    font-size: 10pt !important;
+    margin: 0 0 1px 0 !important;
+    line-height: 1.15 !important;
+  }
+
+  .cef-wrap.cef-has-bg .cef-head p {
+    font-size: 9pt !important;
+    margin: 0 0 1px 0 !important;
+    line-height: 1.15 !important;
+  }
+
+  .cef-wrap.cef-has-bg .cef-table,
+  .cef-wrap.cef-has-bg .cef-table * {
+    font-size: 8.5pt !important;
+    line-height: 1.05 !important;
+  }
+
+  .cef-wrap.cef-has-bg .cef-table th,
+  .cef-wrap.cef-has-bg .cef-table td {
+    padding: 0.5px 0 !important;
+  }
+
+  .cef-wrap.cef-has-bg .cef-line-blank td {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+  }
+
+  .cef-wrap.cef-has-bg .cef-signatures-wrapper {
+    margin-top: 8px !important;
+    margin-bottom: 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  .cef-wrap.cef-has-bg .cef-sig-box {
+    width: 38% !important;
+    margin: 0 15px !important;
+  }
+
+  .cef-wrap.cef-has-bg .cef-sig-gap {
+    height: 18px !important;
+  }
+
+  .cef-wrap.cef-has-bg .cef-sig-line {
+    font-size: 8.5pt !important;
+    padding-top: 2px !important;
+  }
+
+  .cef-wrap.cef-has-bg .cef-sig-name,
+  .cef-wrap.cef-has-bg .cef-sig-title {
+    font-size: 8.5pt !important;
+    margin-top: 1px !important;
+    line-height: 1.15 !important;
   }
 
   @media print {
@@ -286,17 +371,28 @@
       padding: 0 !important;
       margin: 0 !important;
     }
+    .print-format {
+      margin-top: 0mm !important;
+      margin-bottom: 0mm !important;
+      margin-left: 0mm !important;
+      margin-right: 0mm !important;
+      padding: 0mm !important;
+    }
     .cef-wrap.cef-has-bg {
       width: 100% !important;
       height: 100vh !important;
       min-height: 100vh !important;
+      max-height: 100vh !important;
       page-break-inside: avoid !important;
+      overflow: hidden !important;
     }
   }
 
   @media screen {
     .cef-wrap.cef-has-bg {
       min-height: 1050px;
+      height: auto;
+      max-height: none;
       margin: 0 auto 25px;
       box-shadow: 0 0 10px rgba(0,0,0,0.15);
     }
@@ -305,7 +401,7 @@
 
 {% if doc.orientacion == "Horizontal" %}
 <style>
-  @page { size: landscape; }
+  @page { size: letter landscape; margin: 0mm !important; }
 </style>
 {% endif %}
 

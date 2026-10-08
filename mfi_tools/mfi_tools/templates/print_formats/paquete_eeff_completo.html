@@ -1,4 +1,25 @@
+<div id="header-html" class="hidden-pdf">
+  <div id="variables" style="display:none;">
+    <span id="margin-top">0mm</span>
+    <span id="margin-left">0mm</span>
+    <span id="margin-right">0mm</span>
+    <span id="margin-bottom">0mm</span>
+  </div>
+</div>
 <style>
+  @page {
+    size: letter portrait;
+    margin: 0mm !important;
+  }
+
+  .print-format {
+    margin-top: 0mm !important;
+    margin-bottom: 0mm !important;
+    margin-left: 0mm !important;
+    margin-right: 0mm !important;
+    padding: 0mm !important;
+  }
+
   .cpc-wrap,
   .cpc-wrap * {
     font-family: "Arial Narrow", Arial, "Helvetica Neue", sans-serif !important;
@@ -330,7 +351,8 @@
   }
 
   @page landscape_page {
-    size: landscape;
+    size: letter landscape;
+    margin: 0mm !important;
   }
   .cpc-landscape-section {
     page: landscape_page;
@@ -341,10 +363,15 @@
   .cpc-estado-block.cpc-has-bg {
     position: relative;
     width: 100%;
+    height: 100vh;
     min-height: 279mm;
+    max-height: 100vh;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    page-break-after: always;
+    page-break-inside: avoid;
+    overflow: hidden;
   }
 
   .cpc-cover-page,
@@ -357,20 +384,77 @@
 
   .cpc-estado-block.cpc-has-bg {
     page-break-inside: avoid;
+    page-break-after: always;
     overflow: hidden;
   }
 
   .cpc-estado-inner {
     position: relative;
     z-index: 2;
-    padding: 28mm 20mm 24mm 20mm;
+    padding: 38mm 18mm 28mm 18mm;
     box-sizing: border-box;
   }
 
   .cpc-estado-block.cpc-has-bg .cpc-estado-header-block {
     border-bottom: 2px solid #000000;
-    padding-bottom: 6px;
-    margin-bottom: 12px;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-estado-header-block h3 {
+    font-size: 10pt !important;
+    font-weight: 700 !important;
+    margin: 0 0 1px 0 !important;
+    line-height: 1.15 !important;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-estado-header-block .cpc-subtitle {
+    font-size: 9pt !important;
+    margin: 0 0 1px 0 !important;
+    line-height: 1.15 !important;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-table,
+  .cpc-estado-block.cpc-has-bg .cpc-table * {
+    font-size: 8.5pt !important;
+    line-height: 1.05 !important;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-table th,
+  .cpc-estado-block.cpc-has-bg .cpc-table td {
+    padding: 0.5px 0 !important;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-line-blank td {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-signatures-wrapper {
+    margin-top: 8px !important;
+    margin-bottom: 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-sig-box {
+    width: 38% !important;
+    margin: 0 15px !important;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-sig-gap {
+    height: 18px !important;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-sig-line {
+    font-size: 8.5pt !important;
+    padding-top: 2px !important;
+  }
+
+  .cpc-estado-block.cpc-has-bg .cpc-sig-name,
+  .cpc-estado-block.cpc-has-bg .cpc-sig-title {
+    font-size: 8.5pt !important;
+    margin-top: 1px !important;
+    line-height: 1.15 !important;
   }
 
   .cpc-page-bg-img {
@@ -513,8 +597,13 @@
     }
     .cpc-estado-block.cpc-has-bg {
       width: 100% !important;
+      height: 100vh !important;
       min-height: 100vh !important;
+      max-height: 100vh !important;
+      page-break-after: always !important;
+      break-after: page !important;
       page-break-inside: avoid !important;
+      overflow: hidden !important;
     }
   }
 
@@ -523,6 +612,8 @@
     .cpc-index-page,
     .cpc-estado-block.cpc-has-bg {
       min-height: 1050px;
+      height: auto;
+      max-height: none;
       margin-bottom: 25px;
       box-shadow: 0 0 10px rgba(0,0,0,0.15);
     }
