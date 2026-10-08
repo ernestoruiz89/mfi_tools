@@ -16,7 +16,23 @@ frappe.ui.form.on("Balanza Comprobacion EEFF", {
             open_duplicate_dialog(frm, "mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.duplicar_a_moneda");
         });
     },
+    tasas_cambio_add(frm, cdt, cdn) {
+        set_default_moneda_tasa_cambio(cdt, cdn);
+    },
 });
+
+frappe.ui.form.on("Tasa Cambio Balanza EEFF", {
+    tasas_cambio_add(frm, cdt, cdn) {
+        set_default_moneda_tasa_cambio(cdt, cdn);
+    },
+});
+
+function set_default_moneda_tasa_cambio(cdt, cdn) {
+    const row = frappe.get_doc(cdt, cdn);
+    if (row && !row.moneda) {
+        frappe.model.set_value(cdt, cdn, "moneda", "USD");
+    }
+}
 
 function open_duplicate_dialog(frm, method) {
     const dialog = new frappe.ui.Dialog({

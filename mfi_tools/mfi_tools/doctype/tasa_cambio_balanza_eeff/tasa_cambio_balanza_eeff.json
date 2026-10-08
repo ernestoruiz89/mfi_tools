@@ -15,6 +15,7 @@
             "fieldtype": "Link",
             "label": "Moneda",
             "options": "Currency",
+            "default": "USD",
             "reqd": 1,
             "in_list_view": 1
         },
