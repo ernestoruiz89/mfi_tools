@@ -659,7 +659,7 @@ limit_page_length=100
     {% if estados %}
     {% for estado in estados %}
     {% set estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name) %}
-    {% set estado_bg = estado_doc.get_background_image() if hasattr(estado_doc, "get_background_image") else (estado_doc.imagen_fondo or doc.imagen_fondo_estados) %}
+    {% set estado_bg = estado_doc.imagen_fondo or doc.imagen_fondo_estados %}
     {% set lineas = (estado_doc.lineas or []) %}
     {% set estado_header = estado_doc.get_print_header() %}
     {% set is_landscape_class = " cpc-landscape-section" if estado_doc.orientacion == "Horizontal" else "" %}
