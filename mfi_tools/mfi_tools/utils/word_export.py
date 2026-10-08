@@ -810,6 +810,7 @@ def _apply_estado_line_format(row, linea, font_size=BODY_SIZE):
     desc_paragraph = row.cells[0].paragraphs[0]
     _set_paragraph_runs_font(
         desc_paragraph,
+        size=font_size,
         bold=bool(
             cint(getattr(linea, "negrita", 0))
             or cint(getattr(linea, "es_total", 0))
@@ -1117,7 +1118,7 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
             )
             _set_paragraph_runs_font(title_paragraph, size=BODY_SIZE, bold=True)
             title_paragraph.paragraph_format.keep_with_next = True
-            title_paragraph.paragraph_format.space_after = Pt(6)
+            title_paragraph.paragraph_format.space_after = Pt(0)
             for run in title_paragraph.runs:
                 run.bold = True
                 run.italic = True
@@ -1130,7 +1131,6 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
         if rendered_section_narrative:
             _add_rich_block(document, rendered_section_narrative, size=BODY_SIZE)
 
-        section_table_started = False
         section_table_rendered = False
         for table_meta in tables:
             if not table_meta.get("columnas") or not table_meta.get("filas"):
@@ -1149,11 +1149,6 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
             if show_section_title and not section_title_rendered:
                 add_section_title()
                 section_title_rendered = True
-            if not section_table_started:
-                table_spacer = document.add_paragraph(" ")
-                _set_paragraph_runs_font(table_spacer, size=note_font_size)
-                table_spacer.paragraph_format.keep_with_next = True
-                section_table_started = True
             section_table_rendered = True
             data_col_indexes = [1 + (idx * 2) for idx in range(len(table_meta["columnas"]))]
             gap_col_indexes = [2 + (idx * 2) for idx in range(max(len(table_meta["columnas"]) - 1, 0))]

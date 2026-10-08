@@ -71,7 +71,6 @@ class EstadoFinancieroEEFF(Document):
         self.estructura_estado = cstr(getattr(self, "estructura_estado", "Simple") or "Simple").strip()
         self.codigo_estado = cstr(self.codigo_estado or "").strip().upper()
         self.subtitulo = cstr(getattr(self, "subtitulo", "") or "").strip()
-        self.tamano_letra_impresion = self.get_print_font_size()
         self.ancho_tabla_impresion = self.get_print_table_width()
         self.alineacion_tabla_impresion = self.get_print_table_alignment()
         if self.estructura_estado == "Compleja":
@@ -211,20 +210,12 @@ class EstadoFinancieroEEFF(Document):
 
     def get_print_font_size(self):
         val = flt(getattr(self, "tamano_letra_impresion", 0) or 0)
-        rows = self._get_printable_row_count()
         fit_rows = self._get_print_fit_row_count()
-        is_landscape = cstr(getattr(self, "orientacion", "") or "").strip().lower() in ("horizontal", "landscape")
 
         if val <= 0:
             value = self.get_auto_font_size(fit_rows)
-        elif val == 12.0 and (fit_rows > 16 or is_landscape):
-            # 12 es el valor por defecto en el DocType; si el reporte supera 16 filas o es apaisado,
-            # se consideran tambien margenes y firmas para mantener el contenido dentro de la pagina.
-            value = self.get_auto_font_size(fit_rows)
         else:
             value = max(7.0, min(val, 18.0))
-            if fit_rows > rows:
-                value = min(value, self.get_auto_font_size(fit_rows))
 
         return int(value) if abs(value - int(value)) < 0.001 else round(value, 2)
 
