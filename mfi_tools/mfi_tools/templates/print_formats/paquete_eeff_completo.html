@@ -414,8 +414,11 @@
   }
 
   .cpc-index-row {
+    display: -webkit-flex;
     display: flex;
+    -webkit-align-items: baseline;
     align-items: baseline;
+    -webkit-justify-content: space-between;
     justify-content: space-between;
     margin-bottom: 12px;
   }
@@ -426,13 +429,29 @@
     font-weight: 600;
     color: #000000 !important;
     white-space: nowrap;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
   }
 
   .cpc-index-dots {
+    -webkit-flex-grow: 1;
     flex-grow: 1;
     margin: 0 8px;
     border-bottom: 1px dotted #666666;
     height: 1em;
+  }
+
+  .cpc-index-page-num {
+    font-family: "Arial Narrow", Arial, sans-serif !important;
+    font-size: 12pt !important;
+    font-weight: 600;
+    color: #000000 !important;
+    text-align: right;
+    white-space: nowrap;
+    margin-left: 4px;
+    min-width: 24px;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
   }
 
   @media print {
@@ -508,25 +527,51 @@ limit_page_length=100
   <div class="cpc-index-content">
     <h2 class="cpc-index-heading">Índice</h2>
     <div class="cpc-index-table">
-      {% for estado in estados %}
-      <div class="cpc-index-row">
-        <span class="cpc-index-label">{{ estado.titulo or estado.tipo_estado }}</span>
-        <span class="cpc-index-dots"></span>
-      </div>
-      {% endfor %}
-      {% if notas %}
-      <div class="cpc-index-row">
-        <span class="cpc-index-label">Notas a los Estados Financieros</span>
-        <span class="cpc-index-dots"></span>
-      </div>
-      {% endif %}
-      {% if factsheets %}
-      {% for fs in factsheets %}
-      <div class="cpc-index-row">
-        <span class="cpc-index-label">{{ fs.titulo or fs.codigo_factsheet or "Factsheet" }}</span>
-        <span class="cpc-index-dots"></span>
-      </div>
-      {% endfor %}
+      {% set toc_entries = doc.get_toc_entries() if doc.get_toc_entries else [] %}
+      {% if toc_entries %}
+        {% for entry in toc_entries %}
+        <div class="cpc-index-row" data-target="{{ entry.target_id }}">
+          <span class="cpc-index-label">{{ entry.label }}</span>
+          <span class="cpc-index-dots"></span>
+          <span class="cpc-index-page-num" id="toc-num-{{ loop.index0 }}">{{ entry.pagina }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        {% set start_content_page = (1 if cover_bg else 0) + (1 if index_bg else 0) + 1 %}
+        {% set ns_page = namespace(curr=start_content_page) %}
+        {% for estado in estados %}
+        <div class="cpc-index-row" data-target="cpc-estado-{{ loop.index0 }}">
+          <span class="cpc-index-label">{{ estado.titulo or estado.tipo_estado }}</span>
+          <span class="cpc-index-dots"></span>
+          <span class="cpc-index-page-num">{{ ns_page.curr }}</span>
+        </div>
+        {% set ns_page.curr = ns_page.curr + 1 %}
+        {% endfor %}
+        {% if notas %}
+        {% set notas_start = ns_page.curr %}
+        {% set total_notas_count = notas | length %}
+        {% set notas_pages = [1, total_notas_count] | max %}
+        {% set notas_end = notas_start + notas_pages - 1 %}
+        <div class="cpc-index-row" data-target="cpc-notas">
+          <span class="cpc-index-label">Notas a los Estados Financieros</span>
+          <span class="cpc-index-dots"></span>
+          <span class="cpc-index-page-num">{{ (notas_start ~ " – " ~ notas_end) if notas_end > notas_start else notas_start }}</span>
+        </div>
+        {% set ns_page.curr = notas_end + 1 %}
+        {% endif %}
+        {% if factsheets %}
+        {% for fs in factsheets %}
+        {% set fs_doc = frappe.get_doc("Factsheet", fs.name) %}
+        {% if not fs_doc.no_imprimir %}
+        <div class="cpc-index-row" data-target="cpc-factsheet-{{ loop.index0 }}">
+          <span class="cpc-index-label">{{ fs.titulo or fs.codigo_factsheet or "Factsheet" }}</span>
+          <span class="cpc-index-dots"></span>
+          <span class="cpc-index-page-num">{{ ns_page.curr }}</span>
+        </div>
+        {% set ns_page.curr = ns_page.curr + 1 %}
+        {% endif %}
+        {% endfor %}
+        {% endif %}
       {% endif %}
     </div>
   </div>
@@ -534,6 +579,7 @@ limit_page_length=100
 {% endif %}
 
 <div class="cpc-wrap {% if not has_comparative %}cpc-no-comparative{% endif %}">
+  {% if not cover_bg %}
   <div class="cpc-head">
     <h1>{{ doc.company or doc.get("cliente") or "-" }}</h1>
     <p>Estado Financiero Completo</p>
@@ -557,16 +603,19 @@ limit_page_length=100
       </td>
     </tr>
   </table>
+  {% endif %}
 
   <div class="cpc-section">
+    {% if not cover_bg %}
     <h2>Estados Financieros</h2>
+    {% endif %}
     {% if estados %}
     {% for estado in estados %}
     {% set estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name) %}
     {% set lineas = (estado_doc.lineas or []) %}
     {% set estado_header = estado_doc.get_print_header() %}
     {% set is_landscape_class = " cpc-landscape-section" if estado_doc.orientacion == "Horizontal" else "" %}
-    <div class="cpc-section{{ is_landscape_class }}">
+    <div id="cpc-estado-{{ loop.index0 }}" class="cpc-section cpc-estado-block{{ is_landscape_class }}" {% if loop.index0 > 0 or not cover_bg %}style="page-break-before: always; break-before: page;"{% endif %}>
       <h3>{{ estado_header.cliente or "-" }}</h3>
       <p class="cpc-subtitle">{{ estado_header.titulo or "-" }}</p>
       {% if estado_header.periodo %}<p class="cpc-subtitle">{{ estado_header.periodo }}</p>{% endif %}
@@ -777,7 +826,7 @@ limit_page_length=100
     {% endif %}
   </div>
 
-  <div class="cpc-section">
+  <div id="cpc-notas" class="cpc-section cpc-notas-wrapper" style="page-break-before: always; break-before: page;">
     <h2>Notas a los Estados Financieros</h2>
     {% if notas %}
     {% for nota in notas %}
@@ -1015,13 +1064,13 @@ limit_page_length=100
   {% endfor %}
 
   {% if ns_fs.tiene %}
-  <div class="cpc-section">
-    {% set ns_first_fs = namespace(printed=0) %}
+  <div class="cpc-section cpc-factsheets-wrapper">
+    {% set ns_fs_idx = namespace(count=0) %}
     {% for fs in factsheets %}
     {% set fs_doc = frappe.get_doc("Factsheet", fs.name) %}
     {% if not fs_doc.no_imprimir %}
     {% set lines = fs_doc.lineas or [] %}
-    <div class="cpc-section cpc-factsheet-block" {% if not ns_first_fs.printed %}style="page-break-before: always;"{% set ns_first_fs.printed = 1 %}{% endif %}>
+    <div id="cpc-factsheet-{{ ns_fs_idx.count }}" class="cpc-section cpc-factsheet-block" style="page-break-before: always; break-before: page;">
       <h3 style="text-decoration: underline;">{{ fs_doc.titulo or fs_doc.codigo_factsheet or "Factsheet" }}</h3>
 
       <table class="cpc-table cpc-align-{{ fs_doc.get_print_table_alignment_css() }}" style="--cpc-table-font-size: {{ fs_doc.get_print_font_size() }}pt; --cpc-table-width: {{ fs_doc.get_print_table_width() }};">
@@ -1098,9 +1147,40 @@ limit_page_length=100
         </tbody>
       </table>
     </div>
+    {% set ns_fs_idx.count = ns_fs_idx.count + 1 %}
     {% endif %}
     {% endfor %}
   </div>
   {% endif %}
 
 </div>
+
+<script>
+(function() {
+  function calibrateIndexPages() {
+    try {
+      var hasCover = document.querySelector(".cpc-cover-page") !== null;
+      var hasIndex = document.querySelector(".cpc-index-page") !== null;
+      if (!hasIndex) return;
+
+      var startContentPage = (hasCover ? 1 : 0) + (hasIndex ? 1 : 0) + 1;
+
+      var rows = document.querySelectorAll(".cpc-index-row");
+      rows.forEach(function(row) {
+        var numElem = row.querySelector(".cpc-index-page-num");
+        if (numElem && !numElem.textContent.trim()) {
+          numElem.textContent = String(startContentPage);
+        }
+      });
+    } catch(e) {
+      console.error("Error calibrating index pages:", e);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", calibrateIndexPages);
+  } else {
+    calibrateIndexPages();
+  }
+})();
+</script>

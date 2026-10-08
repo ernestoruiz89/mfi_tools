@@ -310,6 +310,86 @@ class PaqueteEEFF(Document):
         setattr(self, cache_key, output)
         return output
 
+    def get_toc_entries(self):
+        """
+        Retorna las entradas del índice con su título y número de página calculado para el reporte/PDF.
+        """
+        has_cover = bool(cstr(getattr(self, "imagen_portada", "") or "").strip())
+        has_index = bool(cstr(getattr(self, "imagen_indice", "") or getattr(self, "imagen_portada", "") or "").strip())
+        start_content_page = (1 if has_cover else 0) + (1 if has_index else 0) + 1
+
+        entries = []
+        estados = frappe.get_all(
+            "Estado Financiero EEFF",
+            filters={"paquete_eeff": self.name},
+            fields=["name", "tipo_estado", "titulo", "orden_presentacion"],
+            order_by="orden_presentacion asc, creation asc",
+            limit_page_length=100,
+        )
+
+        current_page = start_content_page
+        for idx, estado in enumerate(estados):
+            titulo = cstr(estado.get("titulo") or estado.get("tipo_estado") or f"Estado Financiero {idx + 1}").strip()
+            entries.append({
+                "tipo": "estado",
+                "label": titulo,
+                "pagina": str(current_page),
+                "pagina_inicio": current_page,
+                "pagina_fin": current_page,
+                "target_id": f"cpc-estado-{idx}",
+            })
+            current_page += 1
+
+        notas = frappe.get_all(
+            "Nota EEFF",
+            filters={"paquete_eeff": self.name},
+            fields=["name", "numero_nota", "sub_nota", "estado_aprobacion", "creation"],
+            order_by="numero_nota asc, sub_nota asc, creation asc",
+            limit_page_length=300,
+        )
+
+        if notas:
+            notas_start = current_page
+            total_notas = len(notas)
+            notas_pages = max(1, total_notas)
+            notas_end = notas_start + notas_pages - 1
+            pagina_display = f"{notas_start} – {notas_end}" if notas_end > notas_start else str(notas_start)
+            entries.append({
+                "tipo": "notas",
+                "label": "Notas a los Estados Financieros",
+                "pagina": pagina_display,
+                "pagina_inicio": notas_start,
+                "pagina_fin": notas_end,
+                "target_id": "cpc-notas",
+            })
+            current_page = notas_end + 1
+
+        factsheets = frappe.get_all(
+            "Factsheet",
+            filters={"paquete_eeff": self.name},
+            fields=["name", "codigo_factsheet", "numero_factsheet", "titulo", "no_imprimir"],
+            order_by="numero_factsheet asc, codigo_factsheet asc",
+            limit_page_length=100,
+        )
+
+        fs_idx = 0
+        for fs in factsheets:
+            if cint(fs.get("no_imprimir")):
+                continue
+            titulo = cstr(fs.get("titulo") or fs.get("codigo_factsheet") or f"Factsheet {fs_idx + 1}").strip()
+            entries.append({
+                "tipo": "factsheet",
+                "label": titulo,
+                "pagina": str(current_page),
+                "pagina_inicio": current_page,
+                "pagina_fin": current_page,
+                "target_id": f"cpc-factsheet-{fs_idx}",
+            })
+            current_page += 1
+            fs_idx += 1
+
+        return entries
+
 
 @frappe.whitelist()
 def ejecutar_mapeo(paquete_name):

@@ -347,11 +347,12 @@ def _build_package_document(package):
         toc_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
 
     toc_paragraph = document.add_paragraph()
-    _append_field(toc_paragraph, 'TOC \\o "1-3" \\h \\z \\u', "Actualice el indice al abrir el documento.", OxmlElement, qn)
+    _append_field(toc_paragraph, 'TOC \\o "1-2" \\h \\z \\u', "Actualice el indice al abrir el documento.", OxmlElement, qn)
 
+    content_start_page = (1 if cover_image_path else 0) + (1 if index_image_path else 0) + 1
     content_section = document.add_section(WD_SECTION_START.NEW_PAGE)
     _configure_section(content_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE)
-    _set_section_footer_page_number(content_section, start=1)
+    _set_section_footer_page_number(content_section, start=content_start_page)
     _add_estados_section(document, package)
 
     notas_section = document.add_section(WD_SECTION_START.NEW_PAGE)
