@@ -332,10 +332,14 @@ def _build_package_document(package):
 
     if index_image_path:
         _apply_section_background_image(toc_section, index_image_path, OxmlElement, qn)
-        toc_heading = document.add_paragraph("Indice", style="Heading 1")
+        toc_heading = document.add_paragraph()
         toc_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        toc_heading.paragraph_format.space_before = Pt(80)
-        _set_paragraph_runs_font(toc_heading, size=Pt(BODY_SIZE), bold=True)
+        toc_heading.paragraph_format.space_before = Pt(24)
+        toc_heading.paragraph_format.space_after = Pt(6)
+        run_h = toc_heading.add_run("Indice")
+        run_h.bold = True
+        run_h.font.name = FONT_NAME
+        run_h.font.size = Pt(11)
     else:
         _set_section_header_content(
             toc_section,
@@ -346,12 +350,21 @@ def _build_package_document(package):
                 "subtitulo": "",
             },
         )
-        toc_heading = document.add_paragraph("Indice", style="Heading 1")
+        toc_heading = document.add_paragraph()
         toc_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        _set_paragraph_runs_font(toc_heading, size=Pt(BODY_SIZE), bold=True)
+        toc_heading.paragraph_format.space_before = Pt(12)
+        toc_heading.paragraph_format.space_after = Pt(6)
+        run_h = toc_heading.add_run("Indice")
+        run_h.bold = True
+        run_h.font.name = FONT_NAME
+        run_h.font.size = Pt(11)
 
     toc_paragraph = document.add_paragraph()
+    toc_paragraph.paragraph_format.space_before = Pt(0)
+    toc_paragraph.paragraph_format.space_after = Pt(0)
+    toc_paragraph.paragraph_format.line_spacing = 1.0
     _append_field(toc_paragraph, 'TOC \\o "1-2" \\h \\z \\u', "Actualice el indice al abrir el documento.", OxmlElement, qn)
+    _set_paragraph_runs_font(toc_paragraph, size=Pt(9))
 
     content_start_page = (1 if cover_image_path else 0) + (1 if index_image_path else 0) + 1
     content_section = document.add_section(WD_SECTION_START.NEW_PAGE)
@@ -387,6 +400,48 @@ def _docx_imports():
     return Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, WD_ALIGN_VERTICAL
 
 
+def _configure_toc_styles(document, Pt, qn):
+    _Document, _Align, _Orient, _SecStart, _TblAlign, _OxmlElement, _qn, _Cm, _Pt, _RGB, _WD_AV = _docx_imports()
+    from docx.enum.style import WD_STYLE_TYPE
+    styles = document.styles
+    toc_specs = [
+        ("TOC 1", "toc 1", "TOC1", 9.0, 1.5, True),
+        ("TOC 2", "toc 2", "TOC2", 8.5, 1.0, False),
+        ("TOC 3", "toc 3", "TOC3", 8.5, 1.0, False),
+    ]
+    for display_name, canonical_name, style_id, font_size, space_after, is_bold in toc_specs:
+        s = None
+        for try_name in (canonical_name, display_name, style_id):
+            if try_name in styles:
+                s = styles[try_name]
+                break
+        if s is None:
+            try:
+                s = styles.add_style(canonical_name, WD_STYLE_TYPE.PARAGRAPH)
+            except Exception:
+                continue
+        try:
+            s._element.set(qn("w:styleId"), style_id)
+            name_el = s._element.find(qn("w:name"))
+            if name_el is not None:
+                name_el.set(qn("w:val"), canonical_name)
+            alias_el = s._element.find(qn("w:aliases"))
+            if alias_el is None:
+                alias_el = _OxmlElement("w:aliases")
+                s._element.insert(1, alias_el)
+            alias_el.set(qn("w:val"), display_name)
+            if qn("w:customStyle") in s._element.attrib:
+                del s._element.attrib[qn("w:customStyle")]
+        except Exception:
+            pass
+        s.font.name = FONT_NAME
+        s.font.size = Pt(font_size)
+        s.font.bold = is_bold
+        s.paragraph_format.space_before = Pt(0)
+        s.paragraph_format.space_after = Pt(space_after)
+        s.paragraph_format.line_spacing = 1.0
+
+
 def _configure_document(document, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, Pt, document_title=REPORT_TITLE):
     styles = document.styles
     styles["Normal"].font.name = FONT_NAME
@@ -402,6 +457,8 @@ def _configure_document(document, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, 
     if "Subtitle" in styles:
         styles["Subtitle"].font.name = FONT_NAME
         styles["Subtitle"].font.size = Pt(BODY_SIZE)
+
+    _configure_toc_styles(document, Pt, qn)
 
     for section in document.sections:
         _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=document_title)
@@ -440,7 +497,10 @@ def _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm
 
 
 def _append_field(paragraph, instruction, placeholder, OxmlElement, qn):
+    _Document, _Align, _Orient, _SecStart, _TblAlign, _OxmlElement, _qn, _Cm, Pt, _RGB, _WD_AV = _docx_imports()
     run = paragraph.add_run()
+    run.font.name = FONT_NAME
+    run.font.size = Pt(9.0) if instruction.startswith("TOC") else Pt(BODY_SIZE)
     begin = OxmlElement("w:fldChar")
     begin.set(qn("w:fldCharType"), "begin")
     instr = OxmlElement("w:instrText")
