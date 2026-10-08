@@ -991,13 +991,15 @@ def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignm
     for cifra in visible_cifras:
         line_index = len(table.rows)
         row = table.add_row().cells
-        concept_parts = []
+        concept_text = ""
         if not cint(getattr(cifra, "es_linea_blanco", 0)):
             indent = "    " * max(cint(getattr(cifra, "nivel", 1) or 1) - 1, 0)
-            concept_parts.append(f"{indent}{cstr(cifra.concepto or '-')}")
-        if cifra.comentario and not cint(getattr(cifra, "es_linea_blanco", 0)):
-            concept_parts.append(cstr(cifra.comentario))
-        row[0].text = "\n".join([part for part in concept_parts if part])
+            concept_text = f"{indent}{cstr(cifra.concepto or '-')}"
+        row[0].text = concept_text
+        comment_text = cstr(getattr(cifra, "comentario", "") or "")
+        has_comment = bool(comment_text and not cint(getattr(cifra, "es_linea_blanco", 0)))
+        if has_comment:
+            row[0].add_paragraph(comment_text)
         if has_comparative:
             if cint(getattr(cifra, "es_linea_blanco", 0)) or cint(getattr(cifra, "es_titulo", 0)):
                 row[1].text = ""
@@ -1012,7 +1014,7 @@ def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignm
                 row[1].text = ""
             else:
                 row[1].text = _format_note_figure_value(nota_doc, cifra, "monto_actual", currency_symbol)
-        rendered_rows.append((line_index, cifra))
+        rendered_rows.append((line_index, cifra, has_comment))
 
         if cint(getattr(cifra, "es_total", 0)):
             total_rows.append(line_index)
@@ -1039,9 +1041,19 @@ def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignm
     else:
         _set_table_column_widths(table, [12.5, 3.5])
         _style_note_table(table, total_rows=total_rows, subtotal_rows=subtotal_rows, font_size=note_font_size, numeric_col_indexes=(1,), gap_col_indexes=())
-    for line_index, cifra in rendered_rows:
+    for line_index, cifra, _has_comment in rendered_rows:
         _apply_note_figure_format(table.rows[line_index], cifra, font_size=note_font_size)
     _force_table_font_size(table, note_font_size)
+    comment_font_size = max(6.0, note_font_size * 0.85)
+    for line_index, cifra, has_comment in rendered_rows:
+        if not has_comment:
+            continue
+        comment_paragraph = table.rows[line_index].cells[0].paragraphs[-1]
+        _set_paragraph_runs_font(comment_paragraph, size=comment_font_size)
+        for run in comment_paragraph.runs:
+            run.bold = False
+            if cint(getattr(cifra, "subrayado", 0)):
+                run.underline = True
     return True
 
 def _render_complex_note_content(document, nota_doc, labels, package, currency_symbol, has_comparative=True, exclude_zero_movements=False, return_to_note_layout=False, allow_layout_switch=True, keep_group_layout=False):

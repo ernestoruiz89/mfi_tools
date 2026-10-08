@@ -121,8 +121,10 @@
         {
             "fieldname": "negrita",
             "fieldtype": "Check",
-            "label": "Negrita",
-            "default": 0
+            "label": "Concepto en Negrita",
+            "in_list_view": 1,
+            "default": 0,
+            "description": "Aplica negrita solo al concepto; no afecta los valores ni el comentario."
         },
         {
             "fieldname": "presentacion_column",

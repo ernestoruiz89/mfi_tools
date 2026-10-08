@@ -330,7 +330,7 @@ class AsistenteNotasEEFF {
                 </div>
                 <div class="cfe-table-wrap">
                     <table class="cfe-table">
-                        <thead><tr><th>${__("Codigo")}</th><th>${__("Concepto")}</th><th>${__("Nivel")}</th><th>${__("Formato")}</th><th>${__("Actual")}</th><th>${__("Comparativo")}</th><th>${__("Titulo")}</th><th>${__("Linea Blanco")}</th><th>${__("Manual")}</th><th>${__("Auto")}</th><th>${__("Formula")}</th><th>${__("Total")}</th><th>${__("Subtotal")}</th><th>${__("No Imprimir")}</th><th></th></tr></thead>
+                        <thead><tr><th>${__("Codigo")}</th><th>${__("Concepto")}</th><th>${__("Nivel")}</th><th>${__("Formato")}</th><th>${__("Actual")}</th><th>${__("Comparativo")}</th><th>${__("Concepto en Negrita")}</th><th>${__("Titulo")}</th><th>${__("Linea Blanco")}</th><th>${__("Manual")}</th><th>${__("Auto")}</th><th>${__("Formula")}</th><th>${__("Total")}</th><th>${__("Subtotal")}</th><th>${__("No Imprimir")}</th><th></th></tr></thead>
                         <tbody>
                             ${figures.length ? figures.map((row, index) => `
                                 <tr>
@@ -340,6 +340,7 @@ class AsistenteNotasEEFF {
                                     <td><select class="cfe-figure-field" data-index="${index}" data-fieldname="formato_numero">${this.select_options(["Numero", "Moneda", "Porcentaje", "Texto"], this.get_figure_format(row))}</select></td>
                                     <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="monto_actual" value="${this.escape(this.get_figure_input_value(row, "monto_actual"))}" ${this.figure_disables_values(row) ? "disabled" : ""}></td>
                                     <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="monto_comparativo" value="${this.escape(this.get_figure_input_value(row, "monto_comparativo"))}" ${this.figure_disables_values(row) ? "disabled" : ""}></td>
+                                    <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="negrita" type="checkbox" ${this.checked(row.negrita)}></td>
                                     <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="es_titulo" type="checkbox" ${this.checked(row.es_titulo)}></td>
                                     <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="es_linea_blanco" type="checkbox" ${this.checked(row.es_linea_blanco)}></td>
                                     <td></td>
@@ -350,7 +351,7 @@ class AsistenteNotasEEFF {
                                     <td><input class="cfe-figure-field" data-index="${index}" data-fieldname="no_imprimir" type="checkbox" ${this.checked(row.no_imprimir)}></td>
                                     <td><span class="cfe-link-delete cfe-delete-figure" data-index="${index}">${__("Eliminar")}</span></td>
                                 </tr>
-                            `).join("") : `<tr><td colspan="15">${__("La nota todavia no tiene cifras.")}</td></tr>`}
+                            `).join("") : `<tr><td colspan="16">${__("La nota todavia no tiene cifras.")}</td></tr>`}
                         </tbody>
                     </table>
                 </div>
