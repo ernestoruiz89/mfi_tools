@@ -18,6 +18,7 @@ FONT_NAME = "Arial Narrow"
 BODY_SIZE = 12
 COMPACT_SIZE = 12
 COMPLEX_NOTE_TABLE_SIZE = 10
+TOC_SIZE = 14
 
 
 def export_paquete_eeff_to_word(package_name):
@@ -339,7 +340,7 @@ def _build_package_document(package):
         run_h = toc_heading.add_run("Indice")
         run_h.bold = True
         run_h.font.name = FONT_NAME
-        run_h.font.size = Pt(11)
+        run_h.font.size = Pt(TOC_SIZE)
     else:
         _set_section_header_content(
             toc_section,
@@ -357,14 +358,14 @@ def _build_package_document(package):
         run_h = toc_heading.add_run("Indice")
         run_h.bold = True
         run_h.font.name = FONT_NAME
-        run_h.font.size = Pt(11)
+        run_h.font.size = Pt(TOC_SIZE)
 
     toc_paragraph = document.add_paragraph()
     toc_paragraph.paragraph_format.space_before = Pt(0)
     toc_paragraph.paragraph_format.space_after = Pt(0)
     toc_paragraph.paragraph_format.line_spacing = 1.0
     _append_field(toc_paragraph, 'TOC \\o "1-2" \\h \\z \\u', "Actualice el indice al abrir el documento.", OxmlElement, qn)
-    _set_paragraph_runs_font(toc_paragraph, size=9)
+    _set_paragraph_runs_font(toc_paragraph, size=TOC_SIZE)
 
     content_start_page = (1 if cover_image_path else 0) + (1 if index_image_path else 0) + 1
     content_section = document.add_section(WD_SECTION_START.NEW_PAGE)
@@ -405,9 +406,9 @@ def _configure_toc_styles(document, Pt, qn):
     from docx.enum.style import WD_STYLE_TYPE
     styles = document.styles
     toc_specs = [
-        ("TOC 1", "toc 1", "TOC1", 9.0, 1.5, True),
-        ("TOC 2", "toc 2", "TOC2", 8.5, 1.0, False),
-        ("TOC 3", "toc 3", "TOC3", 8.5, 1.0, False),
+        ("TOC 1", "toc 1", "TOC1", TOC_SIZE, 1.5, True),
+        ("TOC 2", "toc 2", "TOC2", TOC_SIZE, 1.0, False),
+        ("TOC 3", "toc 3", "TOC3", TOC_SIZE, 1.0, False),
     ]
     for display_name, canonical_name, style_id, font_size, space_after, is_bold in toc_specs:
         s = None
@@ -500,7 +501,7 @@ def _append_field(paragraph, instruction, placeholder, OxmlElement, qn):
     _Document, _Align, _Orient, _SecStart, _TblAlign, _OxmlElement, _qn, _Cm, Pt, _RGB, _WD_AV = _docx_imports()
     run = paragraph.add_run()
     run.font.name = FONT_NAME
-    run.font.size = Pt(9.0) if instruction.startswith("TOC") else Pt(BODY_SIZE)
+    run.font.size = Pt(TOC_SIZE) if instruction.startswith("TOC") else Pt(BODY_SIZE)
     begin = OxmlElement("w:fldChar")
     begin.set(qn("w:fldCharType"), "begin")
     instr = OxmlElement("w:instrText")
@@ -2190,13 +2191,9 @@ def _add_package_signatures_block(document, package):
         bottom_cell.text = ""
         line_paragraph = bottom_cell.paragraphs[0]
         line_paragraph.alignment = 1
-        line_paragraph.add_run("")
-        _set_paragraph_runs_font(line_paragraph, size=10)
+        line_paragraph.add_run(name)
+        _set_paragraph_runs_font(line_paragraph, size=11)
         _style_cell_border(bottom_cell, top={"val": "single", "sz": 8})
-
-        name_paragraph = bottom_cell.add_paragraph(name)
-        name_paragraph.alignment = 1
-        _set_paragraph_runs_font(name_paragraph, size=11)
 
         if title:
             title_paragraph = bottom_cell.add_paragraph(title)
