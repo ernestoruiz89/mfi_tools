@@ -800,7 +800,7 @@ def _add_estados_section(document, package):
             for line_index, linea in rendered_rows:
                 _apply_estado_line_format(table.rows[line_index], linea, font_size=estado_font_size)
                 if cint(getattr(linea, "es_linea_blanco", 0)):
-                    _set_row_min_height(table.rows[line_index], 340)
+                    _set_row_min_height(table.rows[line_index], round(estado_font_size * 20))
     
         if _package_has_signatures(package):
             _add_package_signatures_block(document, package)
@@ -1605,14 +1605,14 @@ def _style_cell_border(cell, top=None, bottom=None):
         edge_el.set(qn("w:color"), spec.get("color", "000000"))
 
 
-def _set_cell_margins(cell, left=None, right=None):
+def _set_cell_margins(cell, top=None, left=None, bottom=None, right=None):
     _Document, _Align, _Orientation, _SectionStart, _TableAlign, OxmlElement, qn, _Cm, _Pt, _RGBColor, _WD_AV = _docx_imports()
     tcPr = cell._tc.get_or_add_tcPr()
     tcMar = tcPr.first_child_found_in("w:tcMar")
     if tcMar is None:
         tcMar = OxmlElement("w:tcMar")
         tcPr.append(tcMar)
-    for edge, value in (("left", left), ("right", right)):
+    for edge, value in (("top", top), ("left", left), ("bottom", bottom), ("right", right)):
         if value is None:
             continue
         edge_el = tcMar.find(qn(f"w:{edge}"))
@@ -1661,6 +1661,9 @@ def _style_financial_table(
     for row_index, row in enumerate(table.rows):
         for cell_index, cell in enumerate(row.cells):
             cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            # Override Word's default cell padding so the configured font size
+            # determines the compact row height consistently.
+            _set_cell_margins(cell, top=0, bottom=0)
             if note_col_index is not None and cell_index == note_col_index:
                 _set_cell_margins(cell, left=80, right=80)
             elif first_numeric_index is not None and cell_index == first_numeric_index:
@@ -1670,6 +1673,7 @@ def _style_financial_table(
             elif cell_index in numeric_indexes:
                 _set_cell_margins(cell, left=140, right=100)
             for paragraph in cell.paragraphs:
+                paragraph.paragraph_format.line_spacing = 1.0
                 _set_paragraph_runs_font(
                     paragraph,
                     size=effective_font_size,
