@@ -33,6 +33,10 @@
         "diseno_column",
         "imagen_indice",
         "imagen_fondo_estados",
+        "margenes_pdf_section",
+        "margen_superior_pdf",
+        "margenes_pdf_column",
+        "margen_inferior_pdf",
         "datos_consolidados_section",
         "datos_estadisticos",
         "firmas_section",
@@ -227,6 +231,35 @@
             "fieldname": "imagen_fondo_estados",
             "fieldtype": "Attach Image",
             "label": "Imagen de Fondo Estados Financieros"
+        },
+        {
+            "fieldname": "margenes_pdf_section",
+            "fieldtype": "Section Break",
+            "label": "Márgenes de Estados en PDF"
+        },
+        {
+            "fieldname": "margen_superior_pdf",
+            "fieldtype": "Float",
+            "label": "Margen Superior PDF (mm)",
+            "default": 0,
+            "min_value": 0,
+            "max_value": 100,
+            "precision": 2,
+            "description": "Margen superior en milímetros (máximo 100). 0 usa el espacio seguro de la plantilla según orientación e imagen de fondo."
+        },
+        {
+            "fieldname": "margenes_pdf_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "margen_inferior_pdf",
+            "fieldtype": "Float",
+            "label": "Margen Inferior PDF (mm)",
+            "default": 0,
+            "min_value": 0,
+            "max_value": 100,
+            "precision": 2,
+            "description": "Margen inferior en milímetros (máximo 100). 0 usa el espacio seguro de la plantilla según orientación e imagen de fondo."
         },
         {
             "fieldname": "datos_consolidados_section",

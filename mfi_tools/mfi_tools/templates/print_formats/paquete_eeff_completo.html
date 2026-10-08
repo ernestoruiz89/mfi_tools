@@ -358,6 +358,14 @@
     page: landscape_page;
   }
 
+  @page cpc_notes_page {
+    size: letter portrait;
+    margin: 15mm 0mm 0mm 0mm;
+  }
+  .cpc-notas-wrapper {
+    page: cpc_notes_page;
+  }
+
   .cpc-cover-page,
   .cpc-index-page,
   .cpc-estado-block.cpc-has-bg {
@@ -399,7 +407,8 @@
   .cpc-estado-inner {
     position: relative;
     z-index: 2;
-    padding: 38mm 18mm 28mm 18mm;
+    height: 100%;
+    padding: var(--cpc-margin-top, 38mm) 18mm var(--cpc-margin-bottom, 28mm) 18mm;
     box-sizing: border-box;
   }
 
@@ -605,11 +614,10 @@
       padding-top: 15mm !important;
     }
     .cpc-estado-block:not(.cpc-has-bg) {
-      padding-top: 15mm !important;
-      padding-bottom: 15mm !important;
+      padding-top: var(--cpc-margin-top, 15mm) !important;
+      padding-bottom: var(--cpc-margin-bottom, 15mm) !important;
     }
     .cpc-notas-wrapper {
-      padding-top: 15mm !important;
       padding-bottom: 15mm !important;
     }
     .cpc-estado-block.cpc-has-bg {
@@ -635,7 +643,7 @@
     }
     .cpc-estado-block.cpc-has-bg.cpc-landscape-section .cpc-estado-inner,
     .cpc-landscape-section.cpc-estado-block.cpc-has-bg .cpc-estado-inner {
-      padding: 30mm 18mm 20mm 18mm !important;
+      padding: var(--cpc-margin-top, 30mm) 18mm var(--cpc-margin-bottom, 20mm) 18mm !important;
     }
   }
 
@@ -791,8 +799,10 @@ limit_page_length=100
     {% set estado_bg = estado_doc.imagen_fondo or doc.imagen_fondo_estados %}
     {% set lineas = (estado_doc.lineas or []) %}
     {% set estado_header = estado_doc.get_print_header() %}
+    {% set margen_superior_estado = doc.get_pdf_margin_top(estado_doc.orientacion, estado_bg) %}
+    {% set margen_inferior_estado = doc.get_pdf_margin_bottom(estado_doc.orientacion, estado_bg) %}
     {% set is_landscape_class = " cpc-landscape-section" if estado_doc.orientacion == "Horizontal" else "" %}
-    <div id="cpc-estado-{{ loop.index0 }}" class="cpc-section cpc-estado-block{% if estado_bg %} cpc-has-bg{% endif %}{{ is_landscape_class }}" {% if loop.index0 > 0 or not cover_bg %}style="page-break-before: always; break-before: page;"{% endif %}>
+    <div id="cpc-estado-{{ loop.index0 }}" class="cpc-section cpc-estado-block{% if estado_bg %} cpc-has-bg{% endif %}{{ is_landscape_class }}" style="{% if loop.index0 > 0 or not cover_bg %}page-break-before: always; break-before: page; {% endif %}--cpc-margin-top: {{ margen_superior_estado }}mm; --cpc-margin-bottom: {{ margen_inferior_estado }}mm;">
       {% if estado_bg %}
       <img class="cpc-page-bg-img" src="{{ estado_bg }}" alt="Fondo">
       <div class="cpc-estado-inner">
@@ -809,8 +819,10 @@ limit_page_length=100
         {% for tabla in tablas %}
           {% if tabla.columnas and tabla.filas %}
           {% set compact_table = (tabla.columnas | length) > 5 %}
+          {% set estado_font_size = estado_doc.get_print_font_size() %}
+          {% if compact_table %}{% set estado_font_size = [10, estado_font_size] | min %}{% endif %}
           <div style="margin-top: 10px;">
-            <table class="cpc-table cpc-align-{{ estado_doc.get_print_table_alignment_css() }}" style="--cpc-table-width: {{ estado_doc.get_print_table_width() }}; --cpc-table-font-size: {{ 10 if compact_table else estado_doc.get_print_font_size() }}pt; --cpc-table-row-padding: {{ estado_doc.get_print_row_padding() }}; --cpc-table-line-height: {{ estado_doc.get_print_line_height() }};">
+            <table class="cpc-table cpc-align-{{ estado_doc.get_print_table_alignment_css() }}" style="--cpc-table-width: {{ estado_doc.get_print_table_width() }}; --cpc-table-font-size: {{ estado_font_size }}pt; --cpc-table-row-padding: {{ estado_doc.get_print_row_padding() }}; --cpc-table-line-height: {{ estado_doc.get_print_line_height() }};">
               <thead>
                 {% if tabla.tiene_grupos %}
                 <tr>

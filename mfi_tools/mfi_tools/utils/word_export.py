@@ -364,7 +364,7 @@ def _build_package_document(package):
     toc_paragraph.paragraph_format.space_after = Pt(0)
     toc_paragraph.paragraph_format.line_spacing = 1.0
     _append_field(toc_paragraph, 'TOC \\o "1-2" \\h \\z \\u', "Actualice el indice al abrir el documento.", OxmlElement, qn)
-    _set_paragraph_runs_font(toc_paragraph, size=Pt(9))
+    _set_paragraph_runs_font(toc_paragraph, size=9)
 
     content_start_page = (1 if cover_image_path else 0) + (1 if index_image_path else 0) + 1
     content_section = document.add_section(WD_SECTION_START.NEW_PAGE)
@@ -672,7 +672,7 @@ def _add_estados_section(document, package):
                 p4.paragraph_format.space_after = Pt(4)
 
             p_div = document.add_paragraph()
-            _set_paragraph_runs_font(p_div, size=Pt(2))
+            _set_paragraph_runs_font(p_div, size=2)
             p_div.paragraph_format.space_before = Pt(0)
             p_div.paragraph_format.space_after = Pt(6)
             pPr = p_div._element.get_or_add_pPr()

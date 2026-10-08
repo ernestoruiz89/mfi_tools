@@ -115,8 +115,76 @@ class EstadoFinancieroEEFF(Document):
             return len(getattr(self, "filas_complejas", []) or [])
         return len([row for row in (self.lineas or []) if not cint(getattr(row, "no_imprimir", 0))])
 
-    def get_auto_font_size(self):
+    def _get_package_print_settings(self):
+        if hasattr(self, "_print_package_settings_cache"):
+            return self._print_package_settings_cache
+
+        package_name = cstr(getattr(self, "paquete_eeff", "") or "").strip()
+        if not package_name:
+            self._print_package_settings_cache = {}
+            return self._print_package_settings_cache
+
+        try:
+            settings = frappe.db.get_value(
+                "Paquete EEFF",
+                package_name,
+                [
+                    "margen_superior_pdf",
+                    "margen_inferior_pdf",
+                    "imagen_fondo_estados",
+                    "elaborado_por",
+                    "revisado_por",
+                    "autorizado_por",
+                ],
+                as_dict=True,
+            )
+        except Exception:
+            settings = None
+
+        self._print_package_settings_cache = settings or {}
+        return self._print_package_settings_cache
+
+    def _get_print_fit_row_count(self):
         rows = self._get_printable_row_count()
+        settings = self._get_package_print_settings()
+        if not settings:
+            return rows
+
+        is_landscape = cstr(getattr(self, "orientacion", "") or "").strip().lower() in ("horizontal", "landscape")
+        has_background = bool(
+            cstr(getattr(self, "imagen_fondo", "") or "").strip()
+            or cstr(settings.get("imagen_fondo_estados") or "").strip()
+        )
+
+        if has_background:
+            base_top = 30 if is_landscape else 38
+            base_bottom = 20 if is_landscape else 28
+        else:
+            base_top = base_bottom = 15
+
+        configured_top = flt(settings.get("margen_superior_pdf") or 0)
+        configured_bottom = flt(settings.get("margen_inferior_pdf") or 0)
+        margin_top = min(configured_top, 100.0) if configured_top > 0 else base_top
+        margin_bottom = min(configured_bottom, 100.0) if configured_bottom > 0 else base_bottom
+        extra_margin = max(0, margin_top - base_top) + max(0, margin_bottom - base_bottom)
+        row_height = 4.5 if is_landscape else 5.0
+        # Convert extra page margins into table-row equivalents for font auto-fit.
+        margin_rows = math.ceil(extra_margin / row_height) if extra_margin else 0
+
+        has_signatures = any(
+            cstr(settings.get(fieldname) or "").strip()
+            for fieldname in ("elaborado_por", "revisado_por", "autorizado_por")
+        )
+        # Keep room for the signature block after the table.
+        if has_signatures:
+            signature_height = (20 if is_landscape else 30) if has_background else (36 if is_landscape else 35)
+            signature_rows = math.ceil(signature_height / row_height)
+        else:
+            signature_rows = 0
+        return rows + margin_rows + signature_rows
+
+    def get_auto_font_size(self, row_count=None):
+        rows = self._get_print_fit_row_count() if row_count is None else max(0, int(row_count))
         is_landscape = cstr(getattr(self, "orientacion", "") or "").strip().lower() in ("horizontal", "landscape")
         if is_landscape:
             if rows <= 12:
@@ -144,16 +212,19 @@ class EstadoFinancieroEEFF(Document):
     def get_print_font_size(self):
         val = flt(getattr(self, "tamano_letra_impresion", 0) or 0)
         rows = self._get_printable_row_count()
+        fit_rows = self._get_print_fit_row_count()
         is_landscape = cstr(getattr(self, "orientacion", "") or "").strip().lower() in ("horizontal", "landscape")
 
         if val <= 0:
-            value = self.get_auto_font_size()
-        elif val == 12.0 and (rows > 16 or is_landscape):
+            value = self.get_auto_font_size(fit_rows)
+        elif val == 12.0 and (fit_rows > 16 or is_landscape):
             # 12 es el valor por defecto en el DocType; si el reporte supera 16 filas o es apaisado,
-            # 12pt desbordaría a una segunda página. Se auto-ajusta para asegurar 1 página.
-            value = self.get_auto_font_size()
+            # se consideran tambien margenes y firmas para mantener el contenido dentro de la pagina.
+            value = self.get_auto_font_size(fit_rows)
         else:
             value = max(7.0, min(val, 18.0))
+            if fit_rows > rows:
+                value = min(value, self.get_auto_font_size(fit_rows))
 
         return int(value) if abs(value - int(value)) < 0.001 else round(value, 2)
 

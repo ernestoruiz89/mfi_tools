@@ -36,6 +36,28 @@ class PaqueteEEFF(Document):
             return cstr(customer_name or cliente).strip()
         return ""
 
+    def _get_pdf_margin(self, fieldname, default):
+        value = flt(getattr(self, fieldname, 0) or 0)
+        if value <= 0:
+            return default
+        return round(min(value, 100.0), 2)
+
+    def get_pdf_margin_top(self, orientacion=None, has_background=False):
+        is_landscape = cstr(orientacion or "").strip().lower() in ("horizontal", "landscape")
+        if has_background:
+            default = 30 if is_landscape else 38
+        else:
+            default = 15
+        return self._get_pdf_margin("margen_superior_pdf", default)
+
+    def get_pdf_margin_bottom(self, orientacion=None, has_background=False):
+        is_landscape = cstr(orientacion or "").strip().lower() in ("horizontal", "landscape")
+        if has_background:
+            default = 20 if is_landscape else 28
+        else:
+            default = 15
+        return self._get_pdf_margin("margen_inferior_pdf", default)
+
     def autoname(self):
         self._sync_names()
         self._validar_paquete_unico()
