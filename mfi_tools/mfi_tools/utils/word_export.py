@@ -18,7 +18,8 @@ FONT_NAME = "Arial Narrow"
 BODY_SIZE = 12
 COMPACT_SIZE = 12
 COMPLEX_NOTE_TABLE_SIZE = 10
-TOC_SIZE = 14
+TOC_SIZE = 12
+TOC_HEADING_SIZE = 14
 
 
 def export_paquete_eeff_to_word(package_name):
@@ -335,12 +336,12 @@ def _build_package_document(package):
         _apply_section_background_image(toc_section, index_image_path, OxmlElement, qn)
         toc_heading = document.add_paragraph()
         toc_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        toc_heading.paragraph_format.space_before = Pt(24)
+        toc_heading.paragraph_format.space_before = Pt(72)
         toc_heading.paragraph_format.space_after = Pt(6)
         run_h = toc_heading.add_run("Indice")
         run_h.bold = True
         run_h.font.name = FONT_NAME
-        run_h.font.size = Pt(TOC_SIZE)
+        run_h.font.size = Pt(TOC_HEADING_SIZE)
     else:
         _set_section_header_content(
             toc_section,
@@ -358,7 +359,7 @@ def _build_package_document(package):
         run_h = toc_heading.add_run("Indice")
         run_h.bold = True
         run_h.font.name = FONT_NAME
-        run_h.font.size = Pt(TOC_SIZE)
+        run_h.font.size = Pt(TOC_HEADING_SIZE)
 
     toc_paragraph = document.add_paragraph()
     toc_paragraph.paragraph_format.space_before = Pt(0)
@@ -1037,10 +1038,24 @@ def _render_note_figures(document, nota_doc, labels, note_font_size, note_alignm
 
     if has_comparative:
         _set_table_column_widths(table, [9.5, 3.2, 0.1, 3.2])
-        _style_note_table(table, total_rows=total_rows, subtotal_rows=subtotal_rows, font_size=note_font_size)
+        _style_note_table(
+            table,
+            total_rows=total_rows,
+            subtotal_rows=subtotal_rows,
+            font_size=note_font_size,
+            center_values=bool(cint(getattr(nota_doc, "centrar_valores_verticalmente", 0))),
+        )
     else:
         _set_table_column_widths(table, [12.5, 3.5])
-        _style_note_table(table, total_rows=total_rows, subtotal_rows=subtotal_rows, font_size=note_font_size, numeric_col_indexes=(1,), gap_col_indexes=())
+        _style_note_table(
+            table,
+            total_rows=total_rows,
+            subtotal_rows=subtotal_rows,
+            font_size=note_font_size,
+            numeric_col_indexes=(1,),
+            gap_col_indexes=(),
+            center_values=bool(cint(getattr(nota_doc, "centrar_valores_verticalmente", 0))),
+        )
     for line_index, cifra, _has_comment in rendered_rows:
         _apply_note_figure_format(table.rows[line_index], cifra, font_size=note_font_size)
     _force_table_font_size(table, note_font_size)
@@ -1233,6 +1248,7 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
                 font_size=min(note_font_size, COMPLEX_NOTE_TABLE_SIZE) if compact else note_font_size,
                 numeric_col_indexes=tuple(data_col_indexes),
                 gap_col_indexes=tuple(gap_col_indexes),
+                center_values=bool(cint(getattr(nota_doc, "centrar_valores_verticalmente", 0))),
             )
             for row_index, fila in rendered_rows:
                 is_bold = bool(
@@ -1658,6 +1674,7 @@ def _style_financial_table(
     gap_col_index=2,
     gap_col_indexes=None,
     align_numeric_headers=False,
+    center_numeric_values=None,
 ):
     total_rows = total_rows or []
     subtotal_rows = subtotal_rows or []
@@ -1672,7 +1689,12 @@ def _style_financial_table(
     _Document, _Align, _Orientation, _SectionStart, _TableAlign, _OxmlEl, _qn, _Cm, _Pt, _RGBColor, WD_ALIGN_VERTICAL = _docx_imports()
     for row_index, row in enumerate(table.rows):
         for cell_index, cell in enumerate(row.cells):
-            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            if center_numeric_values is None or row_index < header_rows:
+                cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            elif cell_index in numeric_indexes and center_numeric_values:
+                cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            else:
+                cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
             # Override Word's default cell padding so the configured font size
             # determines the compact row height consistently.
             _set_cell_margins(cell, top=0, bottom=0)
@@ -1719,6 +1741,7 @@ def _style_note_table(
     font_size=None,
     numeric_col_indexes=(1, 3),
     gap_col_indexes=(2,),
+    center_values=None,
 ):
     _style_financial_table(
         table,
@@ -1730,6 +1753,7 @@ def _style_note_table(
         numeric_col_indexes=numeric_col_indexes,
         gap_col_indexes=gap_col_indexes,
         align_numeric_headers=True,
+        center_numeric_values=center_values,
     )
 
 

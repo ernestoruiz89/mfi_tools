@@ -305,6 +305,7 @@ class AsistenteNotasEEFF {
                     ${this.note_field_html("tamano_letra_impresion", __("Tamano Letra Tablas"), doc.tamano_letra_impresion || 12, "number")}
                     ${this.note_field_html("ancho_tabla_impresion", __("Ancho Tabla"), doc.ancho_tabla_impresion || "100%", "text")}
                     ${this.note_select_html("alineacion_tabla_impresion", __("Alineacion Tabla"), doc.alineacion_tabla_impresion || "Centro", ["Izquierda", "Centro", "Derecha"])}
+                    <div class="cfe-field"><label>${__("Centrar Valores Verticalmente")}</label><input class="cfe-note-field" data-fieldname="centrar_valores_verticalmente" type="checkbox" ${this.checked(doc.centrar_valores_verticalmente)}></div>
                 </div>
                 <div class="cfe-grid note-content" style="padding:0 16px 16px;">
                     <div class="cfe-field"><label>${__("Contenido Narrativo")}</label><textarea class="cfe-note-field" data-fieldname="contenido_narrativo">${this.escape(doc.contenido_narrativo || "")}</textarea></div>
@@ -529,6 +530,7 @@ class AsistenteNotasEEFF {
                 { fieldname: "tamano_letra_impresion", fieldtype: "Float", label: __("Tamano Letra Tablas"), default: 12 },
                 { fieldname: "ancho_tabla_impresion", fieldtype: "Data", label: __("Ancho Tabla"), default: "100%" },
                 { fieldname: "alineacion_tabla_impresion", fieldtype: "Select", label: __("Alineacion Tabla"), options: "Izquierda\nCentro\nDerecha", default: "Centro" },
+                { fieldname: "centrar_valores_verticalmente", fieldtype: "Check", label: __("Centrar Valores Verticalmente"), default: 0 },
                 { fieldname: "contenido_narrativo", fieldtype: "Small Text", label: __("Contenido Narrativo Base") },
                 { fieldname: "observaciones", fieldtype: "Small Text", label: __("Observaciones") },
             ],
@@ -547,6 +549,7 @@ class AsistenteNotasEEFF {
                         tamano_letra_impresion: values.tamano_letra_impresion,
                         ancho_tabla_impresion: values.ancho_tabla_impresion,
                         alineacion_tabla_impresion: values.alineacion_tabla_impresion,
+                        centrar_valores_verticalmente: values.centrar_valores_verticalmente,
                     },
                     freeze: true,
                     freeze_message: __("Creando nota..."),

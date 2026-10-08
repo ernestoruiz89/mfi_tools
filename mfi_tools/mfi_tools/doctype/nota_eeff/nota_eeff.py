@@ -49,6 +49,7 @@ class NotaEEFF(Document):
         self.tamano_letra_impresion = self.get_print_font_size()
         self.ancho_tabla_impresion = self.get_print_table_width()
         self.alineacion_tabla_impresion = self.get_print_table_alignment()
+        self.centrar_valores_verticalmente = cint(getattr(self, "centrar_valores_verticalmente", 0) or 0)
         self.estructura_nota = cstr(self.estructura_nota or "Simple").strip() or "Simple"
         if self.estructura_nota not in ("Simple", "Compleja"):
             self.estructura_nota = "Simple"

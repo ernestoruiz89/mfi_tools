@@ -125,6 +125,14 @@
     font-weight: 700;
   }
 
+  .cni-table td {
+    vertical-align: top !important;
+  }
+
+  .cni-table.cni-center-values td.num {
+    vertical-align: middle !important;
+  }
+
   .cni-col-desc {
     width: 60%;
   }
@@ -254,7 +262,7 @@
 
   {% if cifras | length > 0 %}
   <div class="cni-section">
-    <table class="cni-table cni-align-{{ note_table_align }}" style="margin-top: {{ '0' if note_doc.contenido_narrativo else '4px' }}; --cni-table-width: {{ note_table_width }}; --cni-table-font-size: {{ note_font_size }}pt;">
+    <table class="cni-table cni-align-{{ note_table_align }}{% if note_doc.centrar_valores_verticalmente %} cni-center-values{% endif %}" style="margin-top: {{ '0' if note_doc.contenido_narrativo else '4px' }}; --cni-table-width: {{ note_table_width }}; --cni-table-font-size: {{ note_font_size }}pt;">
       <colgroup>
         <col class="cni-col-desc">
         <col class="cni-col-monto">
@@ -382,7 +390,7 @@
           {% set compact_table = (tabla.columnas | length) > 5 %}
           {% if not exclude_zero_movements or tabla.tiene_movimientos %}
           <div class="cni-section">
-            <table class="cni-table cni-align-{{ note_table_align }}" style="--cni-table-width: {{ note_table_width }}; --cni-table-font-size: {{ 10 if compact_table else note_font_size }}pt;">
+            <table class="cni-table cni-align-{{ note_table_align }}{% if note_doc.centrar_valores_verticalmente %} cni-center-values{% endif %}" style="--cni-table-width: {{ note_table_width }}; --cni-table-font-size: {{ 10 if compact_table else note_font_size }}pt;">
               <thead>
                 {% if tabla.tiene_grupos %}
                 <tr>

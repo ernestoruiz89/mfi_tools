@@ -167,6 +167,14 @@
     font-weight: 700;
   }
 
+  .cpc-table.cpc-note-table td {
+    vertical-align: top !important;
+  }
+
+  .cpc-table.cpc-note-table.cpc-center-values td.num {
+    vertical-align: middle !important;
+  }
+
   .cpc-col-desc {
     width: 46%;
   }
@@ -1047,7 +1055,7 @@ limit_page_length=100
       {% endif %}
 
       {% if cifras | length > 0 %}
-      <table class="cpc-table cpc-align-{{ nota_table_align }}" style="margin-top: {{ '0' if nota_doc.contenido_narrativo else '8px' }}; --cpc-table-width: {{ nota_table_width }}; --cpc-table-font-size: {{ nota_font_size }}pt;">
+      <table class="cpc-table cpc-note-table cpc-align-{{ nota_table_align }}{% if nota_doc.centrar_valores_verticalmente %} cpc-center-values{% endif %}" style="margin-top: {{ '0' if nota_doc.contenido_narrativo else '8px' }}; --cpc-table-width: {{ nota_table_width }}; --cpc-table-font-size: {{ nota_font_size }}pt;">
         <colgroup>
           {% if has_comparative %}
           <col style="width:60%;">
@@ -1176,7 +1184,7 @@ limit_page_length=100
           {% set compact_table = (tabla.columnas | length) > 5 %}
           {% if not exclude_zero_movements or tabla.tiene_movimientos %}
           <div style="margin-top: 10px;">
-            <table class="cpc-table cpc-align-{{ nota_table_align }}" style="--cpc-table-width: {{ nota_table_width }}; --cpc-table-font-size: {{ 10 if compact_table else nota_font_size }}pt;">
+            <table class="cpc-table cpc-note-table cpc-align-{{ nota_table_align }}{% if nota_doc.centrar_valores_verticalmente %} cpc-center-values{% endif %}" style="--cpc-table-width: {{ nota_table_width }}; --cpc-table-font-size: {{ 10 if compact_table else nota_font_size }}pt;">
               <thead>
                 {% if tabla.tiene_grupos %}
                 <tr>

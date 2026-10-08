@@ -26,6 +26,7 @@ NOTE_EDITABLE_FIELDS = (
     "tamano_letra_impresion",
     "ancho_tabla_impresion",
     "alineacion_tabla_impresion",
+    "centrar_valores_verticalmente",
     "estado_aprobacion",
     "estructura_nota",
     "contenido_narrativo",
@@ -457,6 +458,7 @@ def _create_note_doc(
     tamano_letra_impresion=12,
     ancho_tabla_impresion="100%",
     alineacion_tabla_impresion="Centro",
+    centrar_valores_verticalmente=0,
 ):
     if not frappe.db.exists("Paquete EEFF", package_name):
         frappe.throw(_("Debes seleccionar un paquete valido."), title=_("Paquete Invalido"))
@@ -478,6 +480,7 @@ def _create_note_doc(
             "tamano_letra_impresion": tamano_letra_impresion or 12,
             "ancho_tabla_impresion": ancho_tabla_impresion or "100%",
             "alineacion_tabla_impresion": alineacion_tabla_impresion or "Centro",
+            "centrar_valores_verticalmente": cint(centrar_valores_verticalmente or 0),
             "estado_aprobacion": "Borrador",
         }
     )
@@ -517,6 +520,7 @@ def create_note_for_editor(
     tamano_letra_impresion=12,
     ancho_tabla_impresion="100%",
     alineacion_tabla_impresion="Centro",
+    centrar_valores_verticalmente=0,
 ):
     _ensure_page_access(write=True)
 
@@ -531,6 +535,7 @@ def create_note_for_editor(
         tamano_letra_impresion=tamano_letra_impresion,
         ancho_tabla_impresion=ancho_tabla_impresion,
         alineacion_tabla_impresion=alineacion_tabla_impresion,
+        centrar_valores_verticalmente=centrar_valores_verticalmente,
     )
     if cstr(note_doc.estructura_nota or "Simple").strip() == "Compleja":
         _sync_note_sections(note_doc, [_new_default_section(1)])
