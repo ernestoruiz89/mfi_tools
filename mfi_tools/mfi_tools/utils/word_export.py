@@ -753,9 +753,12 @@ def _add_notas_section(document, package):
 def _render_note_block(document, nota_doc, labels, package, currency_symbol, subnotes=None, heading_style="Heading 2"):
     note_font_size = nota_doc.get_print_font_size() if hasattr(nota_doc, "get_print_font_size") else BODY_SIZE
     is_subnote = bool(cstr(getattr(nota_doc, "sub_nota", "") or "").strip())
+    # Solo las notas principales deben tener estilo Heading para figurar en el índice de Word;
+    # las sub-notas se dejan con estilo Normal para excluirse de la tabla de contenido.
+    actual_heading_style = "Normal" if is_subnote else heading_style
     heading_paragraph = document.add_paragraph(
         cstr(nota_doc.get_print_heading() if hasattr(nota_doc, "get_print_heading") else cstr(nota_doc.titulo or "Sin titulo")),
-        style=heading_style,
+        style=actual_heading_style,
     )
     _set_paragraph_runs_font(heading_paragraph, size=BODY_SIZE)
     for run in heading_paragraph.runs:
@@ -785,7 +788,7 @@ def _render_note_block(document, nota_doc, labels, package, currency_symbol, sub
                 package,
                 currency_symbol,
                 subnotes=[],
-                heading_style="Heading 3",
+                heading_style="Normal",
             )
 
 
@@ -916,7 +919,7 @@ def _render_complex_note_content(document, nota_doc, labels, package, currency_s
         if cint(getattr(section_doc, "mostrar_titulo", 1)):
             title_paragraph = document.add_paragraph(
                 cstr(section_doc.titulo_seccion or section_doc.codigo_seccion or "Seccion"),
-                style="Heading 3",
+                style="Normal",
             )
             _set_paragraph_runs_font(title_paragraph, size=BODY_SIZE, bold=True)
             for run in title_paragraph.runs:
