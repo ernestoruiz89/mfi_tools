@@ -1,3 +1,4 @@
+import calendar
 import re
 
 import frappe
@@ -239,6 +240,54 @@ class PaqueteEEFF(Document):
             "actual": mes,
             "comparativo": _("Comparativo") if self.tiene_comparativo() else "",
         }
+
+    def get_cover_period_subtitle(self):
+        mes_str = cstr(self.mes or "").strip().lower()
+        anio = cint(self.anio or 0)
+        meses_cantidad = {
+            1: "un mes",
+            2: "dos meses",
+            3: "tres meses",
+            4: "cuatro meses",
+            5: "cinco meses",
+            6: "seis meses",
+            7: "siete meses",
+            8: "ocho meses",
+            9: "nueve meses",
+            10: "diez meses",
+            11: "once meses",
+            12: "doce meses",
+        }
+        meses_nombres = {
+            1: "enero",
+            2: "febrero",
+            3: "marzo",
+            4: "abril",
+            5: "mayo",
+            6: "junio",
+            7: "julio",
+            8: "agosto",
+            9: "septiembre",
+            10: "octubre",
+            11: "noviembre",
+            12: "diciembre",
+        }
+        month_num = None
+        for m, name in meses_nombres.items():
+            if name in mes_str:
+                month_num = m
+                break
+
+        if month_num and anio:
+            last_day = calendar.monthrange(anio, month_num)[1]
+            cantidad = meses_cantidad.get(month_num, f"{month_num} meses")
+            nombre_mes = meses_nombres.get(month_num)
+            return f"Estados Financieros por el período de {cantidad} terminado al {last_day} de {nombre_mes} {anio}"
+
+        if self.periodo_nombre:
+            return f"Estados Financieros por el período {self.periodo_nombre}"
+
+        return "Estados Financieros y Notas Explicativas"
 
     def get_currency_context(self):
         cache_key = "_currency_context_cache"

@@ -1,4 +1,6 @@
+import calendar
 import io
+import os
 import re
 from html import unescape
 from html.parser import HTMLParser
@@ -61,6 +63,194 @@ def _get_package_entity_display(package):
     return ""
 
 
+def _get_image_file_path(file_url):
+    if not file_url:
+        return None
+    file_url = cstr(file_url).strip()
+    if not file_url:
+        return None
+
+    if os.path.exists(file_url):
+        return file_url
+
+    try:
+        if frappe.db.exists("File", {"file_url": file_url}):
+            file_doc_name = frappe.db.get_value("File", {"file_url": file_url}, "name")
+            if file_doc_name:
+                file_doc = frappe.get_doc("File", file_doc_name)
+                full_path = file_doc.get_full_path()
+                if os.path.exists(full_path):
+                    return full_path
+    except Exception:
+        pass
+
+    try:
+        clean = file_url.lstrip("/")
+        if clean.startswith("files/"):
+            path = frappe.get_site_path("public", clean)
+            if os.path.exists(path):
+                return path
+        elif clean.startswith("private/files/"):
+            rel = clean[len("private/files/"):]
+            path = frappe.get_site_path("private", "files", rel)
+            if os.path.exists(path):
+                return path
+    except Exception:
+        pass
+
+    try:
+        if frappe.db.exists("File", {"file_url": file_url}):
+            file_doc_name = frappe.db.get_value("File", {"file_url": file_url}, "name")
+            if file_doc_name:
+                file_doc = frappe.get_doc("File", file_doc_name)
+                content = file_doc.get_content()
+                if content:
+                    return io.BytesIO(content if isinstance(content, bytes) else content.encode("utf-8"))
+    except Exception:
+        pass
+
+    if file_url.startswith("http://") or file_url.startswith("https://"):
+        try:
+            import requests
+            resp = requests.get(file_url, timeout=10)
+            if resp.status_code == 200:
+                return io.BytesIO(resp.content)
+        except Exception:
+            pass
+
+    return None
+
+
+def _apply_section_background_image(section, image_source, OxmlElement, qn):
+    if not image_source:
+        return
+    try:
+        page_width = int(section.page_width)
+        page_height = int(section.page_height)
+
+        header = section.header
+        header.is_linked_to_previous = False
+        _clear_header_footer(header)
+
+        header_para = header.paragraphs[0] if header.paragraphs else header.add_paragraph()
+        header_para.text = ""
+        run = header_para.add_run()
+
+        shape = run.add_picture(image_source, width=section.page_width, height=section.page_height)
+
+        drawing_nodes = run._r.xpath(".//w:drawing")
+        if not drawing_nodes:
+            return
+        drawing_elem = drawing_nodes[0]
+        inline_nodes = drawing_elem.xpath(".//wp:inline")
+        if not inline_nodes:
+            return
+        inline_elem = inline_nodes[0]
+
+        anchor = OxmlElement("wp:anchor")
+        anchor.set("distT", "0")
+        anchor.set("distB", "0")
+        anchor.set("distL", "0")
+        anchor.set("distR", "0")
+        anchor.set("simplePos", "0")
+        anchor.set("relativeHeight", "251658240")
+        anchor.set("behindDoc", "1")
+        anchor.set("locked", "0")
+        anchor.set("layoutInCell", "1")
+        anchor.set("allowOverlap", "1")
+
+        simple_pos = OxmlElement("wp:simplePos")
+        simple_pos.set("x", "0")
+        simple_pos.set("y", "0")
+        anchor.append(simple_pos)
+
+        pos_h = OxmlElement("wp:positionH")
+        pos_h.set("relativeFrom", "page")
+        pos_offset_h = OxmlElement("wp:posOffset")
+        pos_offset_h.text = "0"
+        pos_h.append(pos_offset_h)
+        anchor.append(pos_h)
+
+        pos_v = OxmlElement("wp:positionV")
+        pos_v.set("relativeFrom", "page")
+        pos_offset_v = OxmlElement("wp:posOffset")
+        pos_offset_v.text = "0"
+        pos_v.append(pos_offset_v)
+        anchor.append(pos_v)
+
+        extent = OxmlElement("wp:extent")
+        extent.set("cx", str(page_width))
+        extent.set("cy", str(page_height))
+        anchor.append(extent)
+
+        effect_extent = OxmlElement("wp:effectExtent")
+        effect_extent.set("b", "0")
+        effect_extent.set("l", "0")
+        effect_extent.set("r", "0")
+        effect_extent.set("t", "0")
+        anchor.append(effect_extent)
+
+        wrap_none = OxmlElement("wp:wrapNone")
+        anchor.append(wrap_none)
+
+        doc_pr = inline_elem.find(qn("wp:docPr"))
+        if doc_pr is not None:
+            anchor.append(doc_pr)
+
+        c_nv_graphic_frame_pr = inline_elem.find(qn("wp:cNvGraphicFramePr"))
+        if c_nv_graphic_frame_pr is not None:
+            anchor.append(c_nv_graphic_frame_pr)
+
+        graphic = inline_elem.find(qn("a:graphic"))
+        if graphic is not None:
+            xfrm_ext = graphic.xpath(".//a:xfrm/a:ext")
+            if xfrm_ext:
+                xfrm_ext[0].set("cx", str(page_width))
+                xfrm_ext[0].set("cy", str(page_height))
+            anchor.append(graphic)
+
+        drawing_elem.remove(inline_elem)
+        drawing_elem.append(anchor)
+    except Exception as e:
+        frappe.log_error(f"Error aplicando fondo de pagina en Word: {e}", "Word Export Background Image")
+
+
+def _build_cover_period_subtitle(package):
+    if hasattr(package, "get_cover_period_subtitle"):
+        res = package.get_cover_period_subtitle()
+        if res:
+            return res
+
+    mes_str = cstr(package.mes or "").strip().lower()
+    anio = cint(package.anio or 0)
+    meses_cantidad = {
+        1: "un mes", 2: "dos meses", 3: "tres meses", 4: "cuatro meses",
+        5: "cinco meses", 6: "seis meses", 7: "siete meses", 8: "ocho meses",
+        9: "nueve meses", 10: "diez meses", 11: "once meses", 12: "doce meses",
+    }
+    meses_nombres = {
+        1: "enero", 2: "febrero", 3: "marzo", 4: "abril",
+        5: "mayo", 6: "junio", 7: "julio", 8: "agosto",
+        9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre",
+    }
+    month_num = None
+    for m, name in meses_nombres.items():
+        if name in mes_str:
+            month_num = m
+            break
+
+    if month_num and anio:
+        last_day = calendar.monthrange(anio, month_num)[1]
+        cantidad = meses_cantidad.get(month_num, f"{month_num} meses")
+        nombre_mes = meses_nombres.get(month_num)
+        return f"Estados Financieros por el período de {cantidad} terminado al {last_day} de {nombre_mes} {anio}"
+
+    if package.periodo_nombre:
+        return f"Estados Financieros por el período {package.periodo_nombre}"
+
+    return "Estados Financieros y Notas Explicativas"
+
+
 def _build_package_document(package):
     Document, WD_ALIGN_PARAGRAPH, WD_ORIENTATION, WD_SECTION_START, WD_TABLE_ALIGNMENT, OxmlElement, qn, Cm, Pt, RGBColor, _WD_AV = _docx_imports()
 
@@ -70,60 +260,100 @@ def _build_package_document(package):
     document = Document()
     _configure_document(document, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, Pt, document_title=REPORT_TITLE)
 
-    title = document.add_paragraph(REPORT_TITLE, style="Title")
-    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    cover_section = document.sections[0]
+    cover_image_path = _get_image_file_path(package.get("imagen_portada"))
+    index_image_path = _get_image_file_path(package.get("imagen_indice")) or cover_image_path
 
-    subtitle = document.add_paragraph(style="Subtitle")
-    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    subtitle.add_run(entity_display or entity_label)
-    _set_paragraph_runs_font(subtitle)
+    period_subtitle = _build_cover_period_subtitle(package)
 
-    badge = document.add_paragraph()
-    badge.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    badge.add_run("Documento preparado para emision de estados financieros").italic = True
-    _set_paragraph_runs_font(badge)
+    if cover_image_path:
+        _apply_section_background_image(cover_section, cover_image_path, OxmlElement, qn)
 
-    cover_table = document.add_table(rows=4, cols=2)
-    cover_pairs = [
-        ("Paquete", package.name or "-"),
-        (entity_label, entity_display or "-"),
-        ("Periodo", package.periodo_nombre or "-"),
-        ("Mes", package.mes or "-"),
-        ("Anio", cstr(package.anio or "-")),
-        ("Estado Preparacion", package.estado_preparacion or "-"),
-        ("Balanza", package.balanza_comprobacion_eeff or "-"),
-        ("Fecha Emision", cstr(package.fecha_emision or "-")),
-    ]
-    for index, pair in enumerate(cover_pairs):
-        row = cover_table.rows[index // 2]
-        cell = row.cells[index % 2]
-        _fill_label_value_cell(cell, pair[0], pair[1])
-    _style_meta_table(cover_table)
+        cover_para = document.add_paragraph()
+        cover_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cover_para.paragraph_format.space_before = Pt(200)
+        cover_para.paragraph_format.space_after = Pt(18)
+        cover_para.paragraph_format.line_spacing = 1.25
+        run_title = cover_para.add_run(entity_display or entity_label)
+        run_title.bold = True
+        run_title.italic = True
+        run_title.font.name = "Arial"
+        run_title.font.size = Pt(14)
 
-    summary = document.add_paragraph(
-        "Se presenta el juego completo de estados financieros y notas explicativas para el periodo indicado."
-    )
-    _set_paragraph_runs_font(summary)
+        sub_para = document.add_paragraph()
+        sub_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        sub_para.paragraph_format.space_before = Pt(0)
+        sub_para.paragraph_format.line_spacing = 1.25
+        run_sub = sub_para.add_run(period_subtitle)
+        run_sub.font.name = FONT_NAME
+        run_sub.font.size = Pt(12)
+        run_sub.italic = True
+    else:
+        title = document.add_paragraph(REPORT_TITLE, style="Title")
+        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        subtitle = document.add_paragraph(style="Subtitle")
+        subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        subtitle.add_run(entity_display or entity_label)
+        _set_paragraph_runs_font(subtitle)
+
+        badge = document.add_paragraph()
+        badge.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        badge.add_run("Documento preparado para emision de estados financieros").italic = True
+        _set_paragraph_runs_font(badge)
+
+        cover_table = document.add_table(rows=4, cols=2)
+        cover_pairs = [
+            ("Paquete", package.name or "-"),
+            (entity_label, entity_display or "-"),
+            ("Periodo", package.periodo_nombre or "-"),
+            ("Mes", package.mes or "-"),
+            ("Anio", cstr(package.anio or "-")),
+            ("Estado Preparacion", package.estado_preparacion or "-"),
+            ("Balanza", package.balanza_comprobacion_eeff or "-"),
+            ("Fecha Emision", cstr(package.fecha_emision or "-")),
+        ]
+        for index, pair in enumerate(cover_pairs):
+            row = cover_table.rows[index // 2]
+            cell = row.cells[index % 2]
+            _fill_label_value_cell(cell, pair[0], pair[1])
+        _style_meta_table(cover_table)
+
+        summary = document.add_paragraph(
+            "Se presenta el juego completo de estados financieros y notas explicativas para el periodo indicado."
+        )
+        _set_paragraph_runs_font(summary)
 
     toc_section = document.add_section(WD_SECTION_START.NEW_PAGE)
     _configure_section(toc_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE)
-    _set_section_header_content(
-        toc_section,
-        {
-            "cliente": entity_display or entity_label,
-            "titulo": "Estados Financieros",
-            "periodo": "",
-            "subtitulo": "",
-        },
-    )
-    toc_heading = document.add_paragraph("Indice", style="Heading 1")
-    toc_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
+
+    if index_image_path:
+        _apply_section_background_image(toc_section, index_image_path, OxmlElement, qn)
+        toc_heading = document.add_paragraph("Indice", style="Heading 1")
+        toc_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        toc_heading.paragraph_format.space_before = Pt(80)
+        _set_paragraph_runs_font(toc_heading, size=Pt(14), bold=True)
+    else:
+        _set_section_header_content(
+            toc_section,
+            {
+                "cliente": entity_display or entity_label,
+                "titulo": "Estados Financieros",
+                "periodo": "",
+                "subtitulo": "",
+            },
+        )
+        toc_heading = document.add_paragraph("Indice", style="Heading 1")
+        toc_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
+
     toc_paragraph = document.add_paragraph()
     _append_field(toc_paragraph, 'TOC \\o "1-3" \\h \\z \\u', "Actualice el indice al abrir el documento.", OxmlElement, qn)
+
     content_section = document.add_section(WD_SECTION_START.NEW_PAGE)
     _configure_section(content_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE)
     _set_section_footer_page_number(content_section, start=1)
     _add_estados_section(document, package)
+
     notas_section = document.add_section(WD_SECTION_START.NEW_PAGE)
     _configure_section(notas_section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=False, document_title=REPORT_TITLE)
     _set_section_footer_page_number(notas_section)

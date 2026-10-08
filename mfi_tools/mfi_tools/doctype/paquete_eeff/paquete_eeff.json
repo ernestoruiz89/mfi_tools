@@ -28,6 +28,10 @@
         "total_estados",
         "total_notas",
         "total_datos_estadisticos",
+        "diseno_section",
+        "imagen_portada",
+        "diseno_column",
+        "imagen_indice",
         "datos_consolidados_section",
         "datos_estadisticos",
         "firmas_section",
@@ -195,6 +199,27 @@
             "label": "Total Datos Estadisticos",
             "read_only": 1,
             "no_copy": 1
+        },
+        {
+            "fieldname": "diseno_section",
+            "fieldtype": "Section Break",
+            "label": "Diseño y Portadas"
+        },
+        {
+            "description": "Imagen de fondo para la portada (cubre el 100% de la página en Word y PDF).",
+            "fieldname": "imagen_portada",
+            "fieldtype": "Attach Image",
+            "label": "Imagen de Portada"
+        },
+        {
+            "fieldname": "diseno_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "description": "Imagen de fondo para el índice (cubre el 100% de la página en Word y PDF).",
+            "fieldname": "imagen_indice",
+            "fieldtype": "Attach Image",
+            "label": "Imagen de Índice"
         },
         {
             "fieldname": "datos_consolidados_section",

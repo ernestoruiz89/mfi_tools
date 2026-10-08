@@ -335,6 +335,132 @@
   .cpc-landscape-section {
     page: landscape_page;
   }
+
+  .cpc-cover-page,
+  .cpc-index-page {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    min-height: 279mm;
+    page-break-after: always;
+    page-break-inside: avoid;
+    overflow: hidden;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  .cpc-page-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    z-index: 1;
+    display: block;
+  }
+
+  .cpc-cover-content {
+    position: absolute;
+    top: 48%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 82%;
+    text-align: center;
+    z-index: 2;
+  }
+
+  .cpc-cover-title {
+    font-family: "Arial Narrow", Arial, sans-serif !important;
+    font-size: 16pt !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    color: #000000 !important;
+    margin: 0 0 20px 0 !important;
+    line-height: 1.3 !important;
+  }
+
+  .cpc-cover-subtitle {
+    font-family: "Arial Narrow", Arial, sans-serif !important;
+    font-size: 13pt !important;
+    font-style: italic !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    line-height: 1.35 !important;
+  }
+
+  .cpc-index-content {
+    position: absolute;
+    top: 140px;
+    bottom: 130px;
+    left: 60px;
+    right: 60px;
+    z-index: 2;
+  }
+
+  .cpc-index-heading {
+    font-family: "Arial Narrow", Arial, sans-serif !important;
+    font-size: 16pt !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+    margin: 0 0 24px 0 !important;
+    border-bottom: 2px solid #000000;
+    padding-bottom: 6px;
+  }
+
+  .cpc-index-table {
+    width: 100%;
+  }
+
+  .cpc-index-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .cpc-index-label {
+    font-family: "Arial Narrow", Arial, sans-serif !important;
+    font-size: 12pt !important;
+    font-weight: 600;
+    color: #000000 !important;
+    white-space: nowrap;
+  }
+
+  .cpc-index-dots {
+    flex-grow: 1;
+    margin: 0 8px;
+    border-bottom: 1px dotted #666666;
+    height: 1em;
+  }
+
+  @media print {
+    body, html, .print-format {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .cpc-cover-page,
+    .cpc-index-page {
+      width: 100% !important;
+      height: 100vh !important;
+      min-height: 100vh !important;
+      page-break-after: always !important;
+      break-after: page !important;
+    }
+    .cpc-wrap {
+      padding: 15mm 20mm !important;
+    }
+  }
+
+  @media screen {
+    .cpc-cover-page,
+    .cpc-index-page {
+      min-height: 1050px;
+      margin-bottom: 25px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    }
+  }
 </style>
 {% set estados = frappe.get_all(
 "Estado Financiero EEFF",
@@ -362,6 +488,50 @@ limit_page_length=100
 {% set labels = doc.get_column_labels() %}
 {% set currency_ctx = doc.get_currency_context() %}
 {% set currency_symbol = currency_ctx.symbol or "$" %}
+
+{% set cover_bg = doc.imagen_portada %}
+{% set index_bg = doc.imagen_indice or doc.imagen_portada %}
+
+{% if cover_bg %}
+<div class="cpc-cover-page">
+  <img class="cpc-page-bg-img" src="{{ cover_bg }}" alt="Portada">
+  <div class="cpc-cover-content">
+    <h1 class="cpc-cover-title">{{ doc.company or doc.get("cliente") or "-" }}</h1>
+    <p class="cpc-cover-subtitle">{{ doc.get_cover_period_subtitle() }}</p>
+  </div>
+</div>
+{% endif %}
+
+{% if index_bg %}
+<div class="cpc-index-page">
+  <img class="cpc-page-bg-img" src="{{ index_bg }}" alt="Índice">
+  <div class="cpc-index-content">
+    <h2 class="cpc-index-heading">Índice</h2>
+    <div class="cpc-index-table">
+      {% for estado in estados %}
+      <div class="cpc-index-row">
+        <span class="cpc-index-label">{{ estado.titulo or estado.tipo_estado }}</span>
+        <span class="cpc-index-dots"></span>
+      </div>
+      {% endfor %}
+      {% if notas %}
+      <div class="cpc-index-row">
+        <span class="cpc-index-label">Notas a los Estados Financieros</span>
+        <span class="cpc-index-dots"></span>
+      </div>
+      {% endif %}
+      {% if factsheets %}
+      {% for fs in factsheets %}
+      <div class="cpc-index-row">
+        <span class="cpc-index-label">{{ fs.titulo or fs.codigo_factsheet or "Factsheet" }}</span>
+        <span class="cpc-index-dots"></span>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <div class="cpc-wrap {% if not has_comparative %}cpc-no-comparative{% endif %}">
   <div class="cpc-head">
