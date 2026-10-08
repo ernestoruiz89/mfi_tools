@@ -335,7 +335,7 @@ def _build_package_document(package):
         toc_heading = document.add_paragraph("Indice", style="Heading 1")
         toc_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
         toc_heading.paragraph_format.space_before = Pt(80)
-        _set_paragraph_runs_font(toc_heading, size=Pt(14), bold=True)
+        _set_paragraph_runs_font(toc_heading, size=Pt(BODY_SIZE), bold=True)
     else:
         _set_section_header_content(
             toc_section,
@@ -348,6 +348,7 @@ def _build_package_document(package):
         )
         toc_heading = document.add_paragraph("Indice", style="Heading 1")
         toc_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        _set_paragraph_runs_font(toc_heading, size=Pt(BODY_SIZE), bold=True)
 
     toc_paragraph = document.add_paragraph()
     _append_field(toc_paragraph, 'TOC \\o "1-2" \\h \\z \\u', "Actualice el indice al abrir el documento.", OxmlElement, qn)
