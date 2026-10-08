@@ -283,7 +283,7 @@ def _build_package_document(package):
         run_title.bold = True
         run_title.italic = True
         run_title.font.name = "Arial"
-        run_title.font.size = Pt(14)
+        run_title.font.size = Pt(26)
 
         sub_para = document.add_paragraph()
         sub_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -291,7 +291,7 @@ def _build_package_document(package):
         sub_para.paragraph_format.line_spacing = 1.25
         run_sub = sub_para.add_run(period_subtitle)
         run_sub.font.name = FONT_NAME
-        run_sub.font.size = Pt(12)
+        run_sub.font.size = Pt(22)
         run_sub.italic = True
     else:
         title = document.add_paragraph(REPORT_TITLE, style="Title")
