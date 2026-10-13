@@ -33,6 +33,12 @@ FORMULA_HELP_HTML = """
     <code>MES_ANIO_ANT("101*")</code> &rarr; Mismo mes año anterior Balanza<br>
     <code>MES_ANIO_ANT("NO_EMP", "EST")</code> &rarr; Mismo mes año anterior Estadístico<br>
     <br>
+    <strong>&#9654; Ajustes y Período</strong><br>
+    <code>VAL_ACT(5500)</code> &rarr; 5,500 en actual, 0 en comparativo<br>
+    <code>VAL_COMP(5500)</code> &rarr; 5,500 en comparativo, 0 en actual<br>
+    <code>ES_ACTUAL()</code> / <code>ES_COMPARATIVO()</code> &rarr; Condicional de período (True / False)<br>
+    <code>PERIODO</code> &rarr; "ACTUAL" o "COMPARATIVO"<br>
+    <br>
     <strong>&#9654; Matemáticas</strong><br>
     <code>ABS(x)</code>, <code>MAX(a, b)</code>, <code>MIN(a, b)</code>, <code>REDONDEAR(x, 2)</code><br>
     <code>SI(condicion, valor_si, valor_no)</code><br>
@@ -49,18 +55,46 @@ FORMULA_HELP_HTML = """
 
 DATA_FUNCTIONS = {"BAL", "BAL_ACT", "BAL_COMP", "BAL_BASE_ACT", "BAL_BASE_COMP",
                   "EST", "EST_ACT", "EST_COMP",
-                  "YTD", "YTD_ANT", "ANUAL", "ANUAL_ANT", "CIERRE_ANT", "MES_AÑO_ANT", "MES_ANIO_ANT"}
+                  "YTD", "YTD_ANT", "ANUAL", "ANUAL_ANT", "CIERRE_ANT", "MES_AÑO_ANT", "MES_ANIO_ANT",
+                  "VAL_ACT", "VAL_COMP", "ES_ACTUAL", "ES_COMPARATIVO"}
+
+PERIOD_KEYWORDS = {"PERIODO", "ES_ACTUAL", "ES_COMPARATIVO"}
+
 
 def has_data_functions(expression):
     if not expression:
         return False
     expr = cstr(expression).upper()
-    if "VAR " in expr:
+    if "VAR " in expr or any(k in expr for k in PERIOD_KEYWORDS):
         return True
     for func in DATA_FUNCTIONS:
         if f"{func}(" in expr or f"{func} (" in expr:
             return True
     return False
+
+
+class _PeriodBool:
+    def __init__(self, val):
+        self.val = bool(val)
+
+    def __bool__(self):
+        return self.val
+
+    def __call__(self):
+        return self.val
+
+    def __repr__(self):
+        return str(self.val)
+
+    def __eq__(self, other):
+        if isinstance(other, _PeriodBool):
+            return self.val == other.val
+        return self.val == bool(other)
+
+
+class _PeriodStr(str):
+    def __call__(self):
+        return str(self)
 
 class FormulaContext:
     def __init__(self, actual_balances=None, comparative_balances=None,
@@ -284,24 +318,44 @@ def _parse_formula_statements(expr):
     return statements
 
 
-def evaluate_formula(expression, context, period_context="actual", doc_context=None):
+def evaluate_formula(expression, context=None, period_context="actual", doc_context=None):
     expr = cstr(expression or "").strip().upper()
     if not expr:
         return 0.0
-        
-    default_balances = context.comparative_balances if period_context == "comparativo" else context.actual_balances
-    default_stats = context.comparative_stats if period_context == "comparativo" else context.actual_stats
-    
+
+    context = context or FormulaContext()
+    period_norm = cstr(period_context or "actual").strip().lower()
+    is_actual = period_norm in ("actual", "act", "base_actual")
+    is_comparativo = period_norm in ("comparativo", "comp", "base_comparativo")
+
+    default_balances = context.comparative_balances if is_comparativo else context.actual_balances
+    default_stats = context.comparative_stats if is_comparativo else context.actual_stats
+
+    def _clean_num(val):
+        if val is None:
+            return 0.0
+        if isinstance(val, (int, float)):
+            return flt(val)
+        if isinstance(val, str):
+            val = val.replace(",", "").strip()
+        return flt(val)
+
+    def func_val_act(value=0):
+        return _clean_num(value) if is_actual else 0.0
+
+    def func_val_comp(value=0):
+        return _clean_num(value) if is_comparativo else 0.0
+
     def func_bal(pattern, field="saldo"): return _get_balance_value(pattern, field, default_balances)
     def func_bal_act(pattern, field="saldo"): return _get_balance_value(pattern, field, context.actual_balances)
     def func_bal_comp(pattern, field="saldo"): return _get_balance_value(pattern, field, context.comparative_balances)
     def func_bal_base_act(pattern, field="saldo"): return _get_balance_value(pattern, field, context.base_actual_balances)
     def func_bal_base_comp(pattern, field="saldo"): return _get_balance_value(pattern, field, context.base_comparative_balances)
-    
+
     def func_est(code): return _get_stat_value(code, default_stats)
     def func_est_act(code): return _get_stat_value(code, context.actual_stats)
     def func_est_comp(code): return _get_stat_value(code, context.comparative_stats)
-    
+
     def _parse_args(arg1, arg2, default_field):
         a1 = cstr(arg1).strip().upper()
         if a1 == "EST": return "EST", None
@@ -312,49 +366,49 @@ def evaluate_formula(expression, context, period_context="actual", doc_context=N
     def func_ytd(pattern, arg1="BAL", arg2=None):
         src, field = _parse_args(arg1, arg2, "movimiento_del_mes")
         if src == "EST":
-            hist_stat = context.historical_data.get("ytd_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("ytd_actual_stats")
+            hist_stat = context.historical_data.get("ytd_comparativo_stats") if is_comparativo else context.historical_data.get("ytd_actual_stats")
             return _get_ytd_stat_value(pattern, hist_stat)
-        hist_bal = context.historical_data.get("ytd_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("ytd_actual_balances")
+        hist_bal = context.historical_data.get("ytd_comparativo_balances") if is_comparativo else context.historical_data.get("ytd_actual_balances")
         return _get_ytd_balance_value(pattern, hist_bal, field)
-        
+
     def func_ytd_ant(pattern, arg1="BAL", arg2=None):
         src, field = _parse_args(arg1, arg2, "movimiento_del_mes")
         if src == "EST":
-            hist_stat = context.historical_data.get("ytd_anio_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("ytd_anio_anterior_actual_stats")
+            hist_stat = context.historical_data.get("ytd_anio_anterior_comparativo_stats") if is_comparativo else context.historical_data.get("ytd_anio_anterior_actual_stats")
             return _get_ytd_stat_value(pattern, hist_stat)
-        hist_bal = context.historical_data.get("ytd_anio_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("ytd_anio_anterior_actual_balances")
+        hist_bal = context.historical_data.get("ytd_anio_anterior_comparativo_balances") if is_comparativo else context.historical_data.get("ytd_anio_anterior_actual_balances")
         return _get_ytd_balance_value(pattern, hist_bal, field)
 
     def func_anual(pattern, arg1="BAL", arg2=None):
         src, field = _parse_args(arg1, arg2, "movimiento_del_mes")
         if src == "EST":
-            hist_stat = context.historical_data.get("suma_anio_completo_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_actual_stats")
+            hist_stat = context.historical_data.get("suma_anio_completo_comparativo_stats") if is_comparativo else context.historical_data.get("suma_anio_completo_actual_stats")
             return _get_ytd_stat_value(pattern, hist_stat)
-        hist_bal = context.historical_data.get("suma_anio_completo_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_actual_balances")
+        hist_bal = context.historical_data.get("suma_anio_completo_comparativo_balances") if is_comparativo else context.historical_data.get("suma_anio_completo_actual_balances")
         return _get_ytd_balance_value(pattern, hist_bal, field)
 
     def func_anual_ant(pattern, arg1="BAL", arg2=None):
         src, field = _parse_args(arg1, arg2, "movimiento_del_mes")
         if src == "EST":
-            hist_stat = context.historical_data.get("suma_anio_completo_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_anterior_actual_stats")
+            hist_stat = context.historical_data.get("suma_anio_completo_anterior_comparativo_stats") if is_comparativo else context.historical_data.get("suma_anio_completo_anterior_actual_stats")
             return _get_ytd_stat_value(pattern, hist_stat)
-        hist_bal = context.historical_data.get("suma_anio_completo_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("suma_anio_completo_anterior_actual_balances")
+        hist_bal = context.historical_data.get("suma_anio_completo_anterior_comparativo_balances") if is_comparativo else context.historical_data.get("suma_anio_completo_anterior_actual_balances")
         return _get_ytd_balance_value(pattern, hist_bal, field)
 
     def func_cierre_ant(pattern, arg1="BAL", arg2=None):
         src, field = _parse_args(arg1, arg2, "saldo")
         if src == "EST":
-            hist_stat = context.historical_data.get("cierre_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("cierre_anterior_actual_stats")
+            hist_stat = context.historical_data.get("cierre_anterior_comparativo_stats") if is_comparativo else context.historical_data.get("cierre_anterior_actual_stats")
             return _get_stat_value(pattern, hist_stat)
-        hist_bal = context.historical_data.get("cierre_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("cierre_anterior_actual_balances")
+        hist_bal = context.historical_data.get("cierre_anterior_comparativo_balances") if is_comparativo else context.historical_data.get("cierre_anterior_actual_balances")
         return _get_balance_value(pattern, field, hist_bal)
 
     def func_mes_anio_ant(pattern, arg1="BAL", arg2=None):
         src, field = _parse_args(arg1, arg2, "saldo")
         if src == "EST":
-            hist_stat = context.historical_data.get("anio_anterior_comparativo_stats") if period_context == "comparativo" else context.historical_data.get("anio_anterior_actual_stats")
+            hist_stat = context.historical_data.get("anio_anterior_comparativo_stats") if is_comparativo else context.historical_data.get("anio_anterior_actual_stats")
             return _get_stat_value(pattern, hist_stat)
-        hist_bal = context.historical_data.get("anio_anterior_comparativo_balances") if period_context == "comparativo" else context.historical_data.get("anio_anterior_actual_balances")
+        hist_bal = context.historical_data.get("anio_anterior_comparativo_balances") if is_comparativo else context.historical_data.get("anio_anterior_actual_balances")
         return _get_balance_value(pattern, field, hist_bal)
 
     safe_funcs = {
@@ -373,6 +427,13 @@ def evaluate_formula(expression, context, period_context="actual", doc_context=N
         "CIERRE_ANT": func_cierre_ant,
         "MES_AÑO_ANT": func_mes_anio_ant,
         "MES_ANIO_ANT": func_mes_anio_ant,
+        "VAL_ACT": func_val_act,
+        "VAL_COMP": func_val_comp,
+        "ES_ACTUAL": _PeriodBool(is_actual),
+        "ES_COMPARATIVO": _PeriodBool(is_comparativo),
+        "PERIODO": _PeriodStr("ACTUAL" if is_actual else "COMPARATIVO"),
+        "ACTUAL": "ACTUAL",
+        "COMPARATIVO": "COMPARATIVO",
         "ABS": abs,
         "MAX": max,
         "MIN": min,
