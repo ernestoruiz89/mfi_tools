@@ -7,7 +7,7 @@ app_license = "mit"
 app_icon = "fa fa-line-chart"
 app_color = "#0f766e"
 app_logo_url = "/assets/mfi_tools/images/mfi-tools.svg"
-app_home = "/desk/mfi-tools/panel-mfi-tools"
+app_home = "/desk/panel-mfi-tools"
 
 required_apps = ["erpnext"]
 

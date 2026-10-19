@@ -106,7 +106,7 @@
   {
    "type": "Card Break",
    "label": "Configuración",
-   "link_count": 4
+   "link_count": 3
   },
   {
    "type": "Link",
@@ -126,14 +126,6 @@
   },
   {
    "type": "Link",
-   "label": "Tasas de cambio",
-   "link_type": "DocType",
-   "link_to": "Tasa Cambio Balanza EEFF",
-   "hidden": 0,
-   "onboard": 0
-  },
-  {
-   "type": "Link",
    "label": "Clientes",
    "link_type": "DocType",
    "link_to": "Customer",
@@ -141,7 +133,7 @@
    "onboard": 0
   }
  ],
- "modified": "2026-10-18 13:00:00.000000",
+ "modified": "2026-10-18 22:30:00.000000",
  "modified_by": "Administrator",
  "module": "MFI Tools",
  "name": "Panel MFI Tools",

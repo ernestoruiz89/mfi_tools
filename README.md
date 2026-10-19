@@ -11,12 +11,13 @@ App Frappe para preparar EEFF por periodo (`cliente + mes + anio`) con flujo ope
 ## Versiones y acceso en Frappe v16
 
 - La rama `v15` conserva la version anterior. El desarrollo para v16 continua en `main`.
-- MFI Tools 0.2.0 se verifico en WSL con Frappe 16.52.0, ERPNext 16.51.1 y Python 3.14.
+- MFI Tools 0.2.1 se verifico en WSL con Frappe 16.52.0, ERPNext 16.51.1 y Python 3.14.
 - Requiere ERPNext y `python-docx` para la exportacion Word; Bench instala esta dependencia Python.
-- Esta navegacion usa los DocTypes `Sidebar` y `Dock` de la v16 instalada. Las primeras versiones v16 que solo tienen `Workspace Sidebar` requieren actualizar Frappe antes de usar este menu.
-- El acceso **MFI Tools** aparece tanto en Apps como en Desk con el icono `mfi_tools/public/images/mfi-tools.svg`. Su destino es `/desk/mfi-tools/panel-mfi-tools`.
+- Se incluyen `Sidebar` y `Dock` para la navegacion nueva, y `Workspace Sidebar` para versiones como Frappe 16.5. El menu de compatibilidad se exporta en `mfi_tools/workspace_sidebar/panel_mfi_tools.json`.
+- El acceso **MFI Tools** aparece tanto en Apps como en Desk con el icono `mfi_tools/public/images/mfi-tools.svg`. Su destino es `/desk/panel-mfi-tools`, sin depender de rutas con el nombre del modulo.
 - El menu lateral agrupa Preparacion EEFF, Estados y notas y Configuracion. El panel agrega cuatro accesos rapidos y las mismas tres secciones.
 - La visibilidad de la app respeta el permiso de lectura de `Paquete EEFF` para usuarios del Desk. Los roles actuales de los documentos y paginas siguen siendo `System Manager`.
+- Las tasas de cambio se editan dentro de cada **Balanza Comprobacion EEFF**, en **Tasas de Cambio por Moneda**. `Tasa Cambio Balanza EEFF` es una tabla hija y no tiene lista independiente.
 
 Instalacion en un bench v16 con ERPNext instalado:
 

@@ -8,3 +8,4 @@ mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v2
 mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v3
 mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v4
 mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v5
+mfi_tools.mfi_tools.patches.fix_desk_navigation_v16

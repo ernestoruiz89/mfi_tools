@@ -6,7 +6,7 @@
  "app": "mfi_tools",
  "standard": 1,
  "header_icon": "chart-no-axes-combined",
- "modified": "2026-10-18 12:00:00.000000",
+ "modified": "2026-10-18 22:45:00.000000",
  "items": [
   {
    "type": "Link",
@@ -14,6 +14,15 @@
    "link_type": "Workspace",
    "link_to": "Panel MFI Tools",
    "icon": "house",
+   "child": 0,
+   "is_default_module": 1
+  },
+  {
+   "type": "Link",
+   "label": "Paquetes EEFF",
+   "link_type": "DocType",
+   "link_to": "Paquete EEFF",
+   "icon": "folder-open",
    "child": 0,
    "is_default_module": 1
   },
@@ -32,15 +41,6 @@
    "link_type": "Page",
    "link_to": "asistente-eeff",
    "icon": "wand-sparkles",
-   "child": 1,
-   "is_default_module": 1
-  },
-  {
-   "type": "Link",
-   "label": "Paquetes EEFF",
-   "link_type": "DocType",
-   "link_to": "Paquete EEFF",
-   "icon": "folder-open",
    "child": 1,
    "is_default_module": 1
   },
@@ -149,15 +149,6 @@
    "link_type": "Page",
    "link_to": "helper-mapeo-notas-eeff",
    "icon": "list-tree",
-   "child": 1,
-   "is_default_module": 1
-  },
-  {
-   "type": "Link",
-   "label": "Tasas de cambio",
-   "link_type": "DocType",
-   "link_to": "Tasa Cambio Balanza EEFF",
-   "icon": "arrow-left-right",
    "child": 1,
    "is_default_module": 1
   },
