@@ -1,9 +1,14 @@
 import re
+from datetime import datetime, timezone
 
 import frappe
 from frappe import _
 from frappe.utils import cint, cstr, flt
-from mfi_tools.mfi_tools.utils.customer import get_customer_display, get_customer_display_map
+from mfi_tools.mfi_tools.services.formula_engine import has_data_functions
+from mfi_tools.mfi_tools.services.emission_validation import (
+    data_formula_issues, has_figure_content, has_rich_text,
+    section_has_content, tabular_formula_issues,
+)
 from mfi_tools.mfi_tools.utils.nota_eeff import build_note_identifier, get_package_note_rows
 
 MESES = (
@@ -26,6 +31,7 @@ FORMULA_MULTICOL_PREFIXES = {
     "ACT",
     "COMP",
     "BASE",
+    "SELF",
     "BASE_ACT",
     "BASE_COMP",
     "MONTO_ACTUAL",
@@ -39,20 +45,25 @@ def _clean(value):
     return cstr(value or "").strip()
 
 
+def _evaluation_time():
+    return datetime.now(timezone.utc).isoformat()
+
+
 def _get_entity_display(name):
     name = _clean(name)
     if not name:
         return ""
-    if frappe.db.exists("Company", name):
-        c_name = frappe.db.get_value("Company", name, "company_name")
-        return cstr(c_name or name).strip()
-    return get_customer_display(name) or name
+    return _get_entity_display_map([name]).get(name, name)
 
 
 def _get_entity_display_map(names):
-    mapping = {}
-    for name in names:
-        mapping[name] = _get_entity_display(name)
+    names = sorted({_clean(name) for name in names if _clean(name)})
+    mapping = {name: name for name in names}
+    for doctype, label in (("Customer", "customer_name"), ("Company", "company_name")):
+        if names and frappe.has_permission(doctype, "read"):
+            for row in frappe.get_list(doctype, filters={"name": ["in", names]},
+                                       fields=["name", label], limit_page_length=0):
+                mapping[row.name] = row.get(label) or row.name
     return mapping
 
 
@@ -74,17 +85,17 @@ def _get_clients():
     field = "company" if meta.has_field("company") else ("cliente" if meta.has_field("cliente") else None)
     if not field:
         return []
-    rows = frappe.get_all(
+    rows = frappe.get_list(
         "Paquete EEFF",
         fields=[field],
         filters={field: ["is", "set"]},
         distinct=True,
         order_by=f"{field} asc",
-        limit_page_length=2000,
+        limit_page_length=0,
     )
     values = sorted({_clean(row.get(field)) for row in rows if _clean(row.get(field))})
-    if not values and frappe.db.exists("DocType", "Company"):
-        for row in frappe.get_all("Company", fields=["name"], limit_page_length=100):
+    if not values and frappe.has_permission("Company", "read"):
+        for row in frappe.get_list("Company", fields=["name"], limit_page_length=0):
             values.append(row.name)
         values = sorted(set(values))
     display_map = _get_entity_display_map(values)
@@ -94,7 +105,7 @@ def _get_clients():
 def _get_packages(cliente=None, anio=None, mes=None):
     meta = frappe.get_meta("Paquete EEFF")
     entity_field = "company" if meta.has_field("company") else "cliente"
-    rows = frappe.get_all(
+    rows = frappe.get_list(
         "Paquete EEFF",
         filters=_build_filters(cliente=cliente, anio=anio, mes=mes),
         fields=[
@@ -107,7 +118,7 @@ def _get_packages(cliente=None, anio=None, mes=None):
             "modified",
         ],
         order_by="modified desc",
-        limit_page_length=500,
+        limit_page_length=0,
     )
     customer_labels = _get_entity_display_map([row.get(entity_field) for row in rows])
     return [
@@ -127,6 +138,9 @@ def _extract_formula_refs(expression, mode="Vertical"):
     expr = _clean(expression).upper()
     if not expr:
         return [], []
+
+    if has_data_functions(expr):
+        return [], data_formula_issues(expr)
 
     issues = []
     if not FORMULA_ALLOWED_RE.match(expr):
@@ -177,19 +191,21 @@ def _extract_formula_refs(expression, mode="Vertical"):
 
 def _lineas_huerfanas(estado_doc):
     issues = []
-    lineas = sorted(list(estado_doc.lineas or []), key=lambda row: (cint(row.orden or 0), cint(row.idx or 0)))
+    lineas = sorted(
+        [row for row in estado_doc.lineas or []
+         if not cint(row.get("no_imprimir")) and not cint(row.get("es_linea_blanco"))],
+        key=lambda row: (cint(row.get("orden") or row.idx or 0), cint(row.idx or 0)),
+    )
+    ancestors = []
 
-    for idx, row in enumerate(lineas):
+    for row in lineas:
         nivel = max(cint(row.nivel or 1), 1)
+        while ancestors and ancestors[-1] >= nivel:
+            ancestors.pop()
+        parent_ok = bool(ancestors and ancestors[-1] == nivel - 1)
+        ancestors.append(nivel)
         if nivel <= 1:
             continue
-
-        parent_ok = False
-        for prev in reversed(lineas[:idx]):
-            prev_level = max(cint(prev.nivel or 1), 1)
-            if prev_level < nivel:
-                parent_ok = prev_level == (nivel - 1)
-                break
 
         if not parent_ok:
             issues.append(
@@ -213,7 +229,9 @@ def _formula_issues_for_rows(rows, code_field, formula_field, scope, docname, mo
     for row in rows:
         code = _clean(getattr(row, code_field, "")).upper()
         formula = _clean(getattr(row, formula_field, ""))
-        if not code or not formula:
+        if (not code or not formula or row.get("origen_dato") != "Formula"
+                or cint(row.get("es_titulo")) or cint(row.get("es_linea_blanco"))
+                or row.get("formato_numero") == "Texto" or row.get("formato_presentacion") == "Texto"):
             continue
 
         mode = "Vertical"
@@ -248,127 +266,160 @@ def _formula_issues_for_rows(rows, code_field, formula_field, scope, docname, mo
                 continue
             graph[code].append(ref)
 
-    cycle_signatures = set()
+    # Iterative DFS also handles long formula chains without Python recursion limits.
     visited = set()
-    stack = []
-    in_stack = set()
-
-    def dfs(node):
-        visited.add(node)
-        stack.append(node)
-        in_stack.add(node)
-
-        for ref in graph.get(node, []):
-            if ref not in visited:
-                dfs(ref)
-                continue
-            if ref in in_stack:
-                idx = stack.index(ref)
-                cycle = tuple(stack[idx:] + [ref])
-                signature = tuple(sorted(set(cycle)))
-                if signature not in cycle_signatures:
-                    cycle_signatures.add(signature)
-                    issues.append(
-                        {
-                            "scope": scope,
-                            "documento": docname,
-                            "codigo": node,
-                            "formula": _clean(getattr(row_map.get(node), formula_field, "")),
-                            "referencia": " -> ".join(cycle),
-                            "motivo": _("Referencia circular detectada."),
-                        }
-                    )
-
-        stack.pop()
-        in_stack.discard(node)
-
-    for code in graph:
-        if code not in visited:
-            dfs(code)
+    signatures = set()
+    for root in graph:
+        if root in visited:
+            continue
+        stack = [root]
+        positions = {root: 0}
+        pending = [(root, iter(graph.get(root, [])))]
+        visited.add(root)
+        while pending:
+            node, edges = pending[-1]
+            ref = next(edges, None)
+            if ref is None:
+                pending.pop()
+                positions.pop(node, None)
+                stack.pop()
+            elif ref in positions:
+                cycle = stack[positions[ref]:] + [ref]
+                signature = frozenset(cycle)
+                if signature not in signatures:
+                    signatures.add(signature)
+                    issues.append({
+                        "scope": scope, "documento": docname, "codigo": node,
+                        "formula": _clean(getattr(row_map.get(node), formula_field, "")),
+                        "referencia": " -> ".join(cycle),
+                        "motivo": _("Referencia circular detectada."),
+                    })
+            elif ref not in visited:
+                visited.add(ref)
+                positions[ref] = len(stack)
+                stack.append(ref)
+                pending.append((ref, iter(graph.get(ref, []))))
 
     return issues
 
 
 def _has_rich_text(value):
-    text = re.sub(r"<[^>]+>", "", cstr(value or ""))
-    return bool(_clean(text))
+    return has_rich_text(value)
 
 
-def _complex_note_has_content(nota):
-    if cstr(getattr(nota, "estructura_nota", "Simple") or "Simple").strip() != "Compleja":
+def _complex_note_has_content(nota, sections=None):
+    if _clean(nota.get("estructura_nota") or "Simple") != "Compleja":
         return False
-
-    section_names = frappe.get_all(
-        "Seccion Nota EEFF",
-        filters={"nota_eeff": nota.name},
-        pluck="name",
-        limit_page_length=300,
-    )
-    if not section_names:
-        return False
-
-    for section_name in section_names:
-        section = frappe.get_doc("Seccion Nota EEFF", section_name)
-        has_narrative = _has_rich_text(getattr(section, "contenido_narrativo", ""))
-        has_cells = bool(getattr(section, "celdas_tabulares", None) or [])
-        if has_narrative or has_cells:
-            return True
-
-    return False
+    if sections is None:
+        names = frappe.get_all("Seccion Nota EEFF", filters={"nota_eeff": nota.name}, pluck="name")
+        sections = [frappe.get_doc("Seccion Nota EEFF", name) for name in names]
+        for section in sections:
+            section.check_permission("read")
+    return any(section_has_content(section) for section in sections)
 
 
-def _notas_faltantes(notas):
-    issues = []
+def _notas_faltantes(notas, sections_by_note=None):
     if not notas:
-        issues.append({"tipo": "conjunto", "detalle": _("El paquete no tiene notas registradas.")})
-        return issues
-
-    numbers = []
+        return [{"tipo": "conjunto", "detalle": _("El paquete no tiene notas registradas.")}]
+    issues = []
+    numbers = sorted({cint(nota.numero_nota) for nota in notas if cint(nota.numero_nota) > 0})
+    previous = 0
+    for number in numbers:
+        first, last = previous + 1, number - 1
+        # A mistyped note number must not allocate an enormous range or response.
+        if last - first >= 20:
+            issues.append({"tipo": "secuencia", "detalle": _("Faltan las notas {0} a {1}.").format(first, last)})
+        else:
+            for missing in range(first, last + 1):
+                issues.append({"tipo": "secuencia", "detalle": _("Falta la nota numero {0}.").format(missing)})
+        previous = number
     for nota in notas:
-        raw = _clean(nota.numero_nota)
-        match = re.search(r"\d+", raw)
-        if match:
-            numbers.append(int(match.group(0)))
+        visible_cifras = [row for row in nota.cifras_nota or [] if has_figure_content(row)]
+        sections = None if sections_by_note is None else sections_by_note.get(nota.name, [])
+        if (not _has_rich_text(nota.contenido_narrativo) and not _has_rich_text(nota.get("observaciones")) and not visible_cifras
+                and not _complex_note_has_content(nota, sections)):
+            issues.append({
+                "tipo": "contenido",
+                "detalle": _("Nota {0} ({1}) sin contenido.").format(
+                    build_note_identifier(nota.numero_nota, nota.get("sub_nota")) or "-", nota.name),
+            })
+    return issues
 
-    if numbers:
-        missing = sorted(set(range(1, max(numbers) + 1)) - set(numbers))
-        for number in missing:
-            issues.append({"tipo": "secuencia", "detalle": _("Falta la nota numero {0}.").format(number)})
 
-    for nota in notas:
-        visible_cifras = [row for row in (nota.cifras_nota or []) if not cint(getattr(row, "no_imprimir", 0))]
-        has_narrative = _has_rich_text(nota.contenido_narrativo)
-        has_complex_content = _complex_note_has_content(nota)
-        if not has_narrative and not visible_cifras and not has_complex_content:
-            issues.append(
-                {
-                    "tipo": "contenido",
-                    "detalle": _("Nota {0} ({1}) sin contenido.").format(
-                        build_note_identifier(nota.numero_nota, getattr(nota, "sub_nota", "")) or "-",
-                        nota.name,
-                    ),
-                }
-            )
+def _require_access():
+    frappe.only_for("System Manager")
+    if not frappe.has_permission("Paquete EEFF", "read"):
+        frappe.throw(_("No tienes permiso para consultar paquetes EEFF."), frappe.PermissionError)
 
+
+def _state_orphans(estado):
+    if _clean(estado.get("estructura_estado")) != "Compleja":
+        return _lineas_huerfanas(estado)
+    tables = {}
+    for row in estado.filas_tabulares or []:
+        tables.setdefault(row.codigo_tabla, []).append(frappe._dict(
+            codigo_linea=row.codigo_fila, descripcion=row.descripcion, nivel=row.nivel,
+            orden=row.get("orden"), idx=row.idx,
+        ))
+    return [issue for table, rows in tables.items()
+            for issue in _lineas_huerfanas(frappe._dict(name=f"{estado.name} / {table}", lineas=rows))]
+
+
+def _missing_note_refs(estados, notas):
+    numbers = {cint(n.numero_nota) for n in notas}
+    identifiers = {(cint(n.numero_nota), _clean(n.get("sub_nota")).strip("()").upper()) for n in notas}
+    issues = []
+    for estado in estados:
+        rows = estado.filas_tabulares if estado.get("estructura_estado") == "Compleja" else estado.lineas
+        for row in rows or []:
+            if cint(row.get("no_imprimir")) or cint(row.get("es_linea_blanco")):
+                continue
+            for number, sub in re.findall(r"(\d+)(?:\s*\(([A-Za-z0-9]+)\))?", _clean(row.get("nota"))):
+                exists = (cint(number), sub.upper()) in identifiers if sub else cint(number) in numbers
+                if not exists:
+                    issues.append({"tipo": "referencia", "detalle": _("Estado {0}, linea {1}: la nota {2} referenciada no existe.").format(
+                        estado.name, row.get("codigo_linea") or row.get("codigo_fila") or "-",
+                        build_note_identifier(number, sub))})
     return issues
 
 
 def _compute_indicators(paquete_name):
+    _require_access()
+    paquete_name = _clean(paquete_name)
     if not frappe.db.exists("Paquete EEFF", paquete_name):
         frappe.throw(_("El paquete indicado no existe."), title=_("Paquete Invalido"))
 
     package = frappe.get_doc("Paquete EEFF", paquete_name)
+    package.check_permission("read")
     estados_meta = frappe.get_all(
         "Estado Financiero EEFF",
         filters={"paquete_eeff": package.name},
         fields=["name"],
         order_by="orden_presentacion asc, creation asc",
-        limit_page_length=200,
+        limit_page_length=0,
     )
-    notas_meta = get_package_note_rows(package.name, fields=[], limit_page_length=300)
+    notas_meta = get_package_note_rows(package.name, fields=[], limit_page_length=0)
 
     estados = [frappe.get_doc("Estado Financiero EEFF", row.name) for row in estados_meta]
     notas = [frappe.get_doc("Nota EEFF", row.name) for row in notas_meta]
+    for doc in estados + notas:
+        doc.check_permission("read")
+    sections_by_note = {}
+    complex_note_names = [n.name for n in notas if n.get("estructura_nota") == "Compleja"]
+    if complex_note_names:
+        for row in frappe.get_all("Seccion Nota EEFF", filters={"nota_eeff": ["in", complex_note_names]},
+                                  fields=["name", "nota_eeff"]):
+            section = frappe.get_doc("Seccion Nota EEFF", row.name)
+            section.check_permission("read")
+            sections_by_note.setdefault(row.nota_eeff, []).append(section)
+    structure_issues = []
+    if not estados:
+        structure_issues.append({"status": "error", "detalle": _("El paquete no tiene estados financieros.")})
+    for estado in estados:
+        rows = estado.filas_tabulares if estado.get("estructura_estado") == "Compleja" else estado.lineas
+        if not any(not cint(row.get("no_imprimir")) and not cint(row.get("es_linea_blanco"))
+                   and not cint(row.get("es_titulo")) and row.get("tipo_fila") != "Titulo" for row in rows or []):
+            structure_issues.append({"status": "error", "detalle": _("Estado {0} sin filas de datos imprimibles.").format(estado.name)})
 
     # Indicador 1: cuadre automatico (balanza)
     cuadre = {
@@ -380,24 +431,37 @@ def _compute_indicators(paquete_name):
     }
     if package.balanza_comprobacion_eeff and frappe.db.exists("Balanza Comprobacion EEFF", package.balanza_comprobacion_eeff):
         balanza = frappe.get_doc("Balanza Comprobacion EEFF", package.balanza_comprobacion_eeff)
-        diff = flt(balanza.total_debe or 0) - flt(balanza.total_haber or 0)
-        is_balanced = cint(balanza.cuadra) and abs(diff) < 0.01
+        balanza.check_permission("read")
+        total_debe = sum(flt(row.debe_saldo) for row in balanza.lineas or [])
+        total_haber = sum(flt(row.haber_saldo) for row in balanza.lineas or [])
+        diff = total_debe - total_haber
+        compatible = all(_clean(package.get(field)) == _clean(balanza.get(field))
+                         for field in ("company", "cliente", "anio", "mes") if package.get(field))
+        is_balanced = bool(balanza.lineas) and compatible and abs(diff) < 0.0001
         cuadre = {
             "status": "ok" if is_balanced else "error",
             "title": _("Cuadre Automatico"),
             "value": _("Cuadra") if is_balanced else _("No cuadra"),
             "detail": _("Debe Saldo: {0} | Haber Saldo: {1} | Diferencia: {2}").format(
-                f"{flt(balanza.total_debe or 0):,.2f}",
-                f"{flt(balanza.total_haber or 0):,.2f}",
+                f"{total_debe:,.2f}",
+                f"{total_haber:,.2f}",
                 f"{diff:,.2f}",
             ),
             "difference": diff,
         }
+        if not balanza.lineas:
+            cuadre.update(status="warning", value=_("Balanza vacia"), detail=_("La balanza no tiene lineas para evaluar."))
+        if not compatible:
+            cuadre.update(status="error", value=_("Balanza incompatible"), detail=_("La entidad o el periodo de la balanza no coincide con el paquete."))
+        if abs(flt(balanza.total_debe) - total_debe) >= 0.0001 or abs(flt(balanza.total_haber) - total_haber) >= 0.0001:
+            structure_issues.append({"status": "warning", "detalle": _("Los totales guardados de la balanza difieren de sus lineas; el cuadre se recalculo sin guardar cambios.")})
+    elif package.balanza_comprobacion_eeff:
+        cuadre.update(status="error", value=_("Balanza inexistente"), detail=_("La balanza vinculada ya no existe."))
 
     # Indicador 2: lineas huerfanas
     orphan_issues = []
     for estado in estados:
-        orphan_issues.extend(_lineas_huerfanas(estado))
+        orphan_issues.extend(_state_orphans(estado))
 
     lineas_huerfanas = {
         "status": "ok" if not orphan_issues else "warning",
@@ -409,6 +473,9 @@ def _compute_indicators(paquete_name):
     # Indicador 3: formulas rotas (estados + notas)
     formula_issues = []
     for estado in estados:
+        if estado.get("estructura_estado") == "Compleja":
+            formula_issues.extend(tabular_formula_issues(estado, "Estado"))
+            continue
         formula_issues.extend(
             _formula_issues_for_rows(
                 rows=list(estado.lineas or []),
@@ -429,6 +496,9 @@ def _compute_indicators(paquete_name):
                 docname=nota.name,
             )
         )
+        if nota.get("estructura_nota") == "Compleja":
+            for section in sections_by_note.get(nota.name, []):
+                formula_issues.extend(tabular_formula_issues(section, "Seccion de nota"))
 
     formulas_rotas = {
         "status": "ok" if not formula_issues else "error",
@@ -438,7 +508,8 @@ def _compute_indicators(paquete_name):
     }
 
     # Indicador 4: notas faltantes
-    note_issues = _notas_faltantes(notas)
+    note_issues = _notas_faltantes(notas, sections_by_note)
+    note_issues.extend(_missing_note_refs(estados, notas))
     notas_faltantes = {
         "status": "ok" if not note_issues else "warning",
         "title": _("Notas Faltantes"),
@@ -454,7 +525,15 @@ def _compute_indicators(paquete_name):
     score -= min(len(orphan_issues) * 2, 25)
     score -= min(len(formula_issues) * 3, 25)
     score -= min(len(note_issues) * 2, 15)
+    score -= min(len(structure_issues) * 5, 20)
     score = max(score, 0)
+
+    statuses = [cuadre["status"], lineas_huerfanas["status"], formulas_rotas["status"], notas_faltantes["status"]]
+    statuses.extend(issue["status"] for issue in structure_issues)
+    if "error" in statuses:
+        score = min(score, 59)
+    elif "warning" in statuses:
+        score = min(score, 84)
 
     if score >= 85:
         health_level = _("Saludable")
@@ -484,23 +563,35 @@ def _compute_indicators(paquete_name):
             "lineas_huerfanas": lineas_huerfanas,
             "formulas_rotas": formulas_rotas,
             "notas_faltantes": notas_faltantes,
+            "estructura": {
+                "status": "error" if any(i["status"] == "error" for i in structure_issues) else ("warning" if structure_issues else "ok"),
+                "title": _("Integridad del Paquete"), "value": len(structure_issues),
+                "detail": _("Hay estados vacios, faltantes o totales desactualizados.") if structure_issues else _("Sin incidencias."),
+            },
         },
         "details": {
             "lineas_huerfanas": orphan_issues,
             "formulas_rotas": formula_issues,
             "notas_faltantes": note_issues,
+            "estructura": structure_issues,
         },
         "meta": {
             "message": _("Estos indicadores son informativos y no bloquean la emision."),
+            "evaluated_at": _evaluation_time(),
+            "score_policy": _("Un error limita el score a 59; una advertencia lo limita a 84. No certifica la emision."),
         },
     }
 
 
 def _bootstrap_response(cliente=None, anio=None, mes=None, paquete_name=None):
+    _require_access()
     selected_package = _clean(paquete_name) or None
     indicators = None
-    if selected_package and frappe.db.exists("Paquete EEFF", selected_package):
+    if selected_package:
         indicators = _compute_indicators(selected_package)
+        package = frappe.get_doc("Paquete EEFF", selected_package)
+        cliente = package.get("company") or package.get("cliente")
+        anio, mes = package.anio, package.mes
 
     return {
         "cliente": _clean(cliente) or None,

@@ -715,7 +715,7 @@ class EstadoFinancieroEEFF(Document):
             formula = cstr(getattr(row, "formula_filas", "") or "").strip().upper()
             if not formula:
                 continue
-            for _, ref_code in parse_formula_tokens_tabular(formula):
+            for _sign, ref_code in parse_formula_tokens_tabular(formula):
                 if (row.codigo_tabla, ref_code) not in row_map:
                     frappe.throw(
                         _("La fila {0} referencia la fila inexistente {1} en la tabla {2}.").format(
@@ -728,7 +728,7 @@ class EstadoFinancieroEEFF(Document):
             formula = cstr(getattr(row, "formula_columnas", "") or "").strip().upper()
             if not formula:
                 continue
-            for _, ref_code in parse_formula_tokens_tabular(formula):
+            for _sign, ref_code in parse_formula_tokens_tabular(formula):
                 if (row.codigo_tabla, ref_code) not in column_map:
                     frappe.throw(
                         _("La columna {0} referencia la columna inexistente {1} en la tabla {2}.").format(

@@ -32,6 +32,7 @@ class IndicadoresEmisionEEFF {
             route_options: {},
         };
         this.loading = false;
+        this.request_id = 0;
     }
 
     init() {
@@ -51,33 +52,35 @@ class IndicadoresEmisionEEFF {
         const style = document.createElement("style");
         style.id = "cf-indicator-style";
         style.textContent = `
-            .cfi-shell{display:grid;grid-template-columns:1fr;gap:14px;padding:16px;border:1px solid #dbe4ee;border-radius:16px;background:linear-gradient(170deg,#f8fbff 0%,#f4f8ff 50%,#fffdf7 100%)}
-            .cfi-card{background:#fff;border:1px solid #dbe4ee;border-radius:14px;box-shadow:0 8px 20px rgba(15,23,42,.05)}
+            .cfi-shell{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:16px;border:1px solid #dbe4ee;border-radius:16px;background:linear-gradient(170deg,#f8fbff 0%,#f4f8ff 50%,#fffdf7 100%)}
+            .cfi-card{min-width:0;background:#fff;border:1px solid #dbe4ee;border-radius:14px;box-shadow:0 8px 20px rgba(15,23,42,.05)}
             .cfi-head{padding:14px 16px;border-bottom:1px solid #eef2f7}
             .cfi-head h3{margin:0;color:#0f172a;font-size:15px;font-weight:800}
             .cfi-head p{margin:6px 0 0;color:#64748b;font-size:12px}
             .cfi-body{padding:14px 16px}
             .cfi-grid{display:grid;gap:10px}
             .cfi-grid.filters{grid-template-columns:repeat(4,minmax(0,1fr))}
-            .cfi-field{display:flex;flex-direction:column;gap:6px}
+            .cfi-field{display:flex;flex-direction:column;gap:6px;min-width:0}
             .cfi-field label{font-size:11px;text-transform:uppercase;letter-spacing:.35px;color:#64748b;font-weight:800}
             .cfi-field input,.cfi-field select{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;font-size:13px;background:#fff}
             .cfi-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
             .cfi-btn{border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:700;color:#0f172a;cursor:pointer}
             .cfi-btn.primary{background:#166534;border-color:#166534;color:#fff}
-            .cfi-kpis{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(0,1fr))}
+            .cfi-kpis{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr))}
             .cfi-kpi{padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
-            .cfi-kpi strong{display:block;font-size:18px;color:#0f172a}
+            .cfi-kpi strong{display:block;font-size:18px;color:#0f172a;overflow-wrap:anywhere}
             .cfi-kpi span{display:block;margin-top:4px;color:#64748b;font-size:11px;text-transform:uppercase;font-weight:800}
             .cfi-kpi small{display:block;margin-top:6px;color:#475569;font-size:11px}
             .cfi-ok{border-color:#22c55e;background:#f0fdf4}
             .cfi-warning{border-color:#f59e0b;background:#fffbeb}
             .cfi-error{border-color:#ef4444;background:#fef2f2}
             .cfi-alert{padding:10px;border-radius:10px;border:1px solid #bfdbfe;background:#eff6ff;color:#1e3a8a;font-size:12px}
+            .cfi-table-wrap{overflow-x:auto}
             .cfi-table{width:100%;border-collapse:collapse;margin-top:8px}
             .cfi-table th,.cfi-table td{border:1px solid #e2e8f0;padding:6px 8px;font-size:12px;vertical-align:top}
             .cfi-table th{background:#f8fafc;text-align:left}
-            @media (max-width: 1200px){.cfi-grid.filters,.cfi-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+            @media (max-width: 600px){.cfi-grid.filters,.cfi-kpis{grid-template-columns:minmax(0,1fr)}}
+            @media (min-width: 601px) and (max-width: 1200px){.cfi-grid.filters,.cfi-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
         `;
         document.head.appendChild(style);
     }
@@ -123,6 +126,7 @@ class IndicadoresEmisionEEFF {
                     </div>
                     <div class="cfi-body">
                         <div class="cfi-alert" data-role="meta">${__("Estos indicadores son informativos y no bloquean la emision.")}</div>
+                        <p data-role="context" style="margin-top:10px;overflow-wrap:anywhere;"></p>
                         <div class="cfi-kpis" data-role="kpis" style="margin-top:10px;"></div>
                     </div>
                 </div>
@@ -142,27 +146,34 @@ class IndicadoresEmisionEEFF {
         this.$paquete = this.wrapper.find('[data-role="paquete"]');
         this.$kpis = this.wrapper.find('[data-role="kpis"]');
         this.$meta = this.wrapper.find('[data-role="meta"]');
+        this.$context = this.wrapper.find('[data-role="context"]');
         this.$details = this.wrapper.find('[data-role="details"]');
 
-        this.$anio.val(this.state.anio || new Date().getFullYear());
+        this.$anio.val(this.state.anio || "");
     }
 
     bind_events() {
         this.$cliente.on("change", () => {
             this.state.cliente = this.$cliente.val() || "";
+            this.clear_selection();
             this.load_bootstrap();
         });
         this.$anio.on("change", () => {
-            this.state.anio = this.as_int(this.$anio.val(), new Date().getFullYear());
+            this.state.anio = this.as_int(this.$anio.val(), 0);
+            this.clear_selection();
             this.load_bootstrap();
         });
         this.$mes.on("change", () => {
             this.state.mes = this.$mes.val() || "";
+            this.clear_selection();
             this.load_bootstrap();
         });
         this.$paquete.on("change", () => {
             this.state.paquete_name = this.$paquete.val() || "";
-            this.run_indicators();
+            this.state.indicators = null;
+            this.render_indicators();
+            if (this.state.paquete_name) this.run_indicators();
+            else { this.request_id++; this.set_busy(false); }
         });
 
         this.wrapper.on("click", "[data-action='run']", () => this.run_indicators());
@@ -170,84 +181,119 @@ class IndicadoresEmisionEEFF {
         this.wrapper.on("click", "[data-action='open-package']", () => this.open_package_form());
     }
 
-    load_bootstrap() {
-        if (this.loading) return;
-        this.loading = true;
+    clear_selection() {
+        this.state.paquete_name = "";
+        this.state.indicators = null;
+        this.$paquete.val("");
+        this.render_indicators();
+    }
 
+    set_busy(busy) {
+        this.loading = busy;
+        this.wrapper.find("[data-action='run']").prop("disabled", busy);
+        if (this.page.btn_primary) this.page.btn_primary.prop("disabled", busy);
+    }
+
+    load_bootstrap() {
+        const request_id = ++this.request_id;
+        this.set_busy(true);
         const route = this.state.route_options || {};
         this.state.route_options = {};
-
+        this.state.indicators = null;
+        this.render_indicators();
         const args = {
-            cliente: route.cliente || this.state.cliente || null,
-            anio: route.anio || this.state.anio || null,
-            mes: route.mes || this.state.mes || null,
+            cliente: route.cliente ?? (this.state.cliente || null),
+            anio: route.anio ?? (this.state.anio || null),
+            mes: route.mes ?? (this.state.mes || null),
             paquete_name: route.package_name || route.paquete_name || this.state.paquete_name || null,
         };
-
-        frappe.call({
+        return frappe.call({
             method: "mfi_tools.mfi_tools.page.indicadores_emision_eeff.indicadores_emision_eeff.get_indicator_bootstrap",
             args,
             callback: (r) => {
-                this.loading = false;
-                const data = r.message || {};
-                this.absorb_bootstrap(data);
+                if (request_id !== this.request_id) return;
+                this.set_busy(false);
+                this.absorb_bootstrap(r.message || {});
                 this.render_all();
             },
             error: () => {
-                this.loading = false;
-            }
+                if (request_id !== this.request_id) return;
+                this.set_busy(false);
+                this.clear_selection();
+                this.state.packages = [];
+                this.set_select_options(this.$paquete, [], "");
+                this.$meta.text(__("No se pudo cargar el selector. Refresca para reintentar."));
+            },
         });
     }
 
     run_indicators() {
-        const paquete_name = this.$paquete.val() || this.state.paquete_name;
+        const paquete_name = this.$paquete.val() || "";
         if (!paquete_name) {
+            this.clear_selection();
             frappe.msgprint(__("Selecciona un paquete para evaluar."));
             return;
         }
-
-        frappe.call({
+        const request_id = ++this.request_id;
+        this.state.paquete_name = paquete_name;
+        this.state.indicators = null;
+        this.render_indicators();
+        this.set_busy(true);
+        return frappe.call({
             method: "mfi_tools.mfi_tools.page.indicadores_emision_eeff.indicadores_emision_eeff.run_emission_indicators",
             args: { paquete_name },
-            freeze: true,
-            freeze_message: __("Evaluando indicadores de emision..."),
             callback: (r) => {
-                this.state.paquete_name = paquete_name;
+                if (request_id !== this.request_id || this.$paquete.val() !== paquete_name) return;
+                this.set_busy(false);
                 this.state.indicators = r.message || null;
                 this.render_indicators();
                 frappe.show_alert({ message: __("Indicadores actualizados."), indicator: "green" });
+            },
+            error: () => {
+                if (request_id !== this.request_id) return;
+                this.set_busy(false);
+                this.state.indicators = null;
+                this.render_indicators();
+                this.$meta.text(__("La evaluacion fallo. No hay resultados vigentes para este paquete."));
             },
         });
     }
 
     absorb_bootstrap(data) {
-        this.state.cliente = data.cliente || this.state.cliente || "";
-        this.state.anio = this.as_int(data.anio, this.state.anio || new Date().getFullYear());
-        this.state.mes = data.mes || this.state.mes || "";
-        this.state.paquete_name = data.paquete_name || this.state.paquete_name || "";
+        this.state.cliente = data.cliente ?? "";
+        this.state.anio = this.as_int(data.anio, 0);
+        this.state.mes = data.mes ?? "";
+        this.state.paquete_name = data.paquete_name ?? "";
         this.state.clients = data.clients || [];
         this.state.packages = data.packages || [];
         this.state.meses = data.meses || [];
-        this.state.indicators = data.indicators || this.state.indicators || null;
+        this.state.indicators = data.indicators ?? null;
     }
 
     render_all() {
         this.set_select_options(this.$cliente, this.state.clients, this.state.cliente);
         this.set_select_options(this.$mes, (this.state.meses || []).map((row) => ({ value: row, label: row })), this.state.mes);
         this.set_select_options(this.$paquete, this.state.packages, this.state.paquete_name);
-        this.$anio.val(this.state.anio || new Date().getFullYear());
+        this.$anio.val(this.state.anio || "");
         this.render_indicators();
     }
 
     render_indicators() {
         const data = this.state.indicators;
         if (!data || !data.kpis) {
+            this.$meta.text(__("Estos indicadores son informativos y no bloquean la emision."));
+            this.$context.text("");
             this.$kpis.html(`<div class="cfi-kpi"><strong>-</strong><span>${this.escape(__("Sin evaluacion"))}</span></div>`);
             this.$details.html(`<p>${this.escape(__("Selecciona un paquete y ejecuta la evaluacion."))}</p>`);
             return;
         }
 
         this.$meta.text((data.meta && data.meta.message) || __("Estos indicadores son informativos y no bloquean la emision."));
+
+        const pkg = data.package || {};
+        const evaluated_at = data.meta?.evaluated_at ? new Date(data.meta.evaluated_at).toLocaleString() : "";
+        this.$context.text(`${__("Paquete")}: ${pkg.name || "-"} | ${pkg.cliente_label || "-"} | ${pkg.periodo_nombre || "-"} | ${evaluated_at}`);
+        if (data.meta?.score_policy) this.$meta.text(`${data.meta.message} ${data.meta.score_policy}`);
 
         const cards = [
             {
@@ -282,6 +328,8 @@ class IndicadoresEmisionEEFF {
             },
         ];
 
+        if (data.kpis.estructura) cards.push(data.kpis.estructura);
+
         this.$kpis.html(cards.map((card) => `
             <div class="cfi-kpi cfi-${this.escape(card.status)}">
                 <strong>${this.escape(card.value)}</strong>
@@ -297,6 +345,7 @@ class IndicadoresEmisionEEFF {
         const orphanRows = details.lineas_huerfanas || [];
         const formulaRows = details.formulas_rotas || [];
         const noteRows = details.notas_faltantes || [];
+        const structureRows = details.estructura || [];
 
         const orphanHtml = orphanRows.length
             ? `<table class="cfi-table">
@@ -309,9 +358,9 @@ class IndicadoresEmisionEEFF {
 
         const formulaHtml = formulaRows.length
             ? `<table class="cfi-table">
-                    <thead><tr><th>Scope</th><th>Documento</th><th>Codigo</th><th>Referencia</th><th>Motivo</th></tr></thead>
+                    <thead><tr><th>Scope</th><th>Documento</th><th>Codigo</th><th>Formula</th><th>Referencia</th><th>Motivo</th></tr></thead>
                     <tbody>
-                        ${formulaRows.map((row) => `<tr><td>${this.escape(row.scope || "-")}</td><td>${this.escape(row.documento || "-")}</td><td>${this.escape(row.codigo || "-")}</td><td>${this.escape(row.referencia || "-")}</td><td>${this.escape(row.motivo || "-")}</td></tr>`).join("")}
+                        ${formulaRows.map((row) => `<tr><td>${this.escape(row.scope || "-")}</td><td>${this.escape(row.documento || "-")}</td><td>${this.escape(row.codigo || "-")}</td><td>${this.escape(row.formula || "-")}</td><td>${this.escape(row.referencia || "-")}</td><td>${this.escape(row.motivo || "-")}</td></tr>`).join("")}
                     </tbody>
                </table>`
             : `<p>${this.escape(__("Sin formulas rotas."))}</p>`;
@@ -327,16 +376,18 @@ class IndicadoresEmisionEEFF {
 
         this.$details.html(`
             <h4>${this.escape(__("Lineas Huerfanas"))}</h4>
-            ${orphanHtml}
+            <div class="cfi-table-wrap">${orphanHtml}</div>
             <h4 style="margin-top:14px;">${this.escape(__("Formulas Rotas"))}</h4>
-            ${formulaHtml}
+            <div class="cfi-table-wrap">${formulaHtml}</div>
             <h4 style="margin-top:14px;">${this.escape(__("Notas Faltantes"))}</h4>
-            ${noteHtml}
+            <div class="cfi-table-wrap">${noteHtml}</div>
+            <h4 style="margin-top:14px;">${this.escape(__("Integridad del Paquete"))}</h4>
+            ${structureRows.length ? `<ul>${structureRows.map((row) => `<li>${this.escape(row.detalle)}</li>`).join("")}</ul>` : `<p>${this.escape(__("Sin incidencias."))}</p>`}
         `);
     }
 
     open_package_form() {
-        const packageName = this.$paquete.val() || this.state.paquete_name;
+        const packageName = this.$paquete.val() || "";
         if (!packageName) {
             frappe.msgprint(__("No hay paquete seleccionado."));
             return;
@@ -362,6 +413,6 @@ class IndicadoresEmisionEEFF {
     }
 
     escape(value) {
-        return frappe.utils.escape_html(String(value || ""));
+        return frappe.utils.escape_html(String(value ?? ""));
     }
 }

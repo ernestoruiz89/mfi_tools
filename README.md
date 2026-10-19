@@ -11,7 +11,7 @@ App Frappe para preparar EEFF por periodo (`cliente + mes + anio`) con flujo ope
 ## Versiones y acceso en Frappe v16
 
 - La rama `v15` conserva la version anterior. El desarrollo para v16 continua en `main`.
-- MFI Tools 0.2.1 se verifico en WSL con Frappe 16.52.0, ERPNext 16.51.1 y Python 3.14.
+- MFI Tools 0.2.2 se verifico en WSL con Frappe 16.52.0, ERPNext 16.51.1 y Python 3.14.
 - Requiere ERPNext y `python-docx` para la exportacion Word; Bench instala esta dependencia Python.
 - Se incluyen `Sidebar` y `Dock` para la navegacion nueva, y `Workspace Sidebar` para versiones como Frappe 16.5. El menu de compatibilidad se exporta en `mfi_tools/workspace_sidebar/panel_mfi_tools.json`.
 - El acceso **MFI Tools** aparece tanto en Apps como en Desk con el icono `mfi_tools/public/images/mfi-tools.svg`. Su destino es `/desk/panel-mfi-tools`, sin depender de rutas con el nombre del modulo.
@@ -68,6 +68,18 @@ En un sitio que ya tiene MFI Tools, actualizar `main`, instalar sus dependencias
 - Pagina `indicadores_emision_eeff`: KPIs de cuadre, lineas huerfanas, formulas rotas y notas faltantes.
 - Pagina `helper_mapeo_notas_eeff`: helper visual para mapear cifras y celdas de notas complejas.
 - Workspace `panel_mfi_tools`.
+
+## Indicadores de emision
+
+La pagina `indicadores-emision-eeff` requiere el rol `System Manager` y permiso de lectura sobre el paquete y sus documentos vinculados. La evaluacion no guarda ni recalcula los importes de estados y notas en la base de datos.
+
+- Cuadre: suma las columnas de saldo de las lineas de la balanza, con la misma tolerancia de 0.0001 que el documento. Una balanza vacia o de otra entidad/periodo no se considera cuadrada.
+- Jerarquia: comprueba padres de lineas imprimibles y filas de estados complejos por tabla.
+- Formulas: comprueba referencias y ciclos de formulas de lineas y tablas complejas. Reconoce formulas de datos (`BAL`, `EST`, `VAR`, funciones de periodo), cuya sintaxis y argumentos valida sin ejecutarlas. No sustituye la ejecucion del mapeo ni certifica los valores de las fuentes.
+- Notas: comprueba secuencia, referencias desde estados y contenido visible. Titulos, saltos, espacios HTML y celdas vacias no completan una nota.
+- Integridad: detecta estados faltantes o sin filas imprimibles y totales de balanza desactualizados. Se examinan todos los estados, notas y secciones del paquete.
+
+El score mantiene las penalizaciones por cuadre (35 por error o 10 por advertencia), huerfanas (2 por hallazgo, maximo 25), formulas (3, maximo 25) y notas (2, maximo 15); agrega integridad (5, maximo 20). Cualquier error limita el score a 59; cualquier advertencia lo limita a 84. El panel identifica el paquete, periodo y hora de evaluacion, y descarta resultados anteriores cuando cambian los filtros o falla la consulta.
 
 ## Print formats
 
