@@ -7,3 +7,4 @@ mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v1
 mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v2
 mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v3
 mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v4
+mfi_tools.mfi_tools.patches.reload_panel_mfi_tools_workspace_v5

@@ -1,0 +1,15 @@
+{
+ "app": "mfi_tools",
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "App",
+ "idx": 20,
+ "label": "MFI Tools",
+ "link": "/desk/mfi-tools/panel-mfi-tools",
+ "link_type": "External",
+ "logo_url": "/assets/mfi_tools/images/mfi-tools.svg",
+ "modified": "2026-10-18 12:00:00.000000",
+ "name": "MFI Tools",
+ "roles": [{"role": "System Manager"}],
+ "standard": 1
+}

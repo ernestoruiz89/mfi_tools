@@ -8,6 +8,29 @@ App Frappe para preparar EEFF por periodo (`cliente + mes + anio`) con flujo ope
 - Validaciones de formulas y estructura.
 - Indicadores de emision y exportacion a Word.
 
+## Versiones y acceso en Frappe v16
+
+- La rama `v15` conserva la version anterior. El desarrollo para v16 continua en `main`.
+- MFI Tools 0.2.0 se verifico en WSL con Frappe 16.52.0, ERPNext 16.51.1 y Python 3.14.
+- Requiere ERPNext y `python-docx` para la exportacion Word; Bench instala esta dependencia Python.
+- Esta navegacion usa los DocTypes `Sidebar` y `Dock` de la v16 instalada. Las primeras versiones v16 que solo tienen `Workspace Sidebar` requieren actualizar Frappe antes de usar este menu.
+- El acceso **MFI Tools** aparece tanto en Apps como en Desk con el icono `mfi_tools/public/images/mfi-tools.svg`. Su destino es `/desk/mfi-tools/panel-mfi-tools`.
+- El menu lateral agrupa Preparacion EEFF, Estados y notas y Configuracion. El panel agrega cuatro accesos rapidos y las mismas tres secciones.
+- La visibilidad de la app respeta el permiso de lectura de `Paquete EEFF` para usuarios del Desk. Los roles actuales de los documentos y paginas siguen siendo `System Manager`.
+
+Instalacion en un bench v16 con ERPNext instalado:
+
+```bash
+bench get-app /ruta/a/mfi_tools --soft-link --skip-assets
+bench --site nombre-del-sitio backup --with-files
+bench --site nombre-del-sitio install-app mfi_tools
+bench build --app mfi_tools
+bench --site nombre-del-sitio migrate
+bench --site nombre-del-sitio clear-cache
+```
+
+En un sitio que ya tiene MFI Tools, actualizar `main`, instalar sus dependencias con `bench setup requirements --python` y ejecutar build, migrate y clear-cache. La navegacion se importa desde los JSON de la app; las personalizaciones del sitio y del usuario se administran con las capas de Frappe. Recargar el navegador despues de actualizar.
+
 ## Alcance funcional actual
 
 - `Balanza Comprobacion EEFF`: normaliza lineas, calcula `saldo`, totales `debe/haber`, valida duplicados y determina `cuadra`.

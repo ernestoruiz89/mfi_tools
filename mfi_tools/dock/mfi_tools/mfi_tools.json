@@ -1,0 +1,17 @@
+{
+ "app": "mfi_tools",
+ "doctype": "Dock",
+ "items": [
+  {
+   "hidden": 0,
+   "icon": "chart-no-axes-combined",
+   "link_to": "MFI Tools",
+   "link_type": "Sidebar",
+   "title": "MFI Tools"
+  }
+ ],
+ "modified": "2026-10-18 12:00:00.000000",
+ "name": "mfi_tools",
+ "standard": 1,
+ "user": ""
+}

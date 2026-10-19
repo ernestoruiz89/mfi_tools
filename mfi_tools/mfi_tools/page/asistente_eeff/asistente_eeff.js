@@ -56,15 +56,15 @@ class AsistenteEEFF {
         const style = document.createElement("style");
         style.id = "cf-wizard-style";
         style.textContent = `
-            .cf-shell{display:grid;grid-template-columns:1fr;gap:14px;padding:16px;border:1px solid #dbe4ee;border-radius:16px;background:linear-gradient(170deg,#f8fbff 0%,#f2f8f5 55%,#fffdf7 100%)}
-            .cf-card{background:#fff;border:1px solid #dbe4ee;border-radius:14px;box-shadow:0 8px 20px rgba(15,23,42,.05)}
+            .cf-shell{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:16px;border:1px solid #dbe4ee;border-radius:16px;background:linear-gradient(170deg,#f8fbff 0%,#f2f8f5 55%,#fffdf7 100%)}
+            .cf-card{min-width:0;background:#fff;border:1px solid #dbe4ee;border-radius:14px;box-shadow:0 8px 20px rgba(15,23,42,.05)}
             .cf-head{padding:14px 16px;border-bottom:1px solid #eef2f7}
             .cf-head h3{margin:0;color:#0f172a;font-size:15px;font-weight:800}
-            .cf-head p{margin:6px 0 0;color:#64748b;font-size:12px}
+            .cf-head p{margin:6px 0 0;color:#64748b;font-size:12px;overflow-wrap:anywhere}
             .cf-body{padding:14px 16px}
             .cf-grid{display:grid;gap:10px}
             .cf-grid.filters{grid-template-columns:repeat(5,minmax(0,1fr))}
-            .cf-field{display:flex;flex-direction:column;gap:6px}
+            .cf-field{display:flex;flex-direction:column;gap:6px;min-width:0}
             .cf-field label{font-size:11px;text-transform:uppercase;letter-spacing:.35px;color:#64748b;font-weight:800}
             .cf-field input,.cf-field select,.cf-field textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;font-size:13px;background:#fff}
             .cf-field textarea{min-height:220px;resize:vertical;font-family:Consolas,Monaco,monospace}
@@ -74,7 +74,7 @@ class AsistenteEEFF {
             .cf-btn.secondary{background:#0f766e;border-color:#0f766e;color:#fff}
             .cf-status{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(0,1fr))}
             .cf-kpi{padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
-            .cf-kpi strong{display:block;font-size:18px;color:#0f172a}
+            .cf-kpi strong{display:block;font-size:18px;color:#0f172a;overflow-wrap:anywhere}
             .cf-kpi span{display:block;margin-top:4px;color:#64748b;font-size:11px;text-transform:uppercase;font-weight:800}
             .cf-log{margin-top:10px;padding:10px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-size:12px;white-space:pre-wrap}
             @media (max-width: 1200px){.cf-grid.filters,.cf-status{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -554,7 +554,7 @@ class AsistenteEEFF {
     }
 
     format_currency(value) {
-        return frappe.format(value || 0, { fieldtype: "Currency" });
+        return frappe.format(value || 0, { fieldtype: "Currency" }, { only_value: true });
     }
 
     build_balance_csv_template() {
