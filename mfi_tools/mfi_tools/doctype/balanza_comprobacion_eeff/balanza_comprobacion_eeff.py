@@ -112,6 +112,13 @@ def _clean_cell_str(val):
     return cstr(val).strip()
 
 
+def _clean_account_code(val):
+    raw = _clean_cell_str(val)
+    if not raw:
+        return ""
+    return re.sub(r"\D", "", raw)
+
+
 def _clean_cell_flt(val):
     if val is None or val == "":
         return 0.0
@@ -381,7 +388,7 @@ def _parse_csv_bytes_to_dict_rows(csv_text_or_bytes):
 
 
 def _map_row_to_balance_line(row):
-    cuenta = _clean_cell_str(
+    cuenta = _clean_account_code(
         _row_val(
             row,
             "codigo_cuenta",
@@ -555,7 +562,7 @@ def _map_row_to_balance_line(row):
         else:
             haber_saldo = abs(saldo_firmado)
 
-    if not cuenta and not descripcion:
+    if not cuenta or not descripcion:
         return None
 
     return {
@@ -668,7 +675,7 @@ class BalanzaComprobacionEEFF(Document):
         advertencias = []
 
         for idx, row in enumerate(self.lineas or [], start=1):
-            row.codigo_cuenta = cstr(row.codigo_cuenta or "").strip().upper()
+            row.codigo_cuenta = _clean_account_code(row.codigo_cuenta)
             row.descripcion_cuenta = cstr(row.descripcion_cuenta or "").strip()
             row.centro_costo = cstr(getattr(row, "centro_costo", "") or "").strip()
             row.moneda = cstr(self.moneda or "").strip().upper()
