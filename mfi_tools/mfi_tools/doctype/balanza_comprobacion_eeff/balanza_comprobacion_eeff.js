@@ -22,6 +22,10 @@ frappe.ui.form.on("Balanza Comprobacion EEFF", {
             download_balance_excel(frm);
         });
 
+        frm.add_custom_button(__("Generar ISC (TXT)"), () => {
+            open_isc_dialog(frm);
+        });
+
         frm.add_custom_button(__("Duplicar a otra Moneda"), () => {
             open_duplicate_dialog(frm, "mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.duplicar_a_moneda");
         });
@@ -257,4 +261,167 @@ function to_csv_row(row) {
     return (row || [])
         .map((value) => `"${String(value ?? "").replace(/"/g, "\"\"")}"`)
         .join(",");
+}
+
+function open_isc_dialog(frm) {
+    if (!(frm.doc.lineas || []).length) {
+        frappe.msgprint(__("La balanza no tiene lineas cargadas para generar el archivo ISC."));
+        return;
+    }
+
+    const defaultRate = (frm.doc.moneda !== "NIO" && frm.doc.moneda !== "COR")
+        ? (frm.doc.tasas_cambio?.[0]?.tasa_cambio || 1)
+        : 1;
+
+    const dialog = new frappe.ui.Dialog({
+        title: __("Generar Archivo ISC - CONAMI (.txt)"),
+        fields: [
+            {
+                fieldname: "id_moneda",
+                fieldtype: "Select",
+                label: __("Moneda del Envío (id_moneda)"),
+                options: [
+                    "0 - Moneda integradora (Consolidado)",
+                    "Auto-detectar por 9no dígito de cuenta (1, 2, 3 y consolidar en 0)",
+                    "1 - Nacional con Mantenimiento de Valor",
+                    "2 - Nacional sin Mantenimiento de Valor",
+                    "3 - Extranjera",
+                ].join("\n"),
+                default: "0 - Moneda integradora (Consolidado)",
+                description: __("Según manual CONAMI: 0=Integradora, 1=Nac c/MV, 2=Nac s/MV, 3=Extranjera."),
+            },
+            {
+                fieldname: "longitud_cuenta",
+                fieldtype: "Select",
+                label: __("Longitud Cuenta Contable"),
+                options: [
+                    "Hasta 8 dígitos (Sub-subcuenta MUC CONAMI)",
+                    "Código completo (sin puntos/guiones)",
+                ].join("\n"),
+                default: "Hasta 8 dígitos (Sub-subcuenta MUC CONAMI)",
+                description: __("El manual especifica Varchar(8) sin puntos ni guiones."),
+            },
+            {
+                fieldname: "incluir_moneda_0",
+                fieldtype: "Check",
+                label: __("Garantizar registros de Moneda Integradora (0)"),
+                default: 1,
+                description: __("Requerido por validación CONAMI 02.001.007."),
+            },
+            {
+                fieldname: "omitir_ceros",
+                fieldtype: "Check",
+                label: __("Omitir cuentas con saldos y movimientos en cero"),
+                default: 1,
+            },
+            {
+                fieldname: "tasa_cambio",
+                fieldtype: "Float",
+                label: __("Tasa de cambio a Córdobas"),
+                default: defaultRate,
+                description: __("Todos los saldos deben expresarse en Córdobas. Usar 1 si la balanza ya está en Córdobas."),
+            },
+            {
+                fieldname: "separador",
+                fieldtype: "Select",
+                label: __("Separador de Campos"),
+                options: "|\n,\n\\t",
+                default: "|",
+                description: __("El estándar oficial de CONAMI es pleca (|)."),
+            },
+            {
+                fieldname: "preview_section",
+                fieldtype: "Section Break",
+                label: __("Validación y Vista Previa"),
+            },
+            {
+                fieldname: "preview_html",
+                fieldtype: "HTML",
+            },
+        ],
+        primary_action_label: __("Descargar isc_saldos.txt"),
+        primary_action(values) {
+            download_isc_file(frm, values);
+            dialog.hide();
+        },
+        secondary_action_label: __("Validar y Previsualizar"),
+        secondary_action() {
+            refresh_isc_preview(dialog, frm);
+        },
+    });
+
+    dialog.show();
+    refresh_isc_preview(dialog, frm);
+}
+
+function refresh_isc_preview(dialog, frm) {
+    const values = dialog.get_values() || {};
+    const $wrapper = dialog.get_field("preview_html").$wrapper;
+    $wrapper.html(`<div class="text-muted text-center p-3">${__("Validando saldos...")}</div>`);
+
+    frappe.call({
+        method: "mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.validar_datos_isc",
+        args: {
+            balanza_name: frm.doc.name,
+            id_moneda: values.id_moneda || "0",
+            longitud_cuenta: (values.longitud_cuenta || "").includes("completo") ? "completo" : "8",
+            incluir_moneda_0: values.incluir_moneda_0 ? 1 : 0,
+            omitir_ceros: values.omitir_ceros ? 1 : 0,
+            separador: values.separador || "|",
+            tasa_cambio: values.tasa_cambio || 1,
+        },
+        callback: (r) => {
+            const data = r.message || {};
+            const badgeClass = data.cuadra ? "indicator-pill green" : "indicator-pill red";
+            const cuadraText = data.cuadra ? __("Cuadra perfectamente (Σ Deudoras = Σ Acreedoras)") : __("DESCUADRE DETECTADO");
+
+            let html = `
+                <div style="margin-bottom: 12px; padding: 10px; border-radius: 6px; background-color: var(--bg-light-gray, #f8f9fa); border: 1px solid var(--border-color, #d1d8dd);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span class="${badgeClass}" style="font-weight: 600; font-size: 13px;">${cuadraText}</span>
+                        <span class="text-muted" style="font-size: 12px;"><b>${data.total_registros || 0}</b> registros a generar</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 12px;">
+                        <div><b>Σ Deudoras:</b> ${format_currency(data.suma_deudoras || 0, "NIO")}</div>
+                        <div><b>Σ Acreedoras:</b> ${format_currency(data.suma_acreedoras || 0, "NIO")}</div>
+                        <div><b>Diferencia:</b> <span style="color: ${data.cuadra ? 'inherit' : 'red'}">${format_currency(data.diferencia || 0, "NIO")}</span></div>
+                    </div>
+                </div>
+            `;
+
+            if (data.advertencias && data.advertencias.length) {
+                html += `
+                    <div class="alert alert-warning p-2" style="font-size: 12px; margin-bottom: 10px;">
+                        ${data.advertencias.join("<br>")}
+                    </div>
+                `;
+            }
+
+            if (data.preview) {
+                html += `
+                    <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px;" class="text-muted">
+                        ${__("Primeras líneas de isc_saldos.txt (cta_contable|Id_moneda|Saldo_inicial|creditos_mes|debitos_mes|Saldo):")}
+                    </div>
+                    <pre style="background: var(--code-block-bg, #282c34); color: #abb2bf; padding: 10px; border-radius: 5px; max-height: 160px; overflow-y: auto; font-family: monospace; font-size: 11px; line-height: 1.4;">${frappe.utils.escape_html(data.preview)}</pre>
+                `;
+            }
+
+            $wrapper.html(html);
+        },
+    });
+}
+
+function download_isc_file(frm, values) {
+    const balanzaName = frm.doc.name || "";
+    const idMoneda = encodeURIComponent(values.id_moneda || "0");
+    const longCta = encodeURIComponent((values.longitud_cuenta || "").includes("completo") ? "completo" : "8");
+    const inc0 = values.incluir_moneda_0 ? 1 : 0;
+    const omit0 = values.omitir_ceros ? 1 : 0;
+    const sep = encodeURIComponent(values.separador || "|");
+    const tc = values.tasa_cambio || 1;
+
+    const url = frappe.urllib.get_full_url(
+        `/api/method/mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.descargar_archivo_isc?balanza_name=${encodeURIComponent(balanzaName)}&id_moneda=${idMoneda}&longitud_cuenta=${longCta}&incluir_moneda_0=${inc0}&omitir_ceros=${omit0}&separador=${sep}&tasa_cambio=${tc}`
+    );
+    window.open(url, "_blank");
 }

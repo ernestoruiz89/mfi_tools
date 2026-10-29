@@ -95,6 +95,8 @@ El score mantiene las penalizaciones por cuadre (35 por error o 10 por advertenc
 - `mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.cargar_balanza_csv(balanza_name, csv_content, tasa_cambio=None, moneda=None)`
 - `mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.descargar_balanza_excel(balanza_name)`
 - `mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.descargar_plantilla_excel(balanza_name=None)`
+- `mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.descargar_archivo_isc(balanza_name, id_moneda=0, longitud_cuenta="8", incluir_moneda_0=1, omitir_ceros=1, separador="|", tasa_cambio=1.0)`
+- `mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.validar_datos_isc(balanza_name, id_moneda=0, longitud_cuenta="8", incluir_moneda_0=1, omitir_ceros=1, separador="|", tasa_cambio=1.0)`
 
 ### Paquete
 
@@ -125,6 +127,20 @@ El score mantiene las penalizaciones por cuadre (35 por error o 10 por advertenc
 - Debe: `debe`, `debit`
 - Haber: `haber`, `credit`
 - Centro de costo: `centro_costo`, `cost_center`
+
+## Generación de Archivo ISC (CONAMI)
+
+De acuerdo con el *Manual para el Envío de Información de Saldos Contables (ISC)* de la CONAMI (Nicaragua), el botón **Generar ISC (TXT)** genera el archivo oficial `isc_saldos.txt`:
+
+- **Formato:** Archivo plano de texto delimitado por pleca (`|`), sin encabezado.
+- **Estructura (6 campos):**
+  1. `cta_contable` (Varchar 8, caracteres numéricos sin puntos ni guiones)
+  2. `Id_moneda` (0 = Integradora, 1 = Nac c/MV, 2 = Nac s/MV, 3 = Extranjera)
+  3. `Saldo_inicial` (numeric 20,2)
+  4. `creditos_mes` (numeric 20,2)
+  5. `debitos_mes` (numeric 20,2)
+  6. `Saldo` (numeric 20,2)
+- **Validaciones automáticas:** Cuadre de saldos (Σ Deudoras = Σ Acreedoras), agregación de cuentas por moneda, y generación de registros consolidados para la moneda integradora (0).
 
 ## Notas tecnicas
 

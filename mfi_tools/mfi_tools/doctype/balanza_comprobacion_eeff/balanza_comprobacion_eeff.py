@@ -1005,3 +1005,259 @@ def duplicar_a_moneda(docname, moneda_destino, tasa_cambio, operacion):
 
     new_doc.save(ignore_permissions=True)
     return new_doc.name
+
+
+# =====================================================================
+# GENERACIÓN DE ARCHIVO ISC (CONAMI) EN FORMATO PLANO .TXT
+# MANUAL PARA EL ENVÍO DE INFORMACIÓN DE SALDOS CONTABLES (ISC)
+# =====================================================================
+
+def _determinar_naturaleza_cuenta(cta, debe_fin, haber_fin):
+    if flt(debe_fin) > flt(haber_fin):
+        return "DEUDORA"
+    elif flt(haber_fin) > flt(debe_fin):
+        return "ACREEDORA"
+
+    first = cta[:1] if cta else "1"
+    first2 = cta[:2] if len(cta) >= 2 else ""
+    if first in ("2", "3", "4") or first2 in ("62", "72"):
+        return "ACREEDORA"
+    return "DEUDORA"
+
+
+def generar_lineas_isc(
+    doc,
+    id_moneda="0",
+    longitud_cuenta="8",
+    incluir_moneda_0=1,
+    omitir_ceros=1,
+    tasa_cambio=1.0,
+):
+    longitud_cuenta = cstr(longitud_cuenta or "8").strip()
+    incluir_moneda_0 = cint(incluir_moneda_0)
+    omitir_ceros = cint(omitir_ceros)
+    tc = flt(tasa_cambio or 1.0)
+    if tc <= 0:
+        tc = 1.0
+
+    modo_auto = cstr(id_moneda).lower().startswith("auto")
+    try:
+        moneda_fija = cint(cstr(id_moneda).split(" ")[0]) if not modo_auto else 0
+    except (ValueError, TypeError):
+        moneda_fija = 0
+
+    agrupado = {}
+
+    for row in doc.get("lineas") or []:
+        raw_code = cstr(row.codigo_cuenta or "").strip()
+        digits = re.sub(r"\D", "", raw_code)
+        if not digits:
+            continue
+
+        if modo_auto:
+            if len(digits) == 9 and digits[-1] in ("1", "2", "3"):
+                cta = digits[:8]
+                line_moneda = cint(digits[-1])
+            elif len(digits) > 8:
+                cta = digits[:8] if longitud_cuenta == "8" else digits
+                line_moneda = 0
+            else:
+                cta = digits
+                line_moneda = 0
+        else:
+            cta = digits[:8] if (longitud_cuenta == "8" and len(digits) > 8) else digits
+            line_moneda = moneda_fija
+
+        debe_ant = flt(row.debe_saldo_anterior or 0) * tc
+        haber_ant = flt(row.haber_saldo_anterior or 0) * tc
+        debe_mes = flt(row.debe_mes or 0) * tc
+        haber_mes = flt(row.haber_mes or 0) * tc
+        debe_fin = flt(row.debe_saldo or 0) * tc
+        haber_fin = flt(row.haber_saldo or 0) * tc
+
+        if debe_mes == 0 and haber_mes == 0 and getattr(row, "movimiento_del_mes", None):
+            mov = flt(row.movimiento_del_mes or 0) * tc
+            if mov > 0:
+                debe_mes = mov
+            elif mov < 0:
+                haber_mes = abs(mov)
+
+        naturaleza = _determinar_naturaleza_cuenta(cta, debe_fin, haber_fin)
+        if naturaleza == "DEUDORA":
+            saldo_ini = debe_ant - haber_ant
+            saldo = debe_fin - haber_fin
+        else:
+            saldo_ini = haber_ant - debe_ant
+            saldo = haber_fin - debe_fin
+
+        creditos = haber_mes
+        debitos = debe_mes
+
+        claves = [(cta, line_moneda)]
+        if modo_auto and line_moneda != 0 and incluir_moneda_0:
+            claves.append((cta, 0))
+        elif not modo_auto and line_moneda != 0 and incluir_moneda_0:
+            claves.append((cta, 0))
+
+        for k in claves:
+            if k not in agrupado:
+                agrupado[k] = {
+                    "cta": k[0],
+                    "id_moneda": k[1],
+                    "saldo_ini": 0.0,
+                    "creditos": 0.0,
+                    "debitos": 0.0,
+                    "saldo": 0.0,
+                    "naturaleza": naturaleza,
+                }
+            item = agrupado[k]
+            item["saldo_ini"] += saldo_ini
+            item["creditos"] += creditos
+            item["debitos"] += debitos
+            item["saldo"] += saldo
+
+    lineas_resultado = []
+    for k, item in agrupado.items():
+        if omitir_ceros and (
+            abs(item["saldo_ini"]) < 0.005
+            and abs(item["creditos"]) < 0.005
+            and abs(item["debitos"]) < 0.005
+            and abs(item["saldo"]) < 0.005
+        ):
+            continue
+        lineas_resultado.append(item)
+
+    lineas_resultado.sort(key=lambda x: (x["cta"], x["id_moneda"]))
+    return lineas_resultado
+
+
+def construir_archivo_isc_txt(lineas, separador="|"):
+    sep = separador or "|"
+    txt_lines = []
+    for l in lineas:
+        cta = l["cta"]
+        id_m = l["id_moneda"]
+        s_ini = f"{l['saldo_ini']:.2f}"
+        cred = f"{l['creditos']:.2f}"
+        deb = f"{l['debitos']:.2f}"
+        s_fin = f"{l['saldo']:.2f}"
+        txt_lines.append(f"{cta}{sep}{id_m}{sep}{s_ini}{sep}{cred}{sep}{deb}{sep}{s_fin}")
+    return "\r\n".join(txt_lines) + ("\r\n" if txt_lines else "")
+
+
+@frappe.whitelist()
+def validar_datos_isc(
+    balanza_name,
+    id_moneda="0",
+    longitud_cuenta="8",
+    incluir_moneda_0=1,
+    omitir_ceros=1,
+    separador="|",
+    tasa_cambio=1.0,
+):
+    if not frappe.db.exists("Balanza Comprobacion EEFF", balanza_name):
+        frappe.throw(_("La balanza indicada no existe."))
+
+    doc = frappe.get_doc("Balanza Comprobacion EEFF", balanza_name)
+    doc.check_permission("read")
+
+    lineas = generar_lineas_isc(
+        doc,
+        id_moneda=id_moneda,
+        longitud_cuenta=longitud_cuenta,
+        incluir_moneda_0=incluir_moneda_0,
+        omitir_ceros=omitir_ceros,
+        tasa_cambio=tasa_cambio,
+    )
+
+    monedas_set = sorted(list(set(l["id_moneda"] for l in lineas)))
+    resumen_monedas = {}
+    total_deudoras = 0.0
+    total_acreedoras = 0.0
+    advertencias = []
+
+    for m in monedas_set:
+        m_lines = [l for l in lineas if l["id_moneda"] == m]
+        deu = round(sum(l["saldo"] for l in m_lines if l["naturaleza"] == "DEUDORA"), 2)
+        acr = round(sum(l["saldo"] for l in m_lines if l["naturaleza"] == "ACREEDORA"), 2)
+        dif = round(abs(deu - acr), 2)
+        cuadra_m = dif < 0.05
+        resumen_monedas[str(m)] = {
+            "id_moneda": m,
+            "registros": len(m_lines),
+            "deudoras": deu,
+            "acreedoras": acr,
+            "diferencia": dif,
+            "cuadra": cuadra_m,
+        }
+        if not cuadra_m:
+            advertencias.append(
+                _("Moneda {0}: la suma de deudoras ({1}) no coincide con acreedoras ({2}), dif: {3}").format(
+                    m, deu, acr, dif
+                )
+            )
+
+    m0_data = resumen_monedas.get("0") or (next(iter(resumen_monedas.values())) if resumen_monedas else None)
+    if m0_data:
+        total_deudoras = m0_data["deudoras"]
+        total_acreedoras = m0_data["acreedoras"]
+        cuadra = m0_data["cuadra"]
+        diferencia = m0_data["diferencia"]
+    else:
+        cuadra = False
+        diferencia = 0.0
+
+    preview_lines = construir_archivo_isc_txt(lineas[:15], separador=separador).strip().split("\r\n")
+
+    return {
+        "balanza": doc.name,
+        "total_registros": len(lineas),
+        "suma_deudoras": total_deudoras,
+        "suma_acreedoras": total_acreedoras,
+        "diferencia": diferencia,
+        "cuadra": cuadra,
+        "advertencias": advertencias,
+        "resumen_monedas": resumen_monedas,
+        "preview": "\n".join(preview_lines[:15]),
+    }
+
+
+@frappe.whitelist()
+def descargar_archivo_isc(
+    balanza_name,
+    id_moneda="0",
+    longitud_cuenta="8",
+    incluir_moneda_0=1,
+    omitir_ceros=1,
+    separador="|",
+    tasa_cambio=1.0,
+):
+    if not frappe.db.exists("Balanza Comprobacion EEFF", balanza_name):
+        frappe.throw(_("La balanza indicada no existe."))
+
+    doc = frappe.get_doc("Balanza Comprobacion EEFF", balanza_name)
+    doc.check_permission("read")
+    doc.check_permission("export")
+
+    if not doc.get("lineas"):
+        frappe.throw(_("La balanza no tiene lineas cargadas para generar el archivo ISC."))
+
+    lineas = generar_lineas_isc(
+        doc,
+        id_moneda=id_moneda,
+        longitud_cuenta=longitud_cuenta,
+        incluir_moneda_0=incluir_moneda_0,
+        omitir_ceros=omitir_ceros,
+        tasa_cambio=tasa_cambio,
+    )
+
+    if not lineas:
+        frappe.throw(_("No se generaron registros para el archivo ISC con los parámetros seleccionados."))
+
+    content = construir_archivo_isc_txt(lineas, separador=separador)
+
+    frappe.local.response.filename = "isc_saldos.txt"
+    frappe.local.response.filecontent = content
+    frappe.local.response.type = "download"
+    frappe.local.response.display_content_as = "attachment"
+    frappe.local.response.content_type = "text/plain; charset=utf-8"
