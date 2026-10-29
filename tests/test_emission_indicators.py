@@ -59,9 +59,15 @@ class EmissionIndicatorsTest(unittest.TestCase):
         return row(**values)
 
     def test_valid_data_formulas_are_not_line_references(self):
-        for expression in ('BAL("1101*")', 'VAR X = BAL("1*")\nX / 2',
-                           'SI(ES_ACTUAL(), VAL_ACT(3), VAL_COMP(4))',
-                           'YTD("1*", "BAL")', 'VAR X = 1\nVAR X = X + 1\nX'):
+        for expression in (
+            'BAL("1101*")',
+            'VAR X = BAL("1*")\nX / 2',
+            'SI(ES_ACTUAL(), VAL_ACT(3), VAL_COMP(4))',
+            'YTD("1*", "BAL")',
+            'VAR X = 1\nVAR X = X + 1\nX',
+            'BAL("1201")+BAL("1202")+BAL("1203")+\nBAL("1204")+BAL("1205")+BAL("1206")-\nBAL("1207")-BAL("1208")-BAL("1209")',
+            'BAL("2101")+BAL("2102")+BAL("2103")+\n//CUENTAS BANCARIAS SOBREGIRADAS\nSI(BAL("11020101")<0,BAL("11020101"),0)+\nSI(BAL("11020102")<0,BAL("11020102"),0)',
+        ):
             with self.subTest(expression=expression):
                 self.assertEqual(self.formula_issues([self.formula_row("A", expression)]), [])
 

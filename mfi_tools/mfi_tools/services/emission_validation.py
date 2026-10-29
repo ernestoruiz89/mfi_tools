@@ -58,10 +58,11 @@ def data_formula_issues(expression):
     try:
         statements = _parse_formula_statements(cstr(expression).strip().upper())
         for kind, variable, code in statements:
-            if not code.strip():
+            clean_code = code.strip().rstrip("; \t\r\n")
+            if not clean_code:
                 issues.append(_("Expresion de formula vacia."))
                 continue
-            tree = ast.parse(code.strip().rstrip("; \t\r\n"), mode="eval")
+            tree = ast.parse("(\n" + clean_code + "\n)", mode="eval")
             for node in ast.walk(tree):
                 if isinstance(node, ast.Name) and node.id not in known:
                     issues.append(_("Funcion o variable desconocida: {0}.").format(node.id))

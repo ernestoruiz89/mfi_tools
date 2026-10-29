@@ -194,7 +194,7 @@ def _has_unclosed_delimiters(text):
 
 def _is_valid_expr(s):
     try:
-        ast.parse(s.strip().rstrip("; \t\r\n"), mode="eval")
+        ast.parse("(\n" + s.strip().rstrip("; \t\r\n") + "\n)", mode="eval")
         return True
     except (SyntaxError, ValueError):
         return False
