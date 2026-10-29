@@ -1012,22 +1012,141 @@ def duplicar_a_moneda(docname, moneda_destino, tasa_cambio, operacion):
 # MANUAL PARA EL ENVÍO DE INFORMACIÓN DE SALDOS CONTABLES (ISC)
 # =====================================================================
 
-def _determinar_naturaleza_cuenta(cta, debe_fin, haber_fin):
-    if flt(debe_fin) > flt(haber_fin):
-        return "DEUDORA"
-    elif flt(haber_fin) > flt(debe_fin):
+def _determinar_naturaleza_cuenta(cta, debe_fin=0, haber_fin=0):
+    cta = cstr(cta or "").strip()
+    # Cuentas complementarias de activo (Estimaciones, Depreciaciones y Amortizaciones Acumuladas) -> ACREEDORA
+    if cta.startswith(
+        (
+            "1208",
+            "1209",
+            "1308",
+            "1309",
+            "1408",
+            "1409",
+            "1508",
+            "1509",
+            "1608",
+            "1609",
+            "1708",
+            "1709",
+            "1808",
+            "1809",
+            "190609",
+            "190809",
+            "191109",
+        )
+    ):
         return "ACREEDORA"
+    # Cuentas de pérdidas en patrimonio (3802 Pérdidas acumuladas, 3902 Pérdidas del período) -> DEUDORA
+    if cta.startswith(("3802", "3902")):
+        return "DEUDORA"
 
     first = cta[:1] if cta else "1"
     first2 = cta[:2] if len(cta) >= 2 else ""
-    if first in ("2", "3", "4") or first2 in ("62", "72"):
+    if first in ("1", "5", "6"):
+        return "DEUDORA"
+    if first in ("2", "3", "4"):
+        return "ACREEDORA"
+    if first2 in ("71", "81", "82"):
+        return "DEUDORA"
+    if first2 in ("72", "85", "86"):
         return "ACREEDORA"
     return "DEUDORA"
 
 
+def _fmt_isc_num(val):
+    v = round(flt(val or 0), 2)
+    if abs(v) < 0.005:
+        return "0"
+    s = f"{v:.2f}".rstrip("0").rstrip(".")
+    return "0" if s in ("", "-0") else s
+
+
+def _seleccionar_filas_isc(lineas_doc, longitud_cuenta="8", modo_auto=True, moneda_fija=0):
+    """
+    Filtra las filas de la balanza para evitar duplicar o triplicar saldos cuando
+    la balanza incluye niveles jerárquicos (1, 2, 4, 6, 8, 9 y 10+ dígitos) y omite
+    cuentas resumen menores a 8 dígitos cuando longitud_cuenta == '8'.
+    Retorna lista de tuplas: (row, cta_str, id_moneda_int)
+    """
+    parsed = []
+    for row in lineas_doc or []:
+        raw_code = cstr(row.codigo_cuenta or "").strip()
+        digits = re.sub(r"\D", "", raw_code)
+        if not digits:
+            continue
+        parsed.append((row, digits))
+
+    if longitud_cuenta != "8":
+        all_codes = [d for _, d in parsed]
+        out = []
+        for row, digits in parsed:
+            if any(other != digits and other.startswith(digits) for other in all_codes):
+                continue
+            if modo_auto and len(digits) >= 9 and digits[8] in ("1", "2", "3"):
+                out.append((row, digits, cint(digits[8])))
+            else:
+                out.append((row, digits, moneda_fija))
+        return out
+
+    # Agrupar por sub-subcuenta de 8 dígitos (ignorando niveles padres < 8 dígitos)
+    por_cta8 = {}
+    for row, digits in parsed:
+        if len(digits) < 8:
+            continue
+        cta8 = digits[:8]
+        por_cta8.setdefault(cta8, []).append((row, digits))
+
+    seleccionadas = []
+    for cta8, items in por_cta8.items():
+        rows_9 = [
+            (r, d)
+            for r, d in items
+            if len(d) == 9 and d[8] in ("1", "2", "3")
+        ]
+        rows_8 = [(r, d) for r, d in items if len(d) == 8]
+        rows_gt8 = [(r, d) for r, d in items if len(d) > 8]
+
+        if modo_auto:
+            if rows_9:
+                for r, d in rows_9:
+                    seleccionadas.append((r, cta8, cint(d[8])))
+            elif rows_gt8:
+                codes_gt8 = [d for _, d in rows_gt8]
+                leafs = [
+                    (r, d)
+                    for r, d in rows_gt8
+                    if not any(other != d and other.startswith(d) for other in codes_gt8)
+                ]
+                for r, d in leafs:
+                    mon = cint(d[8]) if d[8] in ("1", "2", "3") else 0
+                    seleccionadas.append((r, cta8, mon))
+            else:
+                for r, _d in rows_8:
+                    seleccionadas.append((r, cta8, 0))
+        else:
+            if rows_8:
+                for r, _d in rows_8:
+                    seleccionadas.append((r, cta8, moneda_fija))
+            elif rows_9:
+                for r, _d in rows_9:
+                    seleccionadas.append((r, cta8, moneda_fija))
+            else:
+                codes_gt8 = [d for _, d in rows_gt8]
+                leafs = [
+                    (r, d)
+                    for r, d in rows_gt8
+                    if not any(other != d and other.startswith(d) for other in codes_gt8)
+                ]
+                for r, _d in leafs:
+                    seleccionadas.append((r, cta8, moneda_fija))
+
+    return seleccionadas
+
+
 def generar_lineas_isc(
     doc,
-    id_moneda="0",
+    id_moneda="auto",
     longitud_cuenta="8",
     incluir_moneda_0=1,
     omitir_ceros=1,
@@ -1040,34 +1159,22 @@ def generar_lineas_isc(
     if tc <= 0:
         tc = 1.0
 
-    modo_auto = cstr(id_moneda).lower().startswith("auto")
+    modo_auto = cstr(id_moneda or "auto").lower().startswith("auto")
     try:
         moneda_fija = cint(cstr(id_moneda).split(" ")[0]) if not modo_auto else 0
     except (ValueError, TypeError):
         moneda_fija = 0
 
+    filas = _seleccionar_filas_isc(
+        doc.get("lineas") or [],
+        longitud_cuenta=longitud_cuenta,
+        modo_auto=modo_auto,
+        moneda_fija=moneda_fija,
+    )
+
     agrupado = {}
 
-    for row in doc.get("lineas") or []:
-        raw_code = cstr(row.codigo_cuenta or "").strip()
-        digits = re.sub(r"\D", "", raw_code)
-        if not digits:
-            continue
-
-        if modo_auto:
-            if len(digits) == 9 and digits[-1] in ("1", "2", "3"):
-                cta = digits[:8]
-                line_moneda = cint(digits[-1])
-            elif len(digits) > 8:
-                cta = digits[:8] if longitud_cuenta == "8" else digits
-                line_moneda = 0
-            else:
-                cta = digits
-                line_moneda = 0
-        else:
-            cta = digits[:8] if (longitud_cuenta == "8" and len(digits) > 8) else digits
-            line_moneda = moneda_fija
-
+    for row, cta, line_moneda in filas:
         debe_ant = flt(row.debe_saldo_anterior or 0) * tc
         haber_ant = flt(row.haber_saldo_anterior or 0) * tc
         debe_mes = flt(row.debe_mes or 0) * tc
@@ -1094,9 +1201,7 @@ def generar_lineas_isc(
         debitos = debe_mes
 
         claves = [(cta, line_moneda)]
-        if modo_auto and line_moneda != 0 and incluir_moneda_0:
-            claves.append((cta, 0))
-        elif not modo_auto and line_moneda != 0 and incluir_moneda_0:
+        if line_moneda != 0 and incluir_moneda_0:
             claves.append((cta, 0))
 
         for k in claves:
@@ -1135,12 +1240,12 @@ def construir_archivo_isc_txt(lineas, separador="|"):
     sep = separador or "|"
     txt_lines = []
     for l in lineas:
-        cta = l["cta"]
+        cta = f'"{l["cta"]}"'
         id_m = l["id_moneda"]
-        s_ini = f"{l['saldo_ini']:.2f}"
-        cred = f"{l['creditos']:.2f}"
-        deb = f"{l['debitos']:.2f}"
-        s_fin = f"{l['saldo']:.2f}"
+        s_ini = _fmt_isc_num(l["saldo_ini"])
+        cred = _fmt_isc_num(l["creditos"])
+        deb = _fmt_isc_num(l["debitos"])
+        s_fin = _fmt_isc_num(l["saldo"])
         txt_lines.append(f"{cta}{sep}{id_m}{sep}{s_ini}{sep}{cred}{sep}{deb}{sep}{s_fin}")
     return "\r\n".join(txt_lines) + ("\r\n" if txt_lines else "")
 
@@ -1148,7 +1253,7 @@ def construir_archivo_isc_txt(lineas, separador="|"):
 @frappe.whitelist()
 def validar_datos_isc(
     balanza_name,
-    id_moneda="0",
+    id_moneda="auto",
     longitud_cuenta="8",
     incluir_moneda_0=1,
     omitir_ceros=1,
@@ -1190,10 +1295,10 @@ def validar_datos_isc(
             "diferencia": dif,
             "cuadra": cuadra_m,
         }
-        if not cuadra_m:
+        if m == 0 and not cuadra_m:
             advertencias.append(
-                _("Moneda {0}: la suma de deudoras ({1}) no coincide con acreedoras ({2}), dif: {3}").format(
-                    m, deu, acr, dif
+                _("Moneda Integradora (0): la suma de deudoras ({0}) no coincide con acreedoras ({1}), dif: {2}").format(
+                    deu, acr, dif
                 )
             )
 
@@ -1225,7 +1330,7 @@ def validar_datos_isc(
 @frappe.whitelist()
 def descargar_archivo_isc(
     balanza_name,
-    id_moneda="0",
+    id_moneda="auto",
     longitud_cuenta="8",
     incluir_moneda_0=1,
     omitir_ceros=1,
@@ -1252,11 +1357,11 @@ def descargar_archivo_isc(
     )
 
     if not lineas:
-        frappe.throw(_("No se generaron registros para el archivo ISC con los parámetros seleccionados."))
+        frappe.throw(_("No se generaron registros para el archivo ISC con los parametros seleccionados."))
 
     content = construir_archivo_isc_txt(lineas, separador=separador)
 
-    frappe.local.response.filename = "isc_saldos.txt"
+    frappe.local.response.filename = "ISC_Saldos.txt"
     frappe.local.response.filecontent = content
     frappe.local.response.type = "download"
     frappe.local.response.display_content_as = "attachment"

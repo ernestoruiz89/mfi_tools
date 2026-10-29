@@ -281,13 +281,13 @@ function open_isc_dialog(frm) {
                 fieldtype: "Select",
                 label: __("Moneda del Envío (id_moneda)"),
                 options: [
-                    "0 - Moneda integradora (Consolidado)",
                     "Auto-detectar por 9no dígito de cuenta (1, 2, 3 y consolidar en 0)",
+                    "0 - Moneda integradora (Consolidado)",
                     "1 - Nacional con Mantenimiento de Valor",
                     "2 - Nacional sin Mantenimiento de Valor",
                     "3 - Extranjera",
                 ].join("\n"),
-                default: "0 - Moneda integradora (Consolidado)",
+                default: "Auto-detectar por 9no dígito de cuenta (1, 2, 3 y consolidar en 0)",
                 description: __("Según manual CONAMI: 0=Integradora, 1=Nac c/MV, 2=Nac s/MV, 3=Extranjera."),
             },
             {
@@ -339,7 +339,7 @@ function open_isc_dialog(frm) {
                 fieldtype: "HTML",
             },
         ],
-        primary_action_label: __("Descargar isc_saldos.txt"),
+        primary_action_label: __("Descargar ISC_Saldos.txt"),
         primary_action(values) {
             download_isc_file(frm, values);
             dialog.hide();
@@ -363,7 +363,7 @@ function refresh_isc_preview(dialog, frm) {
         method: "mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.validar_datos_isc",
         args: {
             balanza_name: frm.doc.name,
-            id_moneda: values.id_moneda || "0",
+            id_moneda: values.id_moneda || "auto",
             longitud_cuenta: (values.longitud_cuenta || "").includes("completo") ? "completo" : "8",
             incluir_moneda_0: values.incluir_moneda_0 ? 1 : 0,
             omitir_ceros: values.omitir_ceros ? 1 : 0,
@@ -413,7 +413,7 @@ function refresh_isc_preview(dialog, frm) {
 
 function download_isc_file(frm, values) {
     const balanzaName = frm.doc.name || "";
-    const idMoneda = encodeURIComponent(values.id_moneda || "0");
+    const idMoneda = encodeURIComponent(values.id_moneda || "auto");
     const longCta = encodeURIComponent((values.longitud_cuenta || "").includes("completo") ? "completo" : "8");
     const inc0 = values.incluir_moneda_0 ? 1 : 0;
     const omit0 = values.omitir_ceros ? 1 : 0;
