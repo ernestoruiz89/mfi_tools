@@ -1057,9 +1057,8 @@ def _determinar_naturaleza_cuenta(cta, debe_fin=0, haber_fin=0):
 def _fmt_isc_num(val):
     v = round(flt(val or 0), 2)
     if abs(v) < 0.005:
-        return "0"
-    s = f"{v:.2f}".rstrip("0").rstrip(".")
-    return "0" if s in ("", "-0") else s
+        v = 0.0
+    return f"{v:.2f}"
 
 
 def _seleccionar_filas_isc(lineas_doc, longitud_cuenta="8", modo_auto=True, moneda_fija=0):
