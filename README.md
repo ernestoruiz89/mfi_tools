@@ -91,7 +91,10 @@ El score mantiene las penalizaciones por cuadre (35 por error o 10 por advertenc
 
 ### Balanza
 
-- `mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.cargar_balanza_csv(balanza_name, csv_content)`
+- `mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.cargar_balanza_archivo(balanza_name, file_url=None, csv_content=None, tasa_cambio=None, moneda=None)`
+- `mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.cargar_balanza_csv(balanza_name, csv_content, tasa_cambio=None, moneda=None)`
+- `mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.descargar_balanza_excel(balanza_name)`
+- `mfi_tools.mfi_tools.doctype.balanza_comprobacion_eeff.balanza_comprobacion_eeff.descargar_plantilla_excel(balanza_name=None)`
 
 ### Paquete
 
@@ -113,9 +116,9 @@ El score mantiene las penalizaciones por cuadre (35 por error o 10 por advertenc
 - `mfi_tools.mfi_tools.page.indicadores_emision_eeff.indicadores_emision_eeff.get_indicator_bootstrap(cliente=None, anio=None, mes=None, paquete_name=None)`
 - `mfi_tools.mfi_tools.page.indicadores_emision_eeff.indicadores_emision_eeff.run_emission_indicators(paquete_name)`
 
-## Formato CSV de balanza
+## Formato de archivo de balanza (Excel / CSV)
 
-`cargar_balanza_csv` acepta encabezados equivalentes:
+`cargar_balanza_archivo` y `cargar_balanza_csv` aceptan archivos Excel (.xlsx, .xls) o CSV con detección automática de encabezados y alias equivalentes:
 
 - Cuenta: `cuenta`, `codigo_cuenta`, `account`
 - Descripcion: `descripcion`, `descripcion_cuenta`, `account_name`
