@@ -72,14 +72,6 @@ frappe.ui.form.on("Nota EEFF", {
             runPackageMappingFromNota(frm);
         }, __("Revision"));
 
-        frm.add_custom_button(__("Helper de Mapeo"), () => {
-            frappe.route_options = {
-                package_name: frm.doc.paquete_eeff,
-                note_name: frm.doc.name,
-            };
-            frappe.set_route("helper-mapeo-notas-eeff");
-        }, __("Revision"));
-
         frm.add_custom_button(__("Imprimir Nota"), () => {
             openNotaPrint(frm);
         }, __("Impresion"));

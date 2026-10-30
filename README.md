@@ -64,9 +64,7 @@ En un sitio que ya tiene MFI Tools, actualizar `main`, instalar sus dependencias
 
 ## Paginas y Workspace
 
-- Pagina `asistente_eeff`: flujo guiado para preparar paquete, cargar CSV y mapear.
 - Pagina `indicadores_emision_eeff`: KPIs de cuadre, lineas huerfanas, formulas rotas y notas faltantes.
-- Pagina `helper_mapeo_notas_eeff`: helper visual para mapear cifras y celdas de notas complejas.
 - Workspace `panel_mfi_tools`.
 
 ## Indicadores de emision
@@ -104,14 +102,6 @@ El score mantiene las penalizaciones por cuadre (35 por error o 10 por advertenc
 - `mfi_tools.mfi_tools.doctype.paquete_eeff.paquete_eeff.exportar_paquete_word(paquete_name)`
 - `mfi_tools.mfi_tools.doctype.paquete_eeff.paquete_eeff.aplicar_plantillas_reutilizables(paquete_name, plantilla_estado=None, plantilla_nota=None, plantilla_dato_estadistico=None, marco_referencia=None, limpiar_estados=0, limpiar_notas=0, limpiar_datos_estadisticos=0)`
 - `mfi_tools.mfi_tools.doctype.paquete_eeff.paquete_eeff.copiar_notas_desde_paquete(paquete_name, paquete_fuente, limpiar_notas=0)`
-
-### Asistente EEFF
-
-- `mfi_tools.mfi_tools.page.asistente_eeff.asistente_eeff.get_wizard_bootstrap(cliente=None, anio=None, mes=None, package_name=None, balanza_name=None)`
-- `mfi_tools.mfi_tools.page.asistente_eeff.asistente_eeff.prepare_package(cliente, anio, mes, package_name=None, balanza_name=None)`
-- `mfi_tools.mfi_tools.page.asistente_eeff.asistente_eeff.upload_balanza_csv_from_wizard(balanza_name, csv_content)`
-- `mfi_tools.mfi_tools.page.asistente_eeff.asistente_eeff.run_mapping_from_wizard(package_name)`
-- `mfi_tools.mfi_tools.page.asistente_eeff.asistente_eeff.one_click_upload_and_map(cliente, anio, mes, csv_content, package_name=None, balanza_name=None)`
 
 ### Indicadores de emision
 

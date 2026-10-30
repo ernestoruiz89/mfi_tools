@@ -10,7 +10,6 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, cstr, flt
-from mfi_tools.mfi_tools.utils.customer import get_customer_display
 
 MESES = {
     "enero": 1,
@@ -619,8 +618,7 @@ class BalanzaComprobacionEEFF(Document):
             or ""
         ).strip()
         if cliente:
-            customer_name = frappe.db.get_value("Customer", cliente, "customer_name")
-            return cstr(customer_name or cliente).strip()
+            return cliente
         return ""
 
     def autoname(self):

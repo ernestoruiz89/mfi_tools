@@ -11,7 +11,6 @@ from frappe.utils import cint, cstr, flt, now_datetime
 from mfi_tools.mfi_tools.utils.estado_line_format import format_accounting_number, format_estado_line_value, is_text_estado_line
 from mfi_tools.mfi_tools.utils.nota_eeff import get_package_note_rows
 from mfi_tools.mfi_tools.utils.nota_tablas import build_complex_section_tables
-from mfi_tools.mfi_tools.utils.customer import get_customer_display
 
 REPORT_TITLE = "Estados Financieros y Notas"
 FONT_NAME = "Arial Narrow"
@@ -61,7 +60,7 @@ def _get_package_entity_display(package):
         return cstr(company_name or company).strip()
     cliente = cstr(package.get("cliente") or "").strip()
     if cliente:
-        return get_customer_display(cliente) or cliente
+        return cliente
     return ""
 
 

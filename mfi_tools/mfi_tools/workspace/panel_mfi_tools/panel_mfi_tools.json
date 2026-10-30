@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"hdr_mfi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Panel MFI Tools</span>\",\"col\":12}},{\"id\":\"shortcut_0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Asistente EEFF\",\"col\":6}},{\"id\":\"shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Paquetes EEFF\",\"col\":6}},{\"id\":\"shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Balanzas\",\"col\":6}},{\"id\":\"shortcut_3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Indicadores de emisión\",\"col\":6}},{\"id\":\"hdr_tools\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Herramientas EEFF</span>\",\"col\":12}},{\"id\":\"card_0\",\"type\":\"card\",\"data\":{\"card_name\":\"Preparación EEFF\",\"col\":4}},{\"id\":\"card_1\",\"type\":\"card\",\"data\":{\"card_name\":\"Estados y notas\",\"col\":4}},{\"id\":\"card_2\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuración\",\"col\":4}}]",
+ "content": "[{\"id\":\"hdr_mfi\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Panel MFI Tools</span>\",\"col\":12}},{\"id\":\"shortcut_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Paquetes EEFF\",\"col\":4}},{\"id\":\"shortcut_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Balanzas\",\"col\":4}},{\"id\":\"shortcut_3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Indicadores de emisión\",\"col\":4}},{\"id\":\"hdr_tools\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Herramientas EEFF</span>\",\"col\":12}},{\"id\":\"card_0\",\"type\":\"card\",\"data\":{\"card_name\":\"Preparación EEFF\",\"col\":4}},{\"id\":\"card_1\",\"type\":\"card\",\"data\":{\"card_name\":\"Estados y notas\",\"col\":4}},{\"id\":\"card_2\",\"type\":\"card\",\"data\":{\"card_name\":\"Configuración\",\"col\":4}}]",
  "creation": "2026-03-12 00:00:00",
  "custom_blocks": [],
  "docstatus": 0,
@@ -16,15 +16,7 @@
   {
    "type": "Card Break",
    "label": "Preparación EEFF",
-   "link_count": 4
-  },
-  {
-   "type": "Link",
-   "label": "Asistente EEFF",
-   "link_type": "Page",
-   "link_to": "asistente-eeff",
-   "hidden": 0,
-   "onboard": 0
+   "link_count": 3
   },
   {
    "type": "Link",
@@ -106,29 +98,13 @@
   {
    "type": "Card Break",
    "label": "Configuración",
-   "link_count": 3
+   "link_count": 1
   },
   {
    "type": "Link",
    "label": "Reglas de mapeo",
    "link_type": "DocType",
    "link_to": "Regla Mapeo Contable EEFF",
-   "hidden": 0,
-   "onboard": 0
-  },
-  {
-   "type": "Link",
-   "label": "Mapeo de notas",
-   "link_type": "Page",
-   "link_to": "helper-mapeo-notas-eeff",
-   "hidden": 0,
-   "onboard": 0
-  },
-  {
-   "type": "Link",
-   "label": "Clientes",
-   "link_type": "DocType",
-   "link_to": "Customer",
    "hidden": 0,
    "onboard": 0
   }
@@ -149,12 +125,6 @@
  ],
  "sequence_id": 1.0,
  "shortcuts": [
-  {
-   "label": "Asistente EEFF",
-   "type": "Page",
-   "link_to": "asistente-eeff",
-   "color": "Teal"
-  },
   {
    "label": "Paquetes EEFF",
    "type": "DocType",

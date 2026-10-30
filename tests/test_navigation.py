@@ -40,8 +40,6 @@ class NavigationTest(unittest.TestCase):
     def test_links_resolve_to_existing_entities(self):
         for source, kind, target in navigation_links():
             with self.subTest(source=source, kind=kind, target=target):
-                if (kind, target) == ("DocType", "Customer"):
-                    continue  # Provided by the required ERPNext app.
                 self.assertIn(target, self.metadata[kind.lower()])
 
     def test_child_tables_are_never_list_destinations(self):

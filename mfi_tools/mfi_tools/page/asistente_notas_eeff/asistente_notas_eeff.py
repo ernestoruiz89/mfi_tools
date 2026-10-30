@@ -2,7 +2,6 @@ import frappe
 from frappe import _
 from frappe.utils import cint, cstr
 
-from mfi_tools.mfi_tools.utils.customer import get_customer_display, get_customer_display_map
 from mfi_tools.mfi_tools.utils.nota_eeff import build_note_identifier, get_package_note_rows, normalize_note_number
 
 MESES = (
@@ -102,7 +101,7 @@ def _get_entity_display(name):
     if frappe.db.exists("Company", name):
         c_name = frappe.db.get_value("Company", name, "company_name")
         return cstr(c_name or name).strip()
-    return get_customer_display(name) or name
+    return name
 
 
 def _get_entity_display_map(names):

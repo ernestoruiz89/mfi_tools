@@ -37,15 +37,6 @@
   },
   {
    "type": "Link",
-   "label": "Asistente EEFF",
-   "link_type": "Page",
-   "link_to": "asistente-eeff",
-   "icon": "wand-sparkles",
-   "child": 1,
-   "is_default_module": 1
-  },
-  {
-   "type": "Link",
    "label": "Balanzas de comprobación",
    "link_type": "DocType",
    "link_to": "Balanza Comprobacion EEFF",
@@ -142,24 +133,6 @@
    "icon": "git-branch",
    "child": 1,
    "is_default_module": 1
-  },
-  {
-   "type": "Link",
-   "label": "Mapeo de notas",
-   "link_type": "Page",
-   "link_to": "helper-mapeo-notas-eeff",
-   "icon": "list-tree",
-   "child": 1,
-   "is_default_module": 1
-  },
-  {
-   "type": "Link",
-   "label": "Clientes",
-   "link_type": "DocType",
-   "link_to": "Customer",
-   "icon": "users",
-   "child": 1,
-   "is_default_module": 0
   }
  ]
 }

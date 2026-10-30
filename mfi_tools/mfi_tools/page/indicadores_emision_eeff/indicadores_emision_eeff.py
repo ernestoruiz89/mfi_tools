@@ -59,7 +59,7 @@ def _get_entity_display(name):
 def _get_entity_display_map(names):
     names = sorted({_clean(name) for name in names if _clean(name)})
     mapping = {name: name for name in names}
-    for doctype, label in (("Customer", "customer_name"), ("Company", "company_name")):
+    for doctype, label in (("Company", "company_name"),):
         if names and frappe.has_permission(doctype, "read"):
             for row in frappe.get_list(doctype, filters={"name": ["in", names]},
                                        fields=["name", label], limit_page_length=0):

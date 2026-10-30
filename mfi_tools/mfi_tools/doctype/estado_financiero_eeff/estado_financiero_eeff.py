@@ -11,7 +11,6 @@ from mfi_tools.mfi_tools.utils.estado_line_format import (
     is_text_estado_line,
     normalize_estado_line_format,
 )
-from mfi_tools.mfi_tools.utils.customer import get_customer_display
 
 from mfi_tools.mfi_tools.utils.nota_tablas import (
     DEFAULT_COLUMN_CODE,
@@ -311,7 +310,7 @@ class EstadoFinancieroEEFF(Document):
                     company_name = frappe.db.get_value("Company", company, "company_name")
                     entity_name = cstr(company_name or company).strip()
                 elif cliente:
-                    entity_name = get_customer_display(cliente) or cliente
+                    entity_name = cliente
         target_date = self._resolve_package_cutoff_date(package) if package else ""
         header = {
             "cliente": entity_name or "-",
