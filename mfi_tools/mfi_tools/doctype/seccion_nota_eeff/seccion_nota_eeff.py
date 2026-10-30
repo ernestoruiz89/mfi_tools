@@ -141,6 +141,12 @@ class SeccionNotaEEFF(Document):
             frappe.throw(_("La nota vinculada no tiene paquete asociado."), title=_("Nota Invalida"))
 
         self.paquete_eeff = note_package
+        if frappe.db.exists("Paquete EEFF", note_package):
+            pkg = frappe.db.get_value("Paquete EEFF", note_package, ["mes", "anio"], as_dict=True) or {}
+            if pkg.get("mes"):
+                self.mes = cstr(pkg.get("mes")).strip()
+            if pkg.get("anio"):
+                self.anio = cint(pkg.get("anio"))
         if cstr(note_values.get("estructura_nota") or "Simple").strip() != "Compleja":
             frappe.db.set_value("Nota EEFF", self.nota_eeff, "estructura_nota", "Compleja", update_modified=False)
 

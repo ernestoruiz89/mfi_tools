@@ -7,6 +7,8 @@
         "identificacion_section",
         "nombre_nota",
         "paquete_eeff",
+        "mes",
+        "anio",
         "identificacion_column",
         "numero_nota",
         "sub_nota",
@@ -37,6 +39,8 @@
         {"fieldname": "identificacion_section", "fieldtype": "Section Break", "label": "Identificacion"},
         {"fieldname": "nombre_nota", "fieldtype": "Data", "label": "Nombre Nota", "read_only": 1, "in_list_view": 1, "no_copy": 1},
         {"fieldname": "paquete_eeff", "fieldtype": "Link", "label": "Paquete EEFF", "options": "Paquete EEFF", "reqd": 1, "in_list_view": 1},
+        {"fieldname": "mes", "fieldtype": "Select", "label": "Mes", "options": "Enero\nFebrero\nMarzo\nAbril\nMayo\nJunio\nJulio\nAgosto\nSeptiembre\nOctubre\nNoviembre\nDiciembre", "fetch_from": "paquete_eeff.mes", "read_only": 1, "in_list_view": 1, "in_standard_filter": 1, "no_copy": 1},
+        {"fieldname": "anio", "fieldtype": "Int", "label": "Anio", "fetch_from": "paquete_eeff.anio", "read_only": 1, "in_list_view": 1, "in_standard_filter": 1, "no_copy": 1},
         {"fieldname": "identificacion_column", "fieldtype": "Column Break"},
         {"fieldname": "numero_nota", "fieldtype": "Int", "label": "Numero Nota", "reqd": 1, "in_list_view": 1},
         {"fieldname": "sub_nota", "fieldtype": "Data", "label": "Sub-nota", "in_list_view": 1},
@@ -72,5 +76,6 @@
     ],
     "sort_field": "modified",
     "sort_order": "DESC",
+    "title_field": "nombre_nota",
     "track_changes": 1
 }

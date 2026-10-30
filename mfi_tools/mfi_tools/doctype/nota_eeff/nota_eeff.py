@@ -42,6 +42,7 @@ class NotaEEFF(Document):
         self.name = self.nombre_nota
 
     def validate(self):
+        self._sync_package_period()
         self.numero_nota = normalize_note_number(self.numero_nota)
         self.sub_nota = normalize_sub_note(self.sub_nota)
         if not self.numero_nota:
@@ -57,6 +58,14 @@ class NotaEEFF(Document):
         self._normalizar_cifras()
         self._calcular_cifras_formula()
         self._sync_complex_sections_summary()
+
+    def _sync_package_period(self):
+        if self.paquete_eeff and frappe.db.exists("Paquete EEFF", self.paquete_eeff):
+            pkg = frappe.db.get_value("Paquete EEFF", self.paquete_eeff, ["mes", "anio"], as_dict=True) or {}
+            if pkg.get("mes"):
+                self.mes = cstr(pkg.get("mes")).strip()
+            if pkg.get("anio"):
+                self.anio = cint(pkg.get("anio"))
 
     def on_trash(self):
         company = ""

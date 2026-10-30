@@ -22,8 +22,16 @@ class Factsheet(Document):
         if "." in self.codigo_factsheet or " " in self.codigo_factsheet:
             frappe.throw(_("El codigo de factsheet {0} no puede contener puntos ni espacios").format(self.codigo_factsheet))
             
-        if not self.company and self.paquete_eeff:
-            self.company = frappe.db.get_value("Paquete EEFF", self.paquete_eeff, "company")
+        if self.paquete_eeff and frappe.db.exists("Paquete EEFF", self.paquete_eeff):
+            paquete_vals = frappe.db.get_value(
+                "Paquete EEFF", self.paquete_eeff, ["company", "mes", "anio"], as_dict=True
+            ) or {}
+            if not self.company and paquete_vals.get("company"):
+                self.company = paquete_vals.get("company")
+            if paquete_vals.get("mes"):
+                self.mes = cstr(paquete_vals.get("mes")).strip()
+            if paquete_vals.get("anio"):
+                self.anio = cint(paquete_vals.get("anio"))
             
         self.ancho_tabla_impresion = self.get_print_table_width()
         self._normalizar_lineas()

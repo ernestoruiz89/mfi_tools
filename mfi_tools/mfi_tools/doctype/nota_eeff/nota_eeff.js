@@ -89,6 +89,8 @@ frappe.ui.form.on("Nota EEFF", {
                 frappe.route_options = {
                     nota_eeff: frm.doc.name,
                     paquete_eeff: frm.doc.paquete_eeff,
+                    mes: frm.doc.mes,
+                    anio: frm.doc.anio,
                 };
                 frappe.new_doc("Seccion Nota EEFF");
             }, __("Estructura"));

@@ -68,6 +68,7 @@ class EstadoFinancieroEEFF(Document):
         self.name = self.nombre_del_estado
 
     def validate(self):
+        self._sync_package_period()
         self.estructura_estado = cstr(getattr(self, "estructura_estado", "Simple") or "Simple").strip()
         self.codigo_estado = cstr(self.codigo_estado or "").strip().upper()
         self.subtitulo = cstr(getattr(self, "subtitulo", "") or "").strip()
@@ -84,6 +85,14 @@ class EstadoFinancieroEEFF(Document):
         else:
             self._normalizar_lineas()
             self._calcular_lineas_formula()
+
+    def _sync_package_period(self):
+        if self.paquete_eeff and frappe.db.exists("Paquete EEFF", self.paquete_eeff):
+            pkg = frappe.db.get_value("Paquete EEFF", self.paquete_eeff, ["mes", "anio"], as_dict=True) or {}
+            if pkg.get("mes"):
+                self.mes = cstr(pkg.get("mes")).strip()
+            if pkg.get("anio"):
+                self.anio = cint(pkg.get("anio"))
 
     def format_line_value(self, row, fieldname):
         return format_estado_line_value(row, fieldname)

@@ -72,6 +72,26 @@ class PaqueteEEFF(Document):
         self._calcular_datos_formula()
         self._sync_totals()
 
+    def on_update(self):
+        self._sync_children_period()
+
+    def _sync_children_period(self):
+        if not self.name or not self.mes or not self.anio:
+            return
+        mes = cstr(self.mes).strip()
+        anio = cint(self.anio)
+        for dt in ("Estado Financiero EEFF", "Nota EEFF", "Seccion Nota EEFF", "Factsheet"):
+            if frappe.db.has_column(dt, "mes") and frappe.db.has_column(dt, "anio"):
+                frappe.db.sql(
+                    f"""
+                    UPDATE `tab{dt}`
+                    SET mes = %s, anio = %s
+                    WHERE paquete_eeff = %s
+                      AND (COALESCE(mes, '') != %s OR COALESCE(anio, 0) != %s)
+                    """,
+                    (mes, anio, self.name, mes, anio),
+                )
+
     def _validar_paquete_unico(self):
         if self.is_new() and self.nombre_paquete:
             if frappe.db.exists("Paquete EEFF", self.nombre_paquete):

@@ -40,4 +40,19 @@ frappe.ui.form.on("Seccion Nota EEFF", {
             runPackageMappingFromSeccion(frm);
         }, __("Revision"));
     },
+    nota_eeff(frm) {
+        if (!frm.doc.nota_eeff) return;
+        frappe.db.get_value("Nota EEFF", frm.doc.nota_eeff, ["paquete_eeff", "mes", "anio"], (r) => {
+            if (!r) return;
+            if (r.paquete_eeff && frm.doc.paquete_eeff !== r.paquete_eeff) {
+                frm.set_value("paquete_eeff", r.paquete_eeff);
+            }
+            if (r.mes) {
+                frm.set_value("mes", r.mes);
+            }
+            if (r.anio) {
+                frm.set_value("anio", r.anio);
+            }
+        });
+    },
 });
