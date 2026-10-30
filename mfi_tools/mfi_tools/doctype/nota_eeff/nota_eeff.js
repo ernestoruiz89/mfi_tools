@@ -68,6 +68,16 @@ frappe.ui.form.on("Nota EEFF", {
 
         if (frm.is_new()) return;
 
+        frm.add_custom_button(__("Abrir en Asistente de Notas"), () => {
+            frappe.route_options = {
+                package_name: frm.doc.paquete_eeff,
+                note_name: frm.doc.name,
+                anio: frm.doc.anio,
+                mes: frm.doc.mes,
+            };
+            frappe.set_route("asistente-notas-eeff");
+        }, __("Revision"));
+
         frm.add_custom_button(__("Ejecutar Mapeo"), () => {
             runPackageMappingFromNota(frm);
         }, __("Revision"));

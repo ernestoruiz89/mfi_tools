@@ -21,6 +21,7 @@
         "impresion_column",
         "ancho_tabla_impresion",
         "alineacion_tabla_impresion",
+        "lineas_tab",
         "lineas_section",
         "lineas"
     ],
@@ -140,6 +141,11 @@
             "label": "Alineacion Tabla Impresion",
             "options": "Izquierda\nCentro\nDerecha",
             "default": "Centro"
+        },
+        {
+            "fieldname": "lineas_tab",
+            "fieldtype": "Tab Break",
+            "label": "Indicadores y Datos"
         },
         {
             "fieldname": "lineas_section",

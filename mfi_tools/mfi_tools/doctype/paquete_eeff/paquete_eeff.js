@@ -200,7 +200,7 @@ frappe.ui.form.on("Paquete EEFF", {
         frm.add_custom_button(__("Indicadores de Emision"), () => {
             frappe.route_options = {
                 paquete_name: frm.doc.name,
-                cliente: frm.doc.cliente,
+                cliente: frm.doc.company || frm.doc.cliente,
                 anio: frm.doc.anio,
                 mes: frm.doc.mes,
             };
@@ -214,7 +214,7 @@ frappe.ui.form.on("Paquete EEFF", {
         frm.add_custom_button(__("Asistente de Notas"), () => {
             frappe.route_options = {
                 package_name: frm.doc.name,
-                cliente: frm.doc.cliente,
+                cliente: frm.doc.company || frm.doc.cliente,
                 anio: frm.doc.anio,
                 mes: frm.doc.mes,
             };

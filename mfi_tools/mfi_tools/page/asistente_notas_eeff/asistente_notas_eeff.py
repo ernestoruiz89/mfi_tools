@@ -1,8 +1,16 @@
+import re
+
 import frappe
 from frappe import _
-from frappe.utils import cint, cstr
+from frappe.utils import cint, cstr, flt
 
-from mfi_tools.mfi_tools.utils.nota_eeff import build_note_identifier, get_package_note_rows, normalize_note_number
+from mfi_tools.mfi_tools.utils.nota_eeff import (
+    build_note_identifier,
+    get_package_note_rows,
+    normalize_note_number,
+    normalize_sub_note_key,
+    parse_note_identifier,
+)
 
 MESES = (
     "Enero",
@@ -22,6 +30,7 @@ NOTE_EDITABLE_FIELDS = (
     "numero_nota",
     "sub_nota",
     "titulo",
+    "orientacion",
     "tamano_letra_impresion",
     "ancho_tabla_impresion",
     "alineacion_tabla_impresion",
@@ -139,7 +148,7 @@ def _clean_payload_row(row):
 def _serialize_note_rows(package_name):
     rows = get_package_note_rows(
         package_name,
-        fields=["estructura_nota", "estado_aprobacion", "total_secciones_complejas"],
+        fields=["estructura_nota", "estado_aprobacion", "total_secciones_complejas", "total_cifras", "orientacion"],
         limit_page_length=1000,
     )
     return [
@@ -150,8 +159,10 @@ def _serialize_note_rows(package_name):
             "identificador_nota": build_note_identifier(row.numero_nota, row.sub_nota),
             "titulo": row.titulo,
             "estructura_nota": row.estructura_nota or "Simple",
+            "orientacion": getattr(row, "orientacion", None) or "Vertical",
             "estado_aprobacion": row.estado_aprobacion or "Borrador",
             "total_secciones_complejas": cint(row.total_secciones_complejas or 0),
+            "total_cifras": cint(getattr(row, "total_cifras", 0) or 0),
             "label": _("Nota {0}. {1}").format(
                 build_note_identifier(row.numero_nota, row.sub_nota) or "-",
                 row.titulo or _("Sin titulo"),
@@ -261,6 +272,99 @@ def _build_summary(package_name):
     }
 
 
+def _extract_declared_note_tokens(raw_nota):
+    raw = _clean(raw_nota)
+    if not raw:
+        return []
+    cleaned = re.sub(r"(?i)\bnotas?\b\.?", "", raw).strip()
+    tokens = []
+    for part in re.split(r"[,;/]|\by\b", cleaned, flags=re.IGNORECASE):
+        part = _clean(part)
+        if not part:
+            continue
+        num, sub = parse_note_identifier(part)
+        if num:
+            tokens.append((num, normalize_sub_note_key(sub)))
+    return tokens
+
+
+def _get_referenced_estado_lines(note_doc):
+    if not note_doc or not _clean(note_doc.paquete_eeff):
+        return []
+
+    note_num = normalize_note_number(note_doc.numero_nota)
+    if not note_num:
+        return []
+    note_sub_key = normalize_sub_note_key(note_doc.sub_nota)
+
+    estado_rows = frappe.get_all(
+        "Estado Financiero EEFF",
+        filters={"paquete_eeff": note_doc.paquete_eeff},
+        fields=["name", "titulo", "tipo_estado", "codigo_estado", "orden"],
+        order_by="orden asc, modified asc",
+        limit_page_length=50,
+    )
+    if not estado_rows:
+        return []
+
+    estado_map = {row.name: row for row in estado_rows}
+    estado_names = list(estado_map.keys())
+    line_rows = frappe.get_all(
+        "Linea Estado Financiero EEFF",
+        filters={
+            "parenttype": "Estado Financiero EEFF",
+            "parent": ["in", estado_names],
+            "nota": ["is", "set"],
+        },
+        fields=[
+            "parent",
+            "idx",
+            "codigo_linea",
+            "descripcion",
+            "nota",
+            "monto_actual",
+            "monto_comparativo",
+            "no_imprimir",
+        ],
+        order_by="parent asc, idx asc",
+        limit_page_length=2000,
+    )
+
+    referenced = []
+    for line in line_rows:
+        if cint(line.get("no_imprimir") or 0):
+            continue
+        tokens = _extract_declared_note_tokens(line.get("nota"))
+        matched = False
+        exact_match = False
+        for tok_num, tok_sub_key in tokens:
+            if tok_num != note_num:
+                continue
+            if tok_sub_key == note_sub_key:
+                matched = True
+                exact_match = True
+                break
+            if not tok_sub_key or not note_sub_key:
+                matched = True
+        if not matched:
+            continue
+
+        est = estado_map.get(line.get("parent")) or {}
+        referenced.append(
+            {
+                "estado_name": line.get("parent"),
+                "estado_titulo": _clean(est.get("titulo") or est.get("tipo_estado") or est.get("codigo_estado") or line.get("parent")),
+                "codigo_linea": _clean(line.get("codigo_linea")),
+                "descripcion": _clean(line.get("descripcion")),
+                "nota_declarada": _clean(line.get("nota")),
+                "monto_actual": flt(line.get("monto_actual") or 0),
+                "monto_comparativo": flt(line.get("monto_comparativo") or 0),
+                "exact_match": exact_match,
+            }
+        )
+    return referenced
+
+
 def _serialize_section(section_doc):
     section = {field: section_doc.get(field) for field in SECTION_EDITABLE_FIELDS}
     section.update(
@@ -308,6 +412,8 @@ def _serialize_note(note_doc):
     )
     sections = [_serialize_section(frappe.get_doc("Seccion Nota EEFF", name)) for name in section_names]
     note = {field: note_doc.get(field) for field in NOTE_EDITABLE_FIELDS}
+    if not _clean(note.get("orientacion")):
+        note["orientacion"] = "Vertical"
     note.update(
         {
             "doctype": note_doc.doctype,
@@ -324,6 +430,7 @@ def _serialize_note(note_doc):
             "total_secciones_complejas": cint(note_doc.total_secciones_complejas or 0),
             "total_cifras": cint(note_doc.total_cifras or 0),
             "cifras_nota": [_serialize_child_row(row) for row in (note_doc.cifras_nota or [])],
+            "referenced_in_estados": _get_referenced_estado_lines(note_doc),
         }
     )
     return {"doc": note, "sections": sections}
@@ -452,6 +559,7 @@ def _create_note_doc(
     sub_nota=None,
     titulo=None,
     estructura_nota="Simple",
+    orientacion="Vertical",
     contenido_narrativo=None,
     observaciones=None,
     tamano_letra_impresion=12,
@@ -466,6 +574,10 @@ def _create_note_doc(
     if not number:
         frappe.throw(_("Debes indicar un numero de nota valido."), title=_("Numero Requerido"))
 
+    orient = cstr(orientacion or "Vertical").strip()
+    if orient not in ("Vertical", "Horizontal"):
+        orient = "Vertical"
+
     doc = frappe.get_doc(
         {
             "doctype": "Nota EEFF",
@@ -474,6 +586,7 @@ def _create_note_doc(
             "sub_nota": sub_nota,
             "titulo": titulo or _("Nota {0}").format(number),
             "estructura_nota": cstr(estructura_nota or "Simple").strip() or "Simple",
+            "orientacion": orient,
             "contenido_narrativo": contenido_narrativo or "",
             "observaciones": observaciones or "",
             "tamano_letra_impresion": tamano_letra_impresion or 12,
@@ -514,6 +627,7 @@ def create_note_for_editor(
     sub_nota=None,
     titulo=None,
     estructura_nota="Simple",
+    orientacion="Vertical",
     contenido_narrativo=None,
     observaciones=None,
     tamano_letra_impresion=12,
@@ -529,6 +643,7 @@ def create_note_for_editor(
         sub_nota=sub_nota,
         titulo=titulo,
         estructura_nota=estructura_nota,
+        orientacion=orientacion,
         contenido_narrativo=contenido_narrativo,
         observaciones=observaciones,
         tamano_letra_impresion=tamano_letra_impresion,
@@ -570,6 +685,31 @@ def save_note_editor(note_payload):
 
 
 @frappe.whitelist()
+def delete_note_from_editor(note_name):
+    _ensure_page_access(write=True)
+    if not frappe.has_permission("Nota EEFF", ptype="delete"):
+        frappe.throw(
+            _("No tienes permisos para eliminar notas EEFF."),
+            frappe.PermissionError,
+        )
+
+    note_name = _clean(note_name)
+    if not note_name or not frappe.db.exists("Nota EEFF", note_name):
+        frappe.throw(_("La nota indicada no existe."), title=_("Nota Invalida"))
+
+    package_name = _clean(frappe.db.get_value("Nota EEFF", note_name, "paquete_eeff"))
+    frappe.delete_doc("Nota EEFF", note_name)
+
+    next_doc = None
+    if package_name:
+        remaining = _serialize_note_rows(package_name)
+        if remaining:
+            next_doc = frappe.get_doc("Nota EEFF", remaining[0]["name"])
+
+    return _build_bootstrap_payload(package_name=package_name, note_doc=next_doc)
+
+
+@frappe.whitelist()
 def get_note_wizard_bootstrap(cliente=None, anio=None, mes=None, package_name=None):
     data = get_note_editor_bootstrap(cliente=cliente, anio=anio, mes=mes, package_name=package_name)
     return {
@@ -593,6 +733,7 @@ def crear_nota_desde_asistente(
     sub_nota=None,
     titulo=None,
     estructura_nota="Simple",
+    orientacion="Vertical",
     contenido_narrativo=None,
     observaciones=None,
     secciones=None,
@@ -605,6 +746,7 @@ def crear_nota_desde_asistente(
         sub_nota=sub_nota,
         titulo=titulo,
         estructura_nota=estructura_nota,
+        orientacion=orientacion,
         contenido_narrativo=contenido_narrativo,
         observaciones=observaciones,
     )
