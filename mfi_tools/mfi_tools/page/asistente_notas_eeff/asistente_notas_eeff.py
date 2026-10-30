@@ -300,8 +300,8 @@ def _get_referenced_estado_lines(note_doc):
     estado_rows = frappe.get_all(
         "Estado Financiero EEFF",
         filters={"paquete_eeff": note_doc.paquete_eeff},
-        fields=["name", "titulo", "tipo_estado", "codigo_estado", "orden"],
-        order_by="orden asc, modified asc",
+        fields=["name", "titulo", "tipo_estado", "codigo_estado", "orden_presentacion"],
+        order_by="orden_presentacion asc, modified asc",
         limit_page_length=50,
     )
     if not estado_rows:
