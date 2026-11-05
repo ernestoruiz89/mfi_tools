@@ -601,13 +601,7 @@ def _set_section_header_content(section, header_data, first_page_only=False):
 
 
 def _add_estados_section(document, package):
-    estados = frappe.get_all(
-        "Estado Financiero EEFF",
-        filters={"paquete_eeff": package.name},
-        fields=["name", "tipo_estado", "titulo", "orden_presentacion"],
-        order_by="orden_presentacion asc, creation asc",
-        limit_page_length=100,
-    )
+    estados = package.get_estados_a_emitir()
     if not estados:
         document.add_paragraph("Estados Financieros", style="Heading 1")
         paragraph = document.add_paragraph("No hay estados financieros registrados para este paquete.")
@@ -866,14 +860,18 @@ def _add_notas_section(document, package):
 
     for note_index, (nota_doc, subnotes) in enumerate(printable_notes):
         is_landscape = cstr(getattr(nota_doc, "orientacion", "Vertical") or "Vertical") == "Horizontal"
+        section = document.sections[-1]
+        current_landscape = section.page_width > section.page_height
         if note_index == 0:
-            section = document.sections[-1]
-            if is_landscape:
-                _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=True, document_title=REPORT_TITLE)
-        else:
+            _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=is_landscape, document_title=REPORT_TITLE)
+        elif current_landscape != is_landscape:
+            # Only a change of paper orientation needs a new section/page.
             section = document.add_section(WD_SECTION_START.NEW_PAGE)
             _configure_section(section, package, WD_ALIGN_PARAGRAPH, OxmlElement, qn, Cm, landscape=is_landscape, document_title=REPORT_TITLE)
             _set_section_footer_page_number(section)
+        else:
+            spacer = document.add_paragraph()
+            spacer.paragraph_format.space_after = Pt(6)
 
         header_data = {
             "cliente": _get_package_entity_display(package) or "Compañía",

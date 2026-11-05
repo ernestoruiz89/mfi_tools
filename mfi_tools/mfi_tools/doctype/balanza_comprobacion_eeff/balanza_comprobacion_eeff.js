@@ -186,13 +186,14 @@ function import_balance_file(frm, file_url, moneda, tasaCambio, dialog) {
             }
             frm.reload_doc();
             const data = callResponse.message || {};
+            const pending = (data.mapeos || []).some((result) => result.mapeo_desactualizado);
             frappe.show_alert({
                 message: __("Balanza importada: {0} lineas | TC {1} {2}", [
                     data.total_lineas || 0,
                     data.moneda_tasa_cambio || moneda || "USD",
                     data.tasa_cambio || tasaCambio || 1,
                 ]),
-                indicator: "green",
+                indicator: pending ? "orange" : "green",
             });
         },
     });

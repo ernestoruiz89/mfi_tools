@@ -401,6 +401,8 @@ def _compute_indicators(paquete_name):
     notas_meta = get_package_note_rows(package.name, fields=[], limit_page_length=0)
 
     estados = [frappe.get_doc("Estado Financiero EEFF", row.name) for row in estados_meta]
+    from mfi_tools.mfi_tools.services.report_periods import should_emit
+    estados = [estado for estado in estados if should_emit(estado, package.mes)]
     notas = [frappe.get_doc("Nota EEFF", row.name) for row in notas_meta]
     for doc in estados + notas:
         doc.check_permission("read")
@@ -413,6 +415,8 @@ def _compute_indicators(paquete_name):
             section.check_permission("read")
             sections_by_note.setdefault(row.nota_eeff, []).append(section)
     structure_issues = []
+    if package.get("mapeo_desactualizado"):
+        structure_issues.append({"status": "warning", "detalle": package.get("detalle_mapeo") or _("El mapeo esta pendiente de actualizar.")})
     if not estados:
         structure_issues.append({"status": "error", "detalle": _("El paquete no tiene estados financieros.")})
     for estado in estados:

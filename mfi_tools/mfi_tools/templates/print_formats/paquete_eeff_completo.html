@@ -627,11 +627,21 @@
       padding-top: 15mm !important;
       padding-bottom: 15mm !important;
     }
+    .cpc-note-block,
+    .cpc-notas-wrapper,
+    .cpc-estados-wrapper {
+      page-break-inside: auto !important;
+      break-inside: auto !important;
+    }
     .cpc-note-block + .cpc-note-block {
-      page-break-before: always !important;
-      break-before: page;
-      margin-top: 0 !important;
-      padding-top: 15mm !important;
+      page-break-before: auto !important;
+      break-before: auto;
+      margin-top: 12pt !important;
+      padding-top: 0 !important;
+    }
+    .cpc-note-block h3 {
+      page-break-after: avoid;
+      break-after: avoid;
     }
     .cpc-estado-block.cpc-has-bg {
       width: 100% !important;
@@ -678,13 +688,7 @@
     }
   }
 </style>
-{% set estados = frappe.get_all(
-"Estado Financiero EEFF",
-filters={"paquete_eeff": doc.name},
-fields=["name", "tipo_estado", "titulo", "orden_presentacion"],
-order_by="orden_presentacion asc, creation asc",
-limit_page_length=100
-) %}
+{% set estados = doc.get_estados_a_emitir() %}
 {% set notas = frappe.get_all(
 "Nota EEFF",
 filters={"paquete_eeff": doc.name},
@@ -792,7 +796,7 @@ limit_page_length=100
     </tr>
     <tr>
       <td><strong>Estado Preparacion</strong><br>{{ doc.estado_preparacion or "-" }}</td>
-      <td><strong>Total Estados</strong><br>{{ doc.total_estados or 0 }}</td>
+      <td><strong>Total Estados</strong><br>{{ estados | length }}</td>
       <td><strong>Total Notas</strong><br>{{ doc.total_notas or 0 }}</td>
       <td>
         <strong>Fecha Emision</strong><br>{{ doc.fecha_emision or "-" }}<br>
@@ -802,10 +806,7 @@ limit_page_length=100
   </table>
   {% endif %}
 
-  <div class="cpc-section">
-    {% if not cover_bg and not doc.imagen_fondo_estados %}
-    <h2>Estados Financieros</h2>
-    {% endif %}
+  <div class="cpc-section cpc-estados-wrapper">
     {% if estados %}
     {% for estado in estados %}
     {% set estado_doc = frappe.get_doc("Estado Financiero EEFF", estado.name) %}
@@ -816,6 +817,7 @@ limit_page_length=100
     {% set margen_inferior_estado = doc.get_pdf_margin_bottom(estado_doc.orientacion, estado_bg) %}
     {% set is_landscape_class = " cpc-landscape-section" if estado_doc.orientacion == "Horizontal" else "" %}
     <div id="cpc-estado-{{ loop.index0 }}" class="cpc-section cpc-estado-block{% if estado_bg %} cpc-has-bg{% endif %}{{ is_landscape_class }}" style="{% if loop.index0 > 0 or not cover_bg %}page-break-before: always; break-before: page; {% endif %}--cpc-margin-top: {{ margen_superior_estado }}mm; --cpc-margin-bottom: {{ margen_inferior_estado }}mm;">
+      {% if loop.first and not cover_bg and not estado_bg %}<h2>Estados Financieros</h2>{% endif %}
       {% if estado_bg %}
       <img class="cpc-page-bg-img" src="{{ estado_bg }}" alt="Fondo">
       <div class="cpc-estado-inner">

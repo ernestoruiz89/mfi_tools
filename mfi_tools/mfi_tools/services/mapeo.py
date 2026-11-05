@@ -755,18 +755,27 @@ def _reset_package_targets(package_name):
           AND IFNULL(child.origen_dato, 'Manual') NOT IN ('Manual', 'Formula')
     """, (package_name,))
 
-    frappe.db.commit()
-
-
 def aplicar_mapeo_paquete(paquete_name):
     if not frappe.db.exists("Paquete EEFF", paquete_name):
         frappe.throw(_("El paquete indicado no existe."), title=_("Paquete Invalido"))
 
     package = frappe.get_doc("Paquete EEFF", paquete_name)
+    package.check_permission("write")
     if not package.balanza_comprobacion_eeff:
         frappe.throw(_("El paquete no tiene balanza vinculada."), title=_("Balanza Requerida"))
 
     balanza = frappe.get_doc("Balanza Comprobacion EEFF", package.balanza_comprobacion_eeff)
+    balanza.check_permission("read")
+    if (package.company != balanza.company or cint(package.anio) != cint(balanza.anio)
+            or cstr(package.mes).strip() != cstr(balanza.mes).strip()):
+        frappe.throw(_("La compania y el periodo de la balanza principal deben coincidir con el paquete."))
+    for field in ("balanza_comparativa_eeff", "balanza_base_actual_eeff", "balanza_base_comparativa_eeff"):
+        source = cstr(package.get(field) or "").strip()
+        if source:
+            linked = frappe.get_doc("Balanza Comprobacion EEFF", source)
+            linked.check_permission("read")
+            if linked.company != package.company:
+                frappe.throw(_("Todas las balanzas vinculadas deben pertenecer a la compania del paquete."))
     balances = _build_balance_map(balanza)
     comparative_balances = None
     comparative_doc = None
@@ -1459,6 +1468,8 @@ def aplicar_mapeo_paquete(paquete_name):
         update_modified=False,
     )
 
+    from mfi_tools.mfi_tools.services.mapping_refresh import record_mapping_result
+    record_mapping_result(package.name, alertas)
     return {
         "paquete": package.name,
         "reglas": len(rules),

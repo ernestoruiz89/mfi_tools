@@ -6,7 +6,6 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, cstr, flt
 
-from mfi_tools.mfi_tools.services.mapeo import aplicar_mapeo_paquete
 from mfi_tools.mfi_tools.utils.nota_eeff import get_package_note_rows
 from mfi_tools.mfi_tools.utils.word_export import build_paquete_eeff_word_content, export_paquete_eeff_to_word
 
@@ -73,6 +72,8 @@ class PaqueteEEFF(Document):
 
     def on_update(self):
         self._sync_children_period()
+        from mfi_tools.mfi_tools.services.mapping_refresh import package_sources_saved
+        package_sources_saved(self)
 
     def _sync_children_period(self):
         if not self.name or not self.mes or not self.anio:
@@ -351,6 +352,10 @@ class PaqueteEEFF(Document):
         setattr(self, cache_key, output)
         return output
 
+    def get_estados_a_emitir(self):
+        from mfi_tools.mfi_tools.services.report_periods import get_states_for_period
+        return get_states_for_period(self.name, self.mes)
+
     def get_toc_entries(self):
         """
         Retorna las entradas del índice con su título y número de página calculado para el reporte/PDF.
@@ -360,13 +365,7 @@ class PaqueteEEFF(Document):
         start_content_page = (1 if has_cover else 0) + (1 if has_index else 0) + 1
 
         entries = []
-        estados = frappe.get_all(
-            "Estado Financiero EEFF",
-            filters={"paquete_eeff": self.name},
-            fields=["name", "tipo_estado", "titulo", "orden_presentacion"],
-            order_by="orden_presentacion asc, creation asc",
-            limit_page_length=100,
-        )
+        estados = self.get_estados_a_emitir()
 
         current_page = start_content_page
         for idx, estado in enumerate(estados):
@@ -439,9 +438,9 @@ def ejecutar_mapeo(paquete_name):
     
     # Asegurarnos que el paquete este guardado para que sincronice los datos estadisticos mas recientes
     doc = frappe.get_doc("Paquete EEFF", paquete_name)
-    doc.save(ignore_permissions=True)
-    
-    return aplicar_mapeo_paquete(paquete_name)
+    doc.check_permission("write")
+    from mfi_tools.mfi_tools.services.mapping_refresh import recalculate_package
+    return recalculate_package(paquete_name)
 
 
 @frappe.whitelist()
@@ -523,6 +522,8 @@ def copiar_eeff_y_notas_desde_paquete(paquete_name, paquete_fuente, limpiar_exis
 
     destino = frappe.get_doc("Paquete EEFF", paquete_name)
     fuente = frappe.get_doc("Paquete EEFF", paquete_fuente)
+    destino.check_permission("write")
+    fuente.check_permission("read")
     if cstr(destino.company or "").strip() and cstr(fuente.company or "").strip() and destino.company != fuente.company:
         frappe.throw(_("Solo puedes copiar EEFF y notas entre paquetes de la misma compania."), title=_("Compania Inconsistente"))
 
@@ -643,8 +644,11 @@ def copiar_eeff_y_notas_desde_paquete(paquete_name, paquete_fuente, limpiar_exis
         created_factsheets.append(new_fs.name)
 
     destino.save(ignore_permissions=True)
+    from mfi_tools.mfi_tools.services.mapping_refresh import recalculate_package
+    mapping_result = recalculate_package(paquete_name)
     return {
         "paquete_destino": paquete_name,
+        "mapeo": mapping_result,
         "paquete_fuente": paquete_fuente,
         "estados_copiados": len(created_estados),
         "notas_copiadas": len(created_notas),

@@ -12,6 +12,11 @@ function runPackageMappingFromFactsheet(frm) {
         freeze_message: __("Ejecutando mapeo del paquete actual..."),
         callback: (r) => {
             const result = r.message || {};
+            if (result.error) {
+                frappe.msgprint({title: __("Mapeo pendiente"), indicator: "orange", message: frappe.utils.escape_html(result.error)});
+                frm.reload_doc();
+                return;
+            }
             const alertas = Array.isArray(result.alertas) ? result.alertas : [];
 
             frappe.show_alert({

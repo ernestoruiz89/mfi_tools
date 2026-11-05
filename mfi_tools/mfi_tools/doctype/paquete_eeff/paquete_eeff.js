@@ -28,6 +28,11 @@ function runPackageMapping(frm, paqueteName) {
         callback: (r) => {
             const result = r.message || {};
             const alertas = Array.isArray(result.alertas) ? result.alertas : [];
+            if (result.error) {
+                frappe.msgprint({title: __("Mapeo pendiente"), indicator: "orange", message: frappe.utils.escape_html(result.error)});
+                frm.reload_doc();
+                return;
+            }
 
             frappe.show_alert({
                 message: __("Mapeo aplicado al paquete {0}", [targetPackage]),
@@ -83,6 +88,7 @@ function openCopyEEFFAndNotesDialog(frm) {
                 freeze_message: __("Copiando EEFF y notas desde paquete fuente..."),
                 callback: (r) => {
                     const message = r.message || {};
+                    const mapping = message.mapeo || {};
                     const parts = [
                         `${message.estados_copiados || 0} EEFF`,
                         `${message.notas_copiadas || 0} Notas`,
@@ -92,7 +98,14 @@ function openCopyEEFFAndNotesDialog(frm) {
                     }
                     frappe.show_alert({
                         message: __("Copiados: {0}", [parts.join(", ")]),
-                        indicator: "green",
+                        indicator: mapping.mapeo_desactualizado ? "orange" : "green",
+                    });
+                    frappe.msgprint({
+                        title: mapping.mapeo_desactualizado ? __("Copia completada. Mapeo pendiente") : __("Copia y mapeo completados"),
+                        indicator: mapping.mapeo_desactualizado ? "orange" : "green",
+                        message: frappe.utils.escape_html(mapping.error || (mapping.mapeo_desactualizado
+                            ? __("Revisa las advertencias del mapeo y vuelve a ejecutarlo.")
+                            : __("Los EEFF y notas ya utilizan los datos del paquete destino."))),
                     });
                     dialog.hide();
                     frm.reload_doc();
@@ -191,6 +204,13 @@ frappe.ui.form.on("Paquete EEFF", {
         if (frm.is_new()) {
             updatePackageNames(frm);
             return;
+        }
+
+        frm.dashboard.clear_headline();
+        if (frm.doc.mapeo_desactualizado) {
+            frm.dashboard.set_headline_alert(
+                frappe.utils.escape_html(frm.doc.detalle_mapeo || __("Mapeo pendiente. Ejecuta el mapeo para actualizar los importes.")), "orange"
+            );
         }
 
         frm.add_custom_button(__("Ejecutar Mapeo"), () => {

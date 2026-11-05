@@ -79,6 +79,16 @@ La pagina `indicadores-emision-eeff` requiere el rol `System Manager` y permiso 
 
 El score mantiene las penalizaciones por cuadre (35 por error o 10 por advertencia), huerfanas (2 por hallazgo, maximo 25), formulas (3, maximo 25) y notas (2, maximo 15); agrega integridad (5, maximo 20). Cualquier error limita el score a 59; cualquier advertencia lo limita a 84. El panel identifica el paquete, periodo y hora de evaluacion, y descarta resultados anteriores cuando cambian los filtros o falla la consulta.
 
+## Actualizacion automatica y meses de emision
+
+- Al importar o volver a importar una balanza se mapean sus paquetes vinculados, incluyendo los enlaces comparativo y base. Guardar cambios de importes, moneda o tasas tambien activa el recalculo; guardar solo comentarios no lo repite.
+- Al copiar EEFF, notas y factsheets se ejecuta el mapeo al terminar, usando las fuentes del destino. Si el mapeo falla, la carga o copia se conserva y sus importes previos no quedan parcialmente modificados. El paquete muestra **Mapeo pendiente** y el detalle para reintentar.
+- Cambiar las fuentes de un paquete lo marca pendiente. Cambiar una balanza usada por formulas historicas tambien deja pendientes los paquetes afectados. **Ejecutar Mapeo** permite reintentarlo; las advertencias de reglas pendientes no se ocultan.
+- Cada Estado Financiero tiene **Meses de emision**, con **Todos los meses** y doce checks. Patrimonio se inicializa en junio/diciembre y Flujos de Efectivo solo en diciembre. Los demas estados se inicializan mensuales; se pueden cambiar estas selecciones por estado. La copia conserva la configuracion.
+- El paquete incluye en Word y PDF solo los estados seleccionados para su mes. Las notas consecutivas de la misma orientacion continuan en la misma pagina cuando hay espacio; los cambios de orientacion conservan el salto necesario. No se cambia el texto de la Nota 1.
+
+La actualizacion requiere `bench --site nombre-del-sitio migrate` para crear los campos y configurar la periodicidad de los estados existentes. Los paquetes anteriores quedan pendientes de un primer mapeo para confirmar sus fuentes.
+
 ## Print formats
 
 - `Estado Financiero EEFF Base`

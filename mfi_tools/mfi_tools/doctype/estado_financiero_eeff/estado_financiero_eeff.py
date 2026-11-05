@@ -67,6 +67,8 @@ class EstadoFinancieroEEFF(Document):
         self.name = self.nombre_del_estado
 
     def validate(self):
+        from mfi_tools.mfi_tools.services.report_periods import configure_default_periods
+        configure_default_periods(self)
         self._sync_package_period()
         self.estructura_estado = cstr(getattr(self, "estructura_estado", "Simple") or "Simple").strip()
         self.codigo_estado = cstr(self.codigo_estado or "").strip().upper()

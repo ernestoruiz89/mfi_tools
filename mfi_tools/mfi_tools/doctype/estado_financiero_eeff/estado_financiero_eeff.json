@@ -27,6 +27,22 @@
         "imagen_fondo",
         "estado_aprobacion",
         "total_lineas",
+        "periodicidad_section",
+        "emitir_todos_meses",
+        "periodicidad_configurada",
+        "emitir_enero",
+        "emitir_febrero",
+        "emitir_marzo",
+        "emitir_abril",
+        "emitir_mayo",
+        "emitir_junio",
+        "periodicidad_column",
+        "emitir_julio",
+        "emitir_agosto",
+        "emitir_septiembre",
+        "emitir_octubre",
+        "emitir_noviembre",
+        "emitir_diciembre",
         "lineas_tab",
         "lineas_section",
         "lineas",
@@ -283,6 +299,112 @@
             "fieldname": "observaciones",
             "fieldtype": "Small Text",
             "label": "Observaciones"
+        },
+        {
+            "fieldname": "periodicidad_section",
+            "fieldtype": "Section Break",
+            "label": "Meses de emision"
+        },
+        {
+            "fieldname": "emitir_todos_meses",
+            "fieldtype": "Check",
+            "label": "Todos los meses",
+            "default": "1",
+            "description": "Desmarca para elegir los meses en los que se incluye este estado en Word y PDF."
+        },
+        {
+            "fieldname": "periodicidad_configurada",
+            "fieldtype": "Check",
+            "default": "0",
+            "hidden": 1
+        },
+        {
+            "fieldname": "emitir_enero",
+            "fieldtype": "Check",
+            "label": "Enero",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "emitir_febrero",
+            "fieldtype": "Check",
+            "label": "Febrero",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "emitir_marzo",
+            "fieldtype": "Check",
+            "label": "Marzo",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "emitir_abril",
+            "fieldtype": "Check",
+            "label": "Abril",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "emitir_mayo",
+            "fieldtype": "Check",
+            "label": "Mayo",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "emitir_junio",
+            "fieldtype": "Check",
+            "label": "Junio",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "periodicidad_column",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "emitir_julio",
+            "fieldtype": "Check",
+            "label": "Julio",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "emitir_agosto",
+            "fieldtype": "Check",
+            "label": "Agosto",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "emitir_septiembre",
+            "fieldtype": "Check",
+            "label": "Septiembre",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "emitir_octubre",
+            "fieldtype": "Check",
+            "label": "Octubre",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "emitir_noviembre",
+            "fieldtype": "Check",
+            "label": "Noviembre",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
+        },
+        {
+            "fieldname": "emitir_diciembre",
+            "fieldtype": "Check",
+            "label": "Diciembre",
+            "default": "0",
+            "depends_on": "eval:!doc.emitir_todos_meses"
         }
     ],
     "module": "MFI Tools",

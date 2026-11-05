@@ -19,6 +19,11 @@ function runPackageMappingFromEstado(frm) {
         freeze_message: __("Ejecutando mapeo del paquete actual..."),
         callback: (r) => {
             const result = r.message || {};
+            if (result.error) {
+                frappe.msgprint({title: __("Mapeo pendiente"), indicator: "orange", message: frappe.utils.escape_html(result.error)});
+                frm.reload_doc();
+                return;
+            }
             const alertas = Array.isArray(result.alertas) ? result.alertas : [];
 
             frappe.show_alert({
@@ -97,6 +102,16 @@ function syncPresentationFields(frm, cdt, cdn) {
 }
 
 frappe.ui.form.on("Estado Financiero EEFF", {
+    tipo_estado(frm) {
+        if (!frm.is_new()) return;
+        const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+        const selected = frm.doc.tipo_estado === "Estado de Cambios en el Patrimonio" ? ["junio", "diciembre"]
+            : frm.doc.tipo_estado === "Estado de Flujos de Efectivo" ? ["diciembre"] : [];
+        const values = { emitir_todos_meses: selected.length ? 0 : 1, periodicidad_configurada: 1 };
+        months.forEach((month) => values[`emitir_${month}`] = selected.includes(month) ? 1 : 0);
+        frm.set_value(values);
+    },
+    emitir_todos_meses(frm) { frm.doc.periodicidad_configurada = 1; },
     refresh(frm) {
         enableLineasBulkEdit(frm);
         if (frm.is_new()) return;
@@ -125,3 +140,10 @@ frappe.ui.form.on("Linea Estado Financiero EEFF", {
         frm.refresh_field("lineas");
     },
 });
+
+// A user's explicit month selections take precedence over the type defaults.
+const emissionMonthHandlers = {};
+["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"].forEach((month) => {
+    emissionMonthHandlers[`emitir_${month}`] = (frm) => { frm.doc.periodicidad_configurada = 1; };
+});
+frappe.ui.form.on("Estado Financiero EEFF", emissionMonthHandlers);

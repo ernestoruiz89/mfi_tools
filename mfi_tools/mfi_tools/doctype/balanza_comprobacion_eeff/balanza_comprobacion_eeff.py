@@ -632,6 +632,10 @@ class BalanzaComprobacionEEFF(Document):
         self._normalizar_tasas_cambio()
         self._normalizar_lineas()
 
+    def on_update(self):
+        from mfi_tools.mfi_tools.services.mapping_refresh import balance_saved
+        balance_saved(self)
+
     def _normalizar_moneda(self):
         moneda = cstr(getattr(self, "moneda", "") or "").strip().upper()
         if not moneda:
@@ -812,9 +816,11 @@ def cargar_balanza_archivo(balanza_name, file_url=None, csv_content=None, tasa_c
     for row in rows:
         doc.append("lineas", row)
 
+    doc.flags.refresh_mapping = True
     doc.save(ignore_permissions=True)
     return {
         "balanza": doc.name,
+        "mapeos": doc.flags.get("mapping_results") or [],
         "periodo_nombre": doc.periodo_nombre,
         "total_lineas": cint(doc.total_lineas),
         "total_debe": flt(doc.total_debe),

@@ -22,6 +22,9 @@
         "datos_estadisticos_comparativo_eeff",
         "control_section",
         "estado_preparacion",
+        "mapeo_desactualizado",
+        "ultimo_mapeo",
+        "detalle_mapeo",
         "fecha_emision",
         "excluir_lineas_sin_movimientos",
         "control_column",
@@ -65,7 +68,6 @@
             "in_list_view": 1,
             "no_copy": 1
         },
-
         {
             "fieldname": "company",
             "fieldtype": "Link",
@@ -326,6 +328,28 @@
             "fieldname": "observaciones",
             "fieldtype": "Small Text",
             "label": "Observaciones"
+        },
+        {
+            "fieldname": "mapeo_desactualizado",
+            "fieldtype": "Check",
+            "label": "Mapeo pendiente",
+            "default": "1",
+            "read_only": 1,
+            "no_copy": 1
+        },
+        {
+            "fieldname": "ultimo_mapeo",
+            "fieldtype": "Datetime",
+            "label": "Ultimo mapeo",
+            "read_only": 1,
+            "no_copy": 1
+        },
+        {
+            "fieldname": "detalle_mapeo",
+            "fieldtype": "Small Text",
+            "label": "Estado del mapeo",
+            "read_only": 1,
+            "no_copy": 1
         }
     ],
     "module": "MFI Tools",
