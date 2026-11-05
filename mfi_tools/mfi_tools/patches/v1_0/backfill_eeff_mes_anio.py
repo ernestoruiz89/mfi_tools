@@ -33,7 +33,6 @@ def _sync_list_view_settings(doctype_name):
         return
 
     raw_fields = frappe.db.get_value("List View Settings", doctype_name, "fields")
-    total_fields = frappe.db.get_value("List View Settings", doctype_name, "total_fields") or 4
     if not raw_fields:
         return
 
@@ -59,14 +58,15 @@ def _sync_list_view_settings(doctype_name):
                 insert_idx = idx + 1
                 break
         fields[insert_idx:insert_idx] = to_insert
-        new_total = min(max(int(total_fields), insert_idx + len(to_insert), 6), 10)
+        values = {"fields": json.dumps(fields)}
+        # Frappe v16 no longer stores a column count in List View Settings.
+        if frappe.db.has_column("List View Settings", "total_fields"):
+            total_fields = frappe.db.get_value("List View Settings", doctype_name, "total_fields") or 4
+            values["total_fields"] = min(max(int(total_fields), insert_idx + len(to_insert), 6), 10)
         frappe.db.set_value(
             "List View Settings",
             doctype_name,
-            {
-                "fields": json.dumps(fields),
-                "total_fields": new_total,
-            },
+            values,
             update_modified=False,
         )
 
