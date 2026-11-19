@@ -6,7 +6,7 @@
  "app": "mfi_tools",
  "standard": 1,
  "header_icon": "chart-no-axes-combined",
- "modified": "2026-10-18 22:45:00.000000",
+ "modified": "2026-11-19 08:00:00.000000",
  "items": [
   {
    "type": "Link",
@@ -39,6 +39,14 @@
    "link_type": "DocType",
    "link_to": "Balanza Comprobacion EEFF",
    "icon": "scale",
+   "child": 1
+  },
+  {
+   "type": "Link",
+   "label": "Tablero financiero",
+   "link_type": "Page",
+   "link_to": "tablero-financiero-eeff",
+   "icon": "chart-no-axes-combined",
    "child": 1
   },
   {

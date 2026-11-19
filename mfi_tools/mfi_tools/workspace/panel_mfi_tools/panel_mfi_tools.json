@@ -16,7 +16,7 @@
   {
    "type": "Card Break",
    "label": "Preparación EEFF",
-   "link_count": 3
+   "link_count": 4
   },
   {
    "type": "Link",
@@ -31,6 +31,14 @@
    "label": "Balanzas de comprobación",
    "link_type": "DocType",
    "link_to": "Balanza Comprobacion EEFF",
+   "hidden": 0,
+   "onboard": 0
+  },
+  {
+   "type": "Link",
+   "label": "Tablero financiero",
+   "link_type": "Page",
+   "link_to": "tablero-financiero-eeff",
    "hidden": 0,
    "onboard": 0
   },
@@ -109,7 +117,7 @@
    "onboard": 0
   }
  ],
- "modified": "2026-10-18 22:30:00.000000",
+ "modified": "2026-11-19 08:00:00.000000",
  "modified_by": "Administrator",
  "module": "MFI Tools",
  "name": "Panel MFI Tools",

@@ -1,0 +1,11 @@
+{
+  "name": "mfi-tools-financial-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gráficos y PowerPoint del tablero financiero EEFF",
+  "dependencies": {
+    "echarts": "6.1.0",
+    "jszip": "3.10.2",
+    "pptxgenjs": "4.0.1"
+  }
+}
