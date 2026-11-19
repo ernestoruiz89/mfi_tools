@@ -25,12 +25,13 @@ Instalacion en un bench v16 con ERPNext instalado:
 bench get-app /ruta/a/mfi_tools --soft-link --skip-assets
 bench --site nombre-del-sitio backup --with-files
 bench --site nombre-del-sitio install-app mfi_tools
+npm --prefix apps/mfi_tools ci --omit=dev
 bench build --app mfi_tools
 bench --site nombre-del-sitio migrate
 bench --site nombre-del-sitio clear-cache
 ```
 
-En un sitio que ya tiene MFI Tools, actualizar `main`, instalar sus dependencias con `bench setup requirements --python` y ejecutar build, migrate y clear-cache. La navegacion se importa desde los JSON de la app; las personalizaciones del sitio y del usuario se administran con las capas de Frappe. Recargar el navegador despues de actualizar.
+En un sitio que ya tiene MFI Tools, actualizar `main`, instalar sus dependencias Python con `bench setup requirements --python` y las dependencias del generador de PowerPoint con `npm --prefix apps/mfi_tools ci --omit=dev`. Luego ejecutar build, migrate y clear-cache. La navegacion se importa desde los JSON de la app; las personalizaciones del sitio y del usuario se administran con las capas de Frappe. Recargar el navegador despues de actualizar.
 
 ## Alcance funcional actual
 

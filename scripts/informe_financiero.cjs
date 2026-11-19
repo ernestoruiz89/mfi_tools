@@ -362,5 +362,5 @@ async function build(data,output) {
   fs.writeFileSync(output,await archive.generateAsync({type:'nodebuffer',compression:'DEFLATE'}));
   return {slides:slideCount};
 }
-if(require.main===module){const [source,out]=process.argv.slice(2);build(JSON.parse(fs.readFileSync(source,'utf8')),out).catch(e=>{console.error(e.message);process.exit(1);});}
+if(require.main===module){const [source,out]=process.argv.slice(2);build(JSON.parse(fs.readFileSync(source,'utf8')),out).catch(e=>{console.error(e.stack||e.message);process.exit(1);});}
 module.exports={build,resultsSummary,branchResults};

@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 
 import frappe
+from frappe import _
 from frappe.rate_limiter import rate_limit
 from frappe.utils import getdate, now_datetime
 
@@ -179,8 +180,53 @@ def get_dashboard(company: str, cutoff: str, currency: str):
     return _dashboard(company, cutoff, currency)
 
 
+def _run_powerpoint_generator(script: Path, source: Path, target: Path):
+    try:
+        result = subprocess.run(
+            ["node", str(script), str(source), str(target)],
+            timeout=60, capture_output=True, text=True, check=False,
+        )
+    except FileNotFoundError:
+        frappe.logger("mfi_tools").error("No se encontró Node.js al generar PowerPoint EEFF.")
+        frappe.throw(
+            _("El generador de PowerPoint no está disponible en el servidor. Contacta al administrador."),
+            title=_("Generador no disponible"),
+        )
+    except subprocess.TimeoutExpired:
+        frappe.logger("mfi_tools").error("Tiempo de espera agotado al generar PowerPoint EEFF.")
+        frappe.throw(
+            _("La presentación tardó demasiado en generarse. Inténtalo de nuevo o contacta al administrador."),
+            title=_("Tiempo de espera agotado"),
+        )
+
+    if result.returncode != 0:
+        details = (result.stderr or result.stdout or "").strip()
+        frappe.logger("mfi_tools").error(
+            "Node terminó con código %s al generar PowerPoint EEFF.\n%s",
+            result.returncode, details[-6000:],
+        )
+        if "MODULE_NOT_FOUND" in details or "Cannot find module" in details:
+            frappe.throw(
+                _("Faltan componentes del generador de PowerPoint en el servidor. Contacta al administrador."),
+                title=_("Generador no disponible"),
+            )
+        frappe.throw(
+            _("No se pudo generar la presentación. El detalle quedó registrado para el administrador."),
+            title=_("Error al generar PowerPoint"),
+        )
+
+    if not target.is_file() or target.stat().st_size == 0:
+        frappe.logger("mfi_tools").error(
+            "El generador de PowerPoint EEFF terminó correctamente, pero no produjo un archivo PPTX."
+        )
+        frappe.throw(
+            _("No se pudo generar la presentación. El detalle quedó registrado para el administrador."),
+            title=_("Error al generar PowerPoint"),
+        )
+
+
 @frappe.whitelist(methods=["POST"])
-@rate_limit(limit=5, seconds=60, user_based=True, ip_based=False)
+@rate_limit(limit=5, seconds=60)
 def generate_powerpoint(company: str, cutoff: str, currency: str, snapshot_id: str, comments: str = "", scale: str = "1000"):
     data = _dashboard(company, cutoff, currency)
     if snapshot_id != data["snapshot_id"]:
@@ -194,5 +240,5 @@ def generate_powerpoint(company: str, cutoff: str, currency: str, snapshot_id: s
     with tempfile.TemporaryDirectory(prefix="mfi-informe-") as temp:
         source, target = Path(temp) / "datos.json", Path(temp) / "informe.pptx"
         source.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        subprocess.run(["node", str(script), str(source), str(target)], timeout=60, check=True, capture_output=True)
+        _run_powerpoint_generator(script, source, target)
         return {"cutoff": data["meta"]["cutoff"], "content": base64.b64encode(target.read_bytes()).decode("ascii")}

@@ -235,6 +235,8 @@ class MfiFinancialDashboard {
       const a=document.createElement('a');a.href=url;a.download=`Informe-financiero-${frappe.scrub(data.meta.company)}-${data.meta.cutoff.slice(0,7)}-${data.meta.currency}.pptx`;
       document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
       frappe.show_alert({message:'Presentación generada con el corte '+r.cutoff,indicator:'green'},8);
+    } catch (error) {
+      frappe.show_alert({message:'No se pudo generar la presentación. Revisa el mensaje del servidor.',indicator:'red'},8);
     } finally {this.exporting=false;this.disableExport(!this.data);this.$root.find('.mfi-eeff-export').prop('disabled',false).text('Generar PowerPoint');}
   }
   async fullscreen() {
